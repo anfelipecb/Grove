@@ -25,6 +25,7 @@ import {
   type XpInput,
 } from "@grove/core";
 import { communityFeed, demoGoals, demoProfile } from "@/lib/demo-data";
+import { NavLinks } from "@/components/nav-links";
 
 type GoalState = GoalDraft & {
   id: string;
@@ -110,6 +111,7 @@ export function GroveDashboard() {
             <Metric icon={<Users className={iconClass} />} label="Community" value="AgentsForGood" />
             <Metric icon={<Bell className={iconClass} />} label="Nudges" value="Email + app" />
           </div>
+          <NavLinks />
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -341,4 +343,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
