@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+coverage/
+out/
+*.tsbuildinfo
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Deployment state
+.vercel/
+.railway/
+
+# Local-only planning, class, and research material
+docs/
+research/
+
+# System files
+.DS_Store
+Thumbs.db
+

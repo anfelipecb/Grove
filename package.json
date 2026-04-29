@@ -1,0 +1,19 @@
+{
+  "name": "grove",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter web dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "worker": "pnpm --filter worker dev"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  }
+}
+
