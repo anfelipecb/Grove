@@ -2,7 +2,7 @@
 
 import { useAuth, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "lucide-react";
 import type { IntakeDraft, MemberProfileCard } from "@grove/core";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
@@ -52,6 +52,7 @@ function mergeLines(chips: string[], text: string): string {
 export function OnboardingFlow() {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
+  const errorBoxRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [intake, setIntake] = useState<IntakeDraft>({
     name: "",
@@ -83,6 +84,12 @@ export function OnboardingFlow() {
       router.replace("/sign-in?redirect_url=/onboarding");
     }
   }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
+    if (error && errorBoxRef.current) {
+      errorBoxRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [error]);
 
   useEffect(() => {
     if (step !== 3 || weightsLoaded) return;
@@ -127,56 +134,83 @@ export function OnboardingFlow() {
     };
   }, [step, weightsLoaded, goalChips, intake.goals, intake.friction, intake.supportStyle, frictionChips]);
 
+  function parseJson<T>(raw: string): T | null {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  }
+
   async function finishOnboarding() {
     setLoading(true);
     setSafetyMessage(null);
     setError(null);
-    const goalsText = mergeLines(goalChips, intake.goals);
-    const frictionText = mergeLines(frictionChips, intake.friction);
-    const fullIntake: IntakeDraft = {
-      ...intake,
-      goals: goalsText,
-      friction: frictionText,
-    };
-    const profileRes = await fetch("/api/ai/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fullIntake),
-    });
-    const profilePayload = (await profileRes.json()) as {
-      profile?: MemberProfileCard;
-      safety?: boolean;
-      message?: string;
-    };
-    if (profilePayload.safety) {
-      setSafetyMessage(profilePayload.message ?? "");
-      setLoading(false);
-      return;
+    let redirecting = false;
+    try {
+      const goalsText = mergeLines(goalChips, intake.goals);
+      const frictionText = mergeLines(frictionChips, intake.friction);
+      const fullIntake: IntakeDraft = {
+        ...intake,
+        goals: goalsText,
+        friction: frictionText,
+      };
+      const profileRes = await fetch("/api/ai/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullIntake),
+      });
+      const profileRaw = await profileRes.text();
+      const profilePayload = parseJson<{
+        profile?: MemberProfileCard;
+        safety?: boolean;
+        message?: string;
+      }>(profileRaw);
+      if (!profilePayload) {
+        setError(
+          profileRes.ok
+            ? "Could not read profile response."
+            : `Profile request failed (${profileRes.status}). ${profileRaw.slice(0, 180)}`,
+        );
+        return;
+      }
+      if ("safety" in profilePayload && profilePayload.safety) {
+        setSafetyMessage(profilePayload.message ?? "");
+        return;
+      }
+      const profileCard = profilePayload.profile ?? null;
+      if (!profileCard) {
+        setError("Could not generate profile. Try again.");
+        return;
+      }
+      setProfile(profileCard);
+      const saveRes = await fetch("/api/onboarding/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intake: fullIntake,
+          profileCard,
+          xpDomainWeights: weights,
+        }),
+      });
+      const saveRaw = await saveRes.text();
+      const saveBody = parseJson<{ ok?: boolean; error?: string }>(saveRaw);
+      if (!saveRes.ok) {
+        const fallback = saveRaw.trim() ? saveRaw.slice(0, 240) : `Save failed (${saveRes.status})`;
+        setError(saveBody?.error ?? fallback);
+        return;
+      }
+      if (!saveBody?.ok) {
+        setError(saveBody?.error ?? "Save did not complete. Try again.");
+        return;
+      }
+      redirecting = true;
+      window.location.assign("/dashboard");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
+    } finally {
+      if (!redirecting) setLoading(false);
     }
-    const profileCard = profilePayload.profile;
-    if (!profileCard) {
-      setError("Could not generate profile. Try again.");
-      setLoading(false);
-      return;
-    }
-    setProfile(profileCard);
-    const saveRes = await fetch("/api/onboarding/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        intake: fullIntake,
-        profileCard,
-        xpDomainWeights: weights,
-      }),
-    });
-    if (!saveRes.ok) {
-      const errBody = (await saveRes.json()) as { error?: string };
-      setError(errBody.error ?? "Save failed");
-      setLoading(false);
-      return;
-    }
-    setLoading(false);
-    router.push("/dashboard");
   }
 
   if (!isLoaded || !isSignedIn) {
@@ -193,23 +227,36 @@ export function OnboardingFlow() {
   return (
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
-              <ClipboardList className="h-4 w-4" aria-hidden="true" />
-              Grove onboarding
+        <header className="sticky top-0 z-30 -mx-4 border-b border-stone-200/80 bg-stone-50/85 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
+                <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Grove onboarding
+              </div>
+              <h1 className="mt-2 text-2xl font-semibold">Grow together—starting with what matters to you.</h1>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
+                <div className="h-full bg-moss transition-all" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-stone-600">
+                Step {step + 1} of {totalSteps}
+              </p>
             </div>
-            <h1 className="mt-2 text-2xl font-semibold">Grow together—starting with what matters to you.</h1>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
-              <div className="h-full bg-moss transition-all" style={{ width: `${progress}%` }} />
+            <div className="flex shrink-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-stone-200 bg-white/90 px-2 py-1.5 shadow-sm sm:justify-start">
+                <span className="pl-2 text-xs font-medium text-stone-600">Account</span>
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-white",
+                      userButtonBox: "flex-row-reverse",
+                    },
+                  }}
+                />
+              </div>
+              <NavLinks />
             </div>
-            <p className="mt-2 text-xs text-stone-600">
-              Step {step + 1} of {totalSteps}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <NavLinks />
-            <UserButton afterSignOutUrl="/" />
           </div>
         </header>
 
@@ -358,7 +405,15 @@ export function OnboardingFlow() {
               </div>
             )}
 
-            {error ? <p className="text-sm text-red-700">{error}</p> : null}
+            {error ? (
+              <div
+                ref={errorBoxRef}
+                role="alert"
+                className="rounded-md border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-800"
+              >
+                {error}
+              </div>
+            ) : null}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
               <button
