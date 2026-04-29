@@ -7,7 +7,7 @@
     "build": "tsc --noEmit",
     "dev": "tsx src/index.ts",
     "lint": "tsc --noEmit",
-    "start": "node dist/index.js",
+    "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,4 +21,3 @@
     "typescript": "^5.7.2"
   }
 }
-
