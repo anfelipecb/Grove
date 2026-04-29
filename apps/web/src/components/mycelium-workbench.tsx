@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CalendarCheck, ClipboardCheck, Network, Sparkles } from "lucide-react";
 import type { SessionSummary } from "@grove/core";
-import { NavLinks } from "@/components/nav-links";
+import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 
 const inputBase =
   "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
@@ -46,7 +46,7 @@ export function MyceliumWorkbench() {
   return (
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300 pb-5 lg:flex-row lg:items-center lg:justify-between">
+        <header className="space-y-4 border-b border-stone-300 pb-5">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
               <Network className="h-4 w-4" aria-hidden="true" />
@@ -54,7 +54,7 @@ export function MyceliumWorkbench() {
             </div>
             <h1 className="mt-2 text-2xl font-semibold">Community memory without organizer overload.</h1>
           </div>
-          <NavLinks />
+          <AppHeaderToolbar />
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">

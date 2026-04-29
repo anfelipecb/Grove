@@ -8,9 +8,9 @@ const links = [
   { href: "/mycelium", label: "Mycelium", icon: Network },
 ];
 
-export function NavLinks() {
+export function NavLinks({ nowrap = false }: { nowrap?: boolean }) {
   return (
-    <nav className="flex flex-wrap gap-2">
+    <nav className={`flex gap-2 ${nowrap ? "flex-nowrap" : "flex-wrap"}`} data-testid="app-nav-links">
       {links.map((link) => {
         const Icon = link.icon;
 

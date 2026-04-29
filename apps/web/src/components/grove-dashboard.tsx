@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { useMemo, useState, useCallback } from "react";
 import {
   Bell,
@@ -25,7 +25,7 @@ import {
   type XpInput,
 } from "@grove/core";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { NavLinks } from "@/components/nav-links";
+import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 
 export type DashboardGoalRow = {
   id: string;
@@ -200,25 +200,24 @@ export function GroveDashboard({
   return (
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-bark text-white shadow-panel">
-              <Leaf className="h-6 w-6" aria-hidden="true" />
+        <header className="space-y-4 border-b border-stone-300 pb-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-bark text-white shadow-panel">
+                <Leaf className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-normal">Grove</h1>
+                <p className="text-sm text-stone-600">Personal follow-through and community participation.</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-normal">Grove</h1>
-              <p className="text-sm text-stone-600">Personal follow-through and community participation.</p>
+            <div className="grid grid-cols-3 gap-2 text-sm sm:flex sm:flex-nowrap">
+              <Metric icon={<Sprout className={iconClass} />} label={seniority.label} value={`${seniorityTotal} XP`} />
+              <Metric icon={<Users className={iconClass} />} label="Community" value={primaryCommunity} />
+              <Metric icon={<Bell className={iconClass} />} label="Points" value={`${spendablePoints} pts`} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-sm sm:flex">
-            <Metric icon={<Sprout className={iconClass} />} label={seniority.label} value={`${seniorityTotal} XP`} />
-            <Metric icon={<Users className={iconClass} />} label="Community" value={primaryCommunity} />
-            <Metric icon={<Bell className={iconClass} />} label="Points" value={`${spendablePoints} pts`} />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <NavLinks />
-            <UserButton afterSignOutUrl="/" />
-          </div>
+          <AppHeaderToolbar />
         </header>
 
         {error ? (

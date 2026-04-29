@@ -1,11 +1,11 @@
 "use client";
 
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { CalendarCheck, Library, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 import { MyceliumChat } from "@/components/mycelium-chat";
-import { NavLinks } from "@/components/nav-links";
 
 export type CommunityListItem = {
   membershipId: string;
@@ -76,15 +76,12 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
   return (
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 pb-4">
+        <header className="space-y-4 border-b border-stone-300 pb-4">
           <div>
             <h1 className="text-xl font-semibold text-bark">Communities</h1>
             <p className="text-sm text-stone-600">Feed, sessions, and Mycelium alongside your group.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <NavLinks />
-            <UserButton afterSignOutUrl="/" />
-          </div>
+          <AppHeaderToolbar />
         </header>
 
         <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[220px_1fr_340px]">

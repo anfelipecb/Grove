@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "lucide-react";
 import type { IntakeDraft, MemberProfileCard } from "@grove/core";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
-import { NavLinks } from "@/components/nav-links";
+import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 
 const inputBase =
   "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
@@ -228,8 +228,8 @@ export function OnboardingFlow() {
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-5">
         <header className="sticky top-0 z-30 -mx-4 border-b border-stone-200/80 bg-stone-50/85 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-4">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
                 <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Grove onboarding
@@ -242,21 +242,14 @@ export function OnboardingFlow() {
                 Step {step + 1} of {totalSteps}
               </p>
             </div>
-            <div className="flex shrink-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-stone-200 bg-white/90 px-2 py-1.5 shadow-sm sm:justify-start">
-                <span className="pl-2 text-xs font-medium text-stone-600">Account</span>
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-white",
-                      userButtonBox: "flex-row-reverse",
-                    },
-                  }}
-                />
-              </div>
-              <NavLinks />
-            </div>
+            <AppHeaderToolbar
+              userButtonAppearance={{
+                elements: {
+                  userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-white",
+                  userButtonBox: "flex-row-reverse",
+                },
+              }}
+            />
           </div>
         </header>
 

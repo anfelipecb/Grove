@@ -23,7 +23,9 @@ out/
 docs/
 research/
 
-# Local verification artifacts
+# Playwright (web e2e)
+apps/web/playwright-report/
+apps/web/test-results/
 .playwright-mcp/
 playwright-mcp/
 **/playwright-mcp/
