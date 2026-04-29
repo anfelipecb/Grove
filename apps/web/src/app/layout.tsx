@@ -3,23 +3,22 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Grove",
+  title: "Grove — grow together",
   description: "ADHD-aware accountability and community coordination.",
+  applicationName: "Grove (grove-growth-together)",
 };
 
-function Providers({ children }: { children: React.ReactNode }) {
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    return <>{children}</>;
-  }
-
-  return <ClerkProvider>{children}</ClerkProvider>;
-}
+const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        {clerkPublishableKey ? (
+          <ClerkProvider publishableKey={clerkPublishableKey}>{children}</ClerkProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

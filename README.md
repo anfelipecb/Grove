@@ -19,7 +19,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-The committed app runs as a polished local demo without vendor keys. Supabase, Clerk, Groq, and email delivery become active once the environment variables are configured.
+The web app runs without vendor keys for UI and builds; **Clerk + Supabase env vars** unlock sign-in, middleware gating, and live data. See `.env.example` and [AGENTS.md](./AGENTS.md).
 
 ## Supabase And Clerk
 

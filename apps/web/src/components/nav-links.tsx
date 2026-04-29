@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ClipboardList, LayoutDashboard, Network } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Network, Users } from "lucide-react";
 
 const links = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/communities", label: "Communities", icon: Users },
   { href: "/onboarding", label: "Onboarding", icon: ClipboardList },
   { href: "/mycelium", label: "Mycelium", icon: Network },
 ];
@@ -27,4 +28,3 @@ export function NavLinks() {
     </nav>
   );
 }
-
