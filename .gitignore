@@ -25,6 +25,8 @@ research/
 
 # Local verification artifacts
 .playwright-mcp/
+playwright-mcp/
+**/playwright-mcp/
 grove-*.png
 
 # System files

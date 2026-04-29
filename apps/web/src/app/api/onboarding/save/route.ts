@@ -2,7 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import type { IntakeDraft, MemberProfileCard } from "@grove/core";
 import type { LifeDomainId } from "@grove/core";
 import { getServerUserId } from "@/lib/clerk-auth";
-import { createServiceSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 
 type SaveBody = {
   intake: IntakeDraft;
@@ -21,9 +21,16 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const supabase = createServiceSupabaseClient();
+  const userSupabase = await createServerSupabaseClient();
+  const supabase = userSupabase ?? createServiceSupabaseClient();
   if (!supabase) {
-    return Response.json({ error: "Server misconfigured" }, { status: 500 });
+    return Response.json(
+      {
+        error:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or anon key) in Vercel.",
+      },
+      { status: 500 },
+    );
   }
 
   const user = await currentUser();
@@ -57,7 +64,10 @@ export async function POST(request: Request) {
     .single();
 
   if (profileError || !profile) {
-    return Response.json({ error: profileError?.message ?? "Profile upsert failed" }, { status: 500 });
+    return Response.json(
+      { error: profileError?.message ?? "Profile upsert failed. Check Supabase + Clerk third-party auth." },
+      { status: 500 },
+    );
   }
 
   const profileId = profile.id;
@@ -77,7 +87,7 @@ export async function POST(request: Request) {
     .map(([k]) => k);
   const primaryDomain = sortedDomains[0] ?? "learning";
 
-  const targets = body.profileCard.firstTargets.slice(0, 5);
+  const targets = body.profileCard.firstTargets.slice(0, 3);
   for (const title of targets) {
     const { error: goalError } = await supabase.from("goals").insert({
       profile_id: profileId,
@@ -106,11 +116,14 @@ export async function POST(request: Request) {
       .eq("profile_id", profileId)
       .maybeSingle();
     if (!existing) {
-      await supabase.from("memberships").insert({
+      const { error: memError } = await supabase.from("memberships").insert({
         community_id: community.id,
         profile_id: profileId,
         role: "member",
       });
+      if (memError) {
+        return Response.json({ error: memError.message }, { status: 500 });
+      }
     }
   }
 

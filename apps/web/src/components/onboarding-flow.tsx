@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "lucide-react";
@@ -207,7 +207,10 @@ export function OnboardingFlow() {
               Step {step + 1} of {totalSteps}
             </p>
           </div>
-          <NavLinks />
+          <div className="flex flex-wrap items-center gap-3">
+            <NavLinks />
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
