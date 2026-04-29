@@ -140,6 +140,21 @@ create table public.nudges (
   created_at timestamptz not null default now()
 );
 
+create index profiles_clerk_user_id_idx on public.profiles (clerk_user_id);
+create index memberships_community_profile_idx on public.memberships (community_id, profile_id);
+create index onboarding_responses_profile_id_idx on public.onboarding_responses (profile_id);
+create index goals_profile_id_idx on public.goals (profile_id);
+create index goals_community_id_idx on public.goals (community_id);
+create index xp_events_profile_id_idx on public.xp_events (profile_id);
+create index rewards_profile_id_idx on public.rewards (profile_id);
+create index reward_redemptions_profile_id_idx on public.reward_redemptions (profile_id);
+create index sessions_community_id_idx on public.sessions (community_id);
+create index attendance_profile_id_idx on public.attendance (profile_id);
+create index commitments_profile_id_idx on public.commitments (profile_id);
+create index commitments_community_id_idx on public.commitments (community_id);
+create index feed_posts_community_id_idx on public.feed_posts (community_id);
+create index nudges_profile_id_idx on public.nudges (profile_id);
+
 alter table public.profiles enable row level security;
 alter table public.communities enable row level security;
 alter table public.memberships enable row level security;
@@ -156,129 +171,167 @@ alter table public.nudges enable row level security;
 
 create policy "profiles own row"
   on public.profiles for all
-  using (clerk_user_id = auth.jwt() ->> 'sub')
-  with check (clerk_user_id = auth.jwt() ->> 'sub');
+  to authenticated
+  using (clerk_user_id = (select auth.jwt() ->> 'sub'))
+  with check (clerk_user_id = (select auth.jwt() ->> 'sub'));
 
 create policy "communities visible to authenticated users"
   on public.communities for select
-  using (auth.role() = 'authenticated');
+  to authenticated
+  using (true);
 
 create policy "memberships visible to community members"
   on public.memberships for select
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = memberships.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
     or exists (
       select 1 from public.memberships m
       join public.profiles p on p.id = m.profile_id
       where m.community_id = memberships.community_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "private profile-owned onboarding"
   on public.onboarding_responses for all
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = onboarding_responses.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   )
   with check (
     exists (
       select 1 from public.profiles p
       where p.id = onboarding_responses.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "profile-owned goals"
   on public.goals for all
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = goals.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   )
   with check (
     exists (
       select 1 from public.profiles p
       where p.id = goals.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "profile-owned xp events"
   on public.xp_events for select
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = xp_events.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "profile-owned rewards"
   on public.rewards for all
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = rewards.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   )
   with check (
     exists (
       select 1 from public.profiles p
       where p.id = rewards.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "profile-owned redemptions"
   on public.reward_redemptions for select
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = reward_redemptions.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "community session visibility"
   on public.sessions for select
+  to authenticated
   using (
     exists (
       select 1 from public.memberships m
       join public.profiles p on p.id = m.profile_id
       where m.community_id = sessions.community_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
+    )
+  );
+
+create policy "profile attendance visibility"
+  on public.attendance for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = attendance.profile_id
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
+    )
+  );
+
+create policy "commitment visibility"
+  on public.commitments for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = commitments.profile_id
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
+    )
+    or exists (
+      select 1 from public.memberships m
+      join public.profiles p on p.id = m.profile_id
+      where m.community_id = commitments.community_id
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "community feed visibility"
   on public.feed_posts for select
+  to authenticated
   using (
     exists (
       select 1 from public.memberships m
       join public.profiles p on p.id = m.profile_id
       where m.community_id = feed_posts.community_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
 
 create policy "private nudges"
   on public.nudges for select
+  to authenticated
   using (
     exists (
       select 1 from public.profiles p
       where p.id = nudges.profile_id
-      and p.clerk_user_id = auth.jwt() ->> 'sub'
+      and p.clerk_user_id = (select auth.jwt() ->> 'sub')
     )
   );
-

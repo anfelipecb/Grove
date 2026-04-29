@@ -21,6 +21,10 @@ pnpm dev
 
 The committed app runs as a polished local demo without vendor keys. Supabase, Clerk, Groq, and email delivery become active once the environment variables are configured.
 
+## Supabase And Clerk
+
+Use Supabase's native Clerk third-party auth integration. In Clerk, activate the Supabase integration; in Supabase, add Clerk under Authentication > Third-party Auth. The app should pass Clerk's normal session token to Supabase through the `accessToken` option. Do not use the deprecated Clerk JWT template flow.
+
 ## Local-Only Material
 
 `docs/` and `research/` are intentionally ignored. Keep class deliverables, proposal iterations, downloaded papers, and private research notes there.
@@ -33,4 +37,3 @@ pnpm worker     # run the worker locally
 pnpm typecheck  # type-check all packages
 pnpm build      # build all packages
 ```
-

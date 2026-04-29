@@ -50,3 +50,10 @@ XP should value effort, resistance, importance, urgency, and community contribut
 - Database/auth/storage: Supabase + Clerk
 - AI: OpenAI-compatible Groq first, with provider abstraction for later swaps.
 
+## Supabase + Clerk
+
+- Use Supabase's native third-party auth integration for Clerk.
+- Do not use the deprecated Clerk JWT template flow.
+- Do not share the Supabase JWT secret with Clerk.
+- Supabase client requests should pass Clerk's normal session token through the `accessToken` client option.
+- RLS policies should read Clerk session claims with `auth.jwt()`. Grove stores Clerk user IDs in `profiles.clerk_user_id`; do not reference `auth.users` for Clerk users.
