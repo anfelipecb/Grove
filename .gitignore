@@ -22,7 +22,10 @@ out/
 docs/
 research/
 
+# Local verification artifacts
+.playwright-mcp/
+grove-*.png
+
 # System files
 .DS_Store
 Thumbs.db
-
