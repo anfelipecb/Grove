@@ -16,6 +16,7 @@ out/
 
 # Deployment state
 .vercel/
+.vercel
 .railway/
 
 # Local-only planning, class, and research material
