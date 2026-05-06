@@ -57,6 +57,12 @@ export function CommunitiesView({
     [demoMode, getToken],
   );
 
+  /** Merged with server props; optimistic row after create so the sidebar updates before RSC refresh. */
+  const [communityList, setCommunityList] = useState(communities);
+  useEffect(() => {
+    setCommunityList(communities);
+  }, [communities]);
+
   const [selectedId, setSelectedId] = useState<string | null>(communities[0]?.communityId ?? null);
   const [feed, setFeed] = useState<FeedRow[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -77,13 +83,13 @@ export function CommunitiesView({
   const [managePending, setManagePending] = useState(false);
 
   useEffect(() => {
-    const ids = new Set(communities.map((c) => c.communityId));
+    const ids = new Set(communityList.map((c) => c.communityId));
     if (selectedId && !ids.has(selectedId)) {
-      setSelectedId(communities[0]?.communityId ?? null);
+      setSelectedId(communityList[0]?.communityId ?? null);
     }
-  }, [communities, selectedId]);
+  }, [communityList, selectedId]);
 
-  const selected = communities.find((c) => c.communityId === selectedId) ?? null;
+  const selected = communityList.find((c) => c.communityId === selectedId) ?? null;
   const canManage = selected ? canManageCommunity(selected.role) : false;
 
   useEffect(() => {
@@ -138,17 +144,38 @@ export function CommunitiesView({
           description: createDescription.trim() || null,
         }),
       });
-      const data = (await res.json()) as { error?: string; community?: { id: string } };
+      const data = (await res.json()) as {
+        error?: string;
+        membershipId?: string;
+        community?: { id: string; name: string; slug: string; description: string | null };
+      };
       if (!res.ok) {
         setCreateError(data.error ?? "Could not create community.");
         return;
       }
-      const newId = data.community?.id;
+      const com = data.community;
+      const membershipId = data.membershipId;
       setCreateOpen(false);
       setCreateName("");
       setCreateSlug("");
       setCreateDescription("");
-      if (newId) setSelectedId(newId);
+      if (com?.id && membershipId) {
+        setCommunityList((prev) => {
+          if (prev.some((c) => c.communityId === com.id)) return prev;
+          return [
+            ...prev,
+            {
+              membershipId,
+              communityId: com.id,
+              name: com.name,
+              slug: com.slug,
+              description: com.description ?? null,
+              role: "owner" as const,
+            },
+          ];
+        });
+        setSelectedId(com.id);
+      }
       router.refresh();
     } finally {
       setCreatePending(false);
@@ -365,7 +392,7 @@ export function CommunitiesView({
               Create community
             </button>
             <ul className="space-y-2">
-              {communities.length === 0 ? (
+              {communityList.length === 0 ? (
                 <li className="text-sm text-stone-600">
                   <p>You are not in any communities yet.</p>
                   <p className="mt-2 font-medium text-bark">Start a space</p>
@@ -375,7 +402,7 @@ export function CommunitiesView({
                   </p>
                 </li>
               ) : (
-                communities.map((c) => (
+                communityList.map((c) => (
                   <li key={c.communityId}>
                     <button
                       type="button"

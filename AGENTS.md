@@ -118,4 +118,4 @@ XP should value effort, resistance, importance, urgency, and community contribut
 
 ## Database migrations (`supabase/migrations`)
 
-Notable columns on `profiles`: `onboarding_step` (0–5), `xp_domain_weights` (JSON). Default community slug `grove-welcome` is seeded for new memberships from onboarding. `xp_events` has an INSERT policy for the owning profile so completing goals can log XP from the client.
+Notable columns on `profiles`: `onboarding_step` (0–5), `xp_domain_weights` (JSON). Default community slug `grove-welcome` is seeded for new memberships from onboarding. `xp_events` has an INSERT policy for the owning profile so completing goals can log XP from the client. **Community creation** in production requires migration `0005_communities_create_and_manage.sql` applied on the linked Supabase project (`created_by` + insert RLS); without it, creates fail or behave incorrectly under RLS.

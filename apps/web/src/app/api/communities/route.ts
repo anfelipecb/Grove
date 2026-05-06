@@ -73,21 +73,26 @@ export async function POST(request: Request) {
 
   const communityId = community.id as string;
 
-  const { error: memError } = await supabase.from("memberships").insert({
-    community_id: communityId,
-    profile_id: profileId,
-    role: "owner",
-  });
+  const { data: membership, error: memError } = await supabase
+    .from("memberships")
+    .insert({
+      community_id: communityId,
+      profile_id: profileId,
+      role: "owner",
+    })
+    .select("id")
+    .single();
 
-  if (memError) {
+  if (memError || !membership?.id) {
     await supabase.from("communities").delete().eq("id", communityId);
     return Response.json(
-      { error: memError.message ?? "Membership create failed; creation was rolled back." },
+      { error: memError?.message ?? "Membership create failed; creation was rolled back." },
       { status: 500 },
     );
   }
 
   return Response.json({
+    membershipId: membership.id as string,
     community: {
       id: communityId,
       name: community.name,
