@@ -2,11 +2,11 @@
 id: "GRO-007"
 title: "Local demo mode for onboarding and personal loop testing"
 slug: "local-demo-mode-for-onboarding-and-personal-loop-testing"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-1"
+branch: "ticket/gro-007-local-demo-mode-for-onboarding-and-personal-loop-testing"
+worktree: "../Grove-agent-1"
 pr_url: "https://github.com/anfelipecb/Grove/pull/6"
 labels: ["demo", "auth", "testing", "onboarding"]
 depends_on: []
