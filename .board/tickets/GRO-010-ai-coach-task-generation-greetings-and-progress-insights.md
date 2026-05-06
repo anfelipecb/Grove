@@ -2,12 +2,12 @@
 id: "GRO-010"
 title: "AI coach task generation greetings and progress insights"
 slug: "ai-coach-task-generation-greetings-and-progress-insights"
-status: "doing"
+status: "review"
 priority: "p1"
 owner: "agent-2"
 branch: "ticket/gro-010-ai-coach-task-generation-greetings-and-progress-insights"
 worktree: "../Grove-agent-2"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/9"
 labels: []
 depends_on: []
 created_at: "2026-05-06T20:58:22.357Z"

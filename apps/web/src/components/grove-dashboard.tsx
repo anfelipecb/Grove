@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
   Bell,
   CalendarCheck,
@@ -27,6 +27,8 @@ import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 import { DashboardInfoRow, DashboardPanel, dashboardInputClassName } from "@/components/dashboard/dashboard-ui";
 import { formatDueLabel } from "@/components/dashboard/due-label";
+import { CoachGreeting } from "@/components/dashboard/coach-greeting";
+import { CoachSuggestions, type CoachSuggestionItem } from "@/components/dashboard/coach-suggestions";
 import { computeXpConsistency } from "@/components/dashboard/xp-consistency";
 
 export type DashboardGoalRow = {
@@ -95,6 +97,90 @@ export function GroveDashboard({
   const [communityContribution, setCommunityContribution] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAssessment, setShowAssessment] = useState(false);
+  const [coachGreeting, setCoachGreeting] = useState<string | null>(null);
+  const [coachInsight, setCoachInsight] = useState<string | null>(null);
+  const [coachGreetingLoading, setCoachGreetingLoading] = useState(true);
+  const [coachSuggestions, setCoachSuggestions] = useState<CoachSuggestionItem[]>([]);
+  const [coachSuggestionsLoading, setCoachSuggestionsLoading] = useState(true);
+  const addTargetDetailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const body = JSON.stringify({ profileId, demoMode });
+
+    async function loadGreeting() {
+      setCoachGreetingLoading(true);
+      try {
+        const res = await fetch("/api/ai/coach-greeting", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+        const data = (await res.json()) as { greeting?: string; insight?: string };
+        if (!cancelled && res.ok && typeof data.greeting === "string") {
+          setCoachGreeting(data.greeting);
+          setCoachInsight(typeof data.insight === "string" ? data.insight : null);
+        } else if (!cancelled) {
+          setCoachGreeting(null);
+          setCoachInsight(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setCoachGreeting(null);
+          setCoachInsight(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setCoachGreetingLoading(false);
+        }
+      }
+    }
+
+    async function loadSuggestions() {
+      setCoachSuggestionsLoading(true);
+      try {
+        const res = await fetch("/api/ai/coach-suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+        const data = (await res.json()) as { suggestions?: CoachSuggestionItem[] };
+        if (!cancelled && res.ok && Array.isArray(data.suggestions)) {
+          setCoachSuggestions(data.suggestions);
+        } else if (!cancelled) {
+          setCoachSuggestions([]);
+        }
+      } catch {
+        if (!cancelled) {
+          setCoachSuggestions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCoachSuggestionsLoading(false);
+        }
+      }
+    }
+
+    loadGreeting();
+    loadSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, demoMode]);
+
+  const adoptSuggestion = useCallback((item: CoachSuggestionItem) => {
+    const nextDomain = item.domain as LifeDomainId;
+    setTitle(item.title);
+    setDomain(nextDomain);
+    setSubarea(DEFAULT_SUBAREAS[nextDomain][0]);
+    const el = addTargetDetailsRef.current;
+    if (el) {
+      el.open = true;
+    }
+    requestAnimationFrame(() => {
+      document.getElementById("dashboard-add-target")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }, []);
 
   const summaryBlurb = useMemo(() => {
     const style = focusNotes?.support_style as string | undefined;
@@ -438,12 +524,23 @@ export function GroveDashboard({
                   </p>
                 </div>
               </div>
-              <p className="mt-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{summaryBlurb}</p>
+              <CoachGreeting
+                fallbackBlurb={summaryBlurb}
+                greeting={coachGreeting}
+                insight={coachInsight}
+                loading={coachGreetingLoading}
+              />
             </section>
 
             <DashboardPanel title="Consistency" icon={<Flame className={iconClass} />}>
               <p className="text-sm leading-relaxed text-muted-foreground">{consistency.message}</p>
             </DashboardPanel>
+
+            <CoachSuggestions
+              suggestions={coachSuggestions}
+              loading={coachSuggestionsLoading}
+              onAdopt={adoptSuggestion}
+            />
 
             <div className="rounded-xl border border-dashed border-border bg-muted/25 p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next action</p>
@@ -536,6 +633,8 @@ export function GroveDashboard({
 
           <aside className="flex flex-col gap-5 lg:sticky lg:top-4">
             <details
+              ref={addTargetDetailsRef}
+              id="dashboard-add-target"
               className="group rounded-xl border border-border bg-card/90 shadow-panel dark:shadow-panel-dark open:shadow-md"
               open={initialGoals.length === 0}
             >

@@ -1,4 +1,5 @@
 import { getServerUserId } from "@/lib/clerk-auth";
+import { groqText } from "@/lib/groq";
 import {
   containsCrisisSignal,
   CRISIS_SUPPORT_MESSAGE,
@@ -7,31 +8,6 @@ import {
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
-
-async function groqText(messages: AiMessage[]): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
-  if (!apiKey) {
-    return "";
-  }
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.35,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Groq error: ${response.status}`);
-  }
-  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  return payload.choices?.[0]?.message?.content?.trim() ?? "";
-}
 
 export async function POST(request: Request) {
   const userId = await getServerUserId();
