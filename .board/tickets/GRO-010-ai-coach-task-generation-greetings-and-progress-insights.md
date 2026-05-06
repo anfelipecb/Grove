@@ -2,16 +2,16 @@
 id: "GRO-010"
 title: "AI coach task generation greetings and progress insights"
 slug: "ai-coach-task-generation-greetings-and-progress-insights"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-2"
+branch: "ticket/gro-010-ai-coach-task-generation-greetings-and-progress-insights"
+worktree: "../Grove-agent-2"
 pr_url: ""
-labels: ["ai", "coach", "tasks", "insights"]
-depends_on: ["GRO-009"]
+labels: []
+depends_on: []
 created_at: "2026-05-06T20:58:22.357Z"
-updated_at: "2026-05-06T21:56:00.000Z"
+updated_at: "2026-05-06T21:59:33.081Z"
 ---
 
 ## Context
