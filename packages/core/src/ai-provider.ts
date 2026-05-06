@@ -1,3 +1,5 @@
+export const DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant";
+
 export type AiMessage = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -11,10 +13,25 @@ export type AiJsonRequest = {
   temperature?: number;
 };
 
+function firstNonWhitespaceModel(...values: (string | undefined)[]): string | undefined {
+  for (const v of values) {
+    const t = v?.trim();
+    if (t) return t;
+  }
+  return undefined;
+}
+
+/** Model for onboarding JSON routes; falls back to general GROQ_MODEL then default. */
+export function resolveGroqOnboardingModel(): string {
+  return (
+    firstNonWhitespaceModel(process.env.GROQ_ONBOARDING_MODEL, process.env.GROQ_MODEL) ?? DEFAULT_GROQ_MODEL
+  );
+}
+
 export async function requestJsonCompletion<T>({
   apiKey,
   baseUrl = "https://api.groq.com/openai/v1",
-  model = "llama-3.1-8b-instant",
+  model = DEFAULT_GROQ_MODEL,
   messages,
   temperature = 0.2,
 }: AiJsonRequest): Promise<T> {
@@ -47,4 +64,3 @@ export async function requestJsonCompletion<T>({
 
   return JSON.parse(content) as T;
 }
-
