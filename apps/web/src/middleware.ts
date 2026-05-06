@@ -22,6 +22,7 @@ const isPublicRoute = createRouteMatcher([
 
 const requiresOnboardingComplete = createRouteMatcher([
   "/dashboard(.*)",
+  "/calendar(.*)",
   "/communities(.*)",
   "/mycelium(.*)",
 ]);
