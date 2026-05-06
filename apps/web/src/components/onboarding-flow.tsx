@@ -7,6 +7,12 @@ import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "luc
 import type { IntakeDraft, MemberProfileCard } from "@grove/core";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
+import {
+  CHIP_DISPLAY_MAX,
+  filterSuggestionsAgainstStatic,
+  normalizeChipLabel,
+  postProfileForSuggestions,
+} from "@/components/onboarding-suggestions";
 
 const inputBase =
   "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
@@ -70,6 +76,10 @@ export function OnboardingFlow() {
   const [safetyMessage, setSafetyMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestedGoalChips, setSuggestedGoalChips] = useState<string[]>([]);
+  const [suggestedGoalLoading, setSuggestedGoalLoading] = useState(false);
+  const [suggestedFrictionChips, setSuggestedFrictionChips] = useState<string[]>([]);
+  const [suggestedFrictionLoading, setSuggestedFrictionLoading] = useState(false);
 
   const toggleChip = useCallback((list: string[], value: string, setter: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -133,6 +143,80 @@ export function OnboardingFlow() {
       cancelled = true;
     };
   }, [step, weightsLoaded, goalChips, intake.goals, intake.friction, intake.supportStyle, frictionChips]);
+
+  useEffect(() => {
+    if (step !== 1) return;
+    const name = (intake.name ?? "").trim();
+    if (!name) return;
+    const ac = new AbortController();
+    setSuggestedGoalLoading(true);
+    (async () => {
+      const draft: IntakeDraft = {
+        name,
+        goals: "",
+        friction: "",
+        supportStyle: intake.supportStyle,
+        communityInterest: "",
+        focusDisclosure: intake.focusDisclosure,
+      };
+      try {
+        const result = await postProfileForSuggestions(draft, ac.signal);
+        if (ac.signal.aborted) return;
+        if (result?.safety) {
+          setSafetyMessage(result.message ?? "Grove cannot safely continue this as a coaching request.");
+          setSuggestedGoalChips([]);
+          return;
+        }
+        setSafetyMessage(null);
+        const list = result?.profile?.firstTargets ?? [];
+        setSuggestedGoalChips(filterSuggestionsAgainstStatic(list, GOAL_CHIPS));
+      } catch {
+        if (ac.signal.aborted) return;
+        setSuggestedGoalChips([]);
+      } finally {
+        if (!ac.signal.aborted) setSuggestedGoalLoading(false);
+      }
+    })();
+    return () => ac.abort();
+  }, [step, intake.name, intake.supportStyle, intake.focusDisclosure]);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    const name = (intake.name ?? "").trim();
+    if (!name) return;
+    const goalsText = mergeLines(goalChips, intake.goals);
+    if (!goalsText.trim()) return;
+    const ac = new AbortController();
+    setSuggestedFrictionLoading(true);
+    (async () => {
+      const draft: IntakeDraft = {
+        name,
+        goals: goalsText,
+        friction: "",
+        supportStyle: intake.supportStyle,
+        communityInterest: "",
+        focusDisclosure: intake.focusDisclosure,
+      };
+      try {
+        const result = await postProfileForSuggestions(draft, ac.signal);
+        if (ac.signal.aborted) return;
+        if (result?.safety) {
+          setSafetyMessage(result.message ?? "Grove cannot safely continue this as a coaching request.");
+          setSuggestedFrictionChips([]);
+          return;
+        }
+        setSafetyMessage(null);
+        const list = result?.profile?.likelyFriction ?? [];
+        setSuggestedFrictionChips(filterSuggestionsAgainstStatic(list, FRICTION_CHIPS));
+      } catch {
+        if (ac.signal.aborted) return;
+        setSuggestedFrictionChips([]);
+      } finally {
+        if (!ac.signal.aborted) setSuggestedFrictionLoading(false);
+      }
+    })();
+    return () => ac.abort();
+  }, [step, intake.name, intake.supportStyle, intake.focusDisclosure, goalChips, intake.goals]);
 
   function parseJson<T>(raw: string): T | null {
     try {
@@ -275,26 +359,38 @@ export function OnboardingFlow() {
             {step === 1 && (
               <div className="grid gap-4">
                 <p className="text-sm font-medium text-bark">What do you want to grow over the next few weeks?</p>
-                <div className="flex flex-wrap gap-2">
-                  {GOAL_CHIPS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => toggleChip(goalChips, c, setGoalChips)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                        goalChips.includes(c)
-                          ? "border-moss bg-moss/15 text-bark"
-                          : "border-stone-300 bg-white text-stone-700 hover:border-moss"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <p className="text-sm leading-6 text-stone-700">
+                  Tap anything that fits—Mycelium also suggests a few based on your name. You can add a line or two
+                  later if you want.
+                </p>
+                {(suggestedGoalLoading || suggestedGoalChips.length > 0) && (
+                  <div className="grid gap-2">
+                    <ChipSubheading>Suggested for you</ChipSubheading>
+                    {suggestedGoalLoading ? (
+                      <p className="text-sm text-stone-600">Loading suggestions…</p>
+                    ) : (
+                      <OnboardingChipButtons
+                        labels={suggestedGoalChips}
+                        selected={goalChips}
+                        variant="goal"
+                        onToggle={(c) => toggleChip(goalChips, c, setGoalChips)}
+                      />
+                    )}
+                  </div>
+                )}
+                <div className="grid gap-2">
+                  <ChipSubheading>Common options</ChipSubheading>
+                  <OnboardingChipButtons
+                    labels={GOAL_CHIPS}
+                    selected={goalChips}
+                    variant="goal"
+                    onToggle={(c) => toggleChip(goalChips, c, setGoalChips)}
+                  />
                 </div>
-                <Field label="Add your own (optional)">
+                <Field label="Add specifics (optional)">
                   <textarea
                     className={inputBase}
-                    rows={4}
+                    rows={3}
                     value={intake.goals}
                     onChange={(e) => setIntake({ ...intake, goals: e.target.value })}
                     placeholder="One line per intention"
@@ -306,26 +402,37 @@ export function OnboardingFlow() {
             {step === 2 && (
               <div className="grid gap-4">
                 <p className="text-sm font-medium text-bark">What usually slows you down?</p>
-                <div className="flex flex-wrap gap-2">
-                  {FRICTION_CHIPS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => toggleChip(frictionChips, c, setFrictionChips)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                        frictionChips.includes(c)
-                          ? "border-clay bg-clay/15 text-bark"
-                          : "border-stone-300 bg-white text-stone-700 hover:border-moss"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <p className="text-sm leading-6 text-stone-700">
+                  Pick what resonates—we&apos;ll suggest patterns based on what you want to grow. Details are optional.
+                </p>
+                {(suggestedFrictionLoading || suggestedFrictionChips.length > 0) && (
+                  <div className="grid gap-2">
+                    <ChipSubheading>Suggested for you</ChipSubheading>
+                    {suggestedFrictionLoading ? (
+                      <p className="text-sm text-stone-600">Loading suggestions…</p>
+                    ) : (
+                      <OnboardingChipButtons
+                        labels={suggestedFrictionChips}
+                        selected={frictionChips}
+                        variant="friction"
+                        onToggle={(c) => toggleChip(frictionChips, c, setFrictionChips)}
+                      />
+                    )}
+                  </div>
+                )}
+                <div className="grid gap-2">
+                  <ChipSubheading>Common options</ChipSubheading>
+                  <OnboardingChipButtons
+                    labels={FRICTION_CHIPS}
+                    selected={frictionChips}
+                    variant="friction"
+                    onToggle={(c) => toggleChip(frictionChips, c, setFrictionChips)}
+                  />
                 </div>
                 <Field label="Say more (optional)">
                   <textarea
                     className={inputBase}
-                    rows={4}
+                    rows={3}
                     value={intake.friction}
                     onChange={(e) => setIntake({ ...intake, friction: e.target.value })}
                   />
@@ -474,6 +581,49 @@ export function OnboardingFlow() {
         </section>
       </div>
     </main>
+  );
+}
+
+function ChipSubheading({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">{children}</p>
+  );
+}
+
+type ChipVariant = "goal" | "friction";
+
+function OnboardingChipButtons({
+  labels,
+  selected,
+  variant,
+  onToggle,
+}: {
+  labels: string[];
+  selected: string[];
+  variant: ChipVariant;
+  onToggle: (value: string) => void;
+}) {
+  const active =
+    variant === "goal"
+      ? "border-moss bg-moss/15 text-bark"
+      : "border-clay bg-clay/15 text-bark";
+  const idle = "border-stone-300 bg-white text-stone-700 hover:border-moss";
+  return (
+    <div className="flex flex-wrap gap-2">
+      {labels.map((c) => (
+        <button
+          key={c}
+          type="button"
+          title={c.length > CHIP_DISPLAY_MAX ? c : undefined}
+          onClick={() => onToggle(c)}
+          className={`max-w-[min(100%,18rem)] truncate rounded-full border px-3 py-1.5 text-left text-xs font-medium transition ${
+            selected.includes(c) ? active : idle
+          }`}
+        >
+          {normalizeChipLabel(c)}
+        </button>
+      ))}
+    </div>
   );
 }
 
