@@ -3,6 +3,7 @@ import {
   CRISIS_SUPPORT_MESSAGE,
   LIFE_DOMAINS,
   requestJsonCompletion,
+  resolveGroqOnboardingModel,
   type LifeDomainId,
 } from "@grove/core";
 import { z } from "zod";
@@ -55,29 +56,33 @@ export async function POST(request: Request) {
   }
 
   const domainKeys = LIFE_DOMAINS.map((d) => d.id).join(", ");
-  const completion = await requestJsonCompletion<unknown>({
-    apiKey: process.env.GROQ_API_KEY,
-    model: process.env.GROQ_MODEL,
-    messages: [
-      {
-        role: "system",
-        content: `You are Mycelium. Return JSON only: an object with keys exactly: ${domainKeys}. Each value is an integer 1-100 representing how much of the member's next-month attention should go to that life domain (relative weights; they will be normalized). Do not diagnose.`,
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          goals: payload.goals,
-          friction: payload.friction,
-          supportStyle: payload.supportStyle,
-        }),
-      },
-    ],
-  });
+  try {
+    const completion = await requestJsonCompletion<unknown>({
+      apiKey: process.env.GROQ_API_KEY,
+      model: resolveGroqOnboardingModel(),
+      messages: [
+        {
+          role: "system",
+          content: `You are Mycelium. Return JSON only: an object with keys exactly: ${domainKeys}. Each value is an integer 1-100 representing how much of the member's next-month attention should go to that life domain (relative weights; they will be normalized). Do not diagnose.`,
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            goals: payload.goals,
+            friction: payload.friction,
+            supportStyle: payload.supportStyle,
+          }),
+        },
+      ],
+    });
 
-  const parsed = weightsResponseSchema.safeParse(completion);
-  if (!parsed.success) {
+    const parsed = weightsResponseSchema.safeParse(completion);
+    if (!parsed.success) {
+      return Response.json({ weights: equalWeights(), source: "fallback" });
+    }
+
+    return Response.json({ weights: normalizeWeights(parsed.data), source: "groq" });
+  } catch {
     return Response.json({ weights: equalWeights(), source: "fallback" });
   }
-
-  return Response.json({ weights: normalizeWeights(parsed.data), source: "groq" });
 }

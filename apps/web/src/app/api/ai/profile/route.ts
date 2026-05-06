@@ -4,6 +4,7 @@ import {
   generateProfileCardFromIntake,
   memberProfileCardSchema,
   requestJsonCompletion,
+  resolveGroqOnboardingModel,
   type IntakeDraft,
 } from "@grove/core";
 
@@ -19,22 +20,26 @@ export async function POST(request: Request) {
     return Response.json({ profile: generateProfileCardFromIntake(intake), source: "local" });
   }
 
-  const profile = await requestJsonCompletion<unknown>({
-    apiKey: process.env.GROQ_API_KEY,
-    model: process.env.GROQ_MODEL,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are Grove's ADHD-aware coach/coordinator. Return JSON only. Do not diagnose. Create a concise profile card that supports personal follow-through and community participation.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify(intake),
-      },
-    ],
-  });
+  try {
+    const profile = await requestJsonCompletion<unknown>({
+      apiKey: process.env.GROQ_API_KEY,
+      model: resolveGroqOnboardingModel(),
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Grove's ADHD-aware coach/coordinator. Return JSON only. Do not diagnose. Create a concise profile card that supports personal follow-through and community participation.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify(intake),
+        },
+      ],
+    });
 
-  return Response.json({ profile: memberProfileCardSchema.parse(profile), source: "groq" });
+    return Response.json({ profile: memberProfileCardSchema.parse(profile), source: "groq" });
+  } catch {
+    return Response.json({ profile: generateProfileCardFromIntake(intake), source: "fallback" });
+  }
 }
 
