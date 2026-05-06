@@ -56,7 +56,7 @@ export default async function DashboardPage() {
 
   const { data: goals } = await supabase
     .from("goals")
-    .select("id, title, domain, subarea, xp_value, status")
+    .select("id, title, domain, subarea, xp_value, status, due_at, created_at")
     .eq("profile_id", profileId)
     .eq("status", "active")
     .order("created_at", { ascending: false });

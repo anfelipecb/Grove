@@ -8,6 +8,7 @@ type Body = {
   domain?: string;
   subarea?: string | null;
   xp_value?: number;
+  due_at?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -23,6 +24,11 @@ export async function POST(request: Request) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const domain = body.domain as LifeDomainId | undefined;
   const xp = typeof body.xp_value === "number" ? body.xp_value : 0;
+  let dueAt: string | null = null;
+  if (body.due_at != null && typeof body.due_at === "string" && body.due_at.trim() !== "") {
+    const parsed = new Date(body.due_at);
+    dueAt = Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
 
   if (!title) {
     return Response.json({ error: "Title required" }, { status: 400 });
@@ -45,8 +51,9 @@ export async function POST(request: Request) {
       subarea: typeof body.subarea === "string" ? body.subarea : null,
       xp_value: xp,
       status: "active",
+      due_at: dueAt,
     })
-    .select("id, title, domain, subarea, xp_value, status")
+    .select("id, title, domain, subarea, xp_value, status, due_at")
     .single();
 
   if (error || !data) {
