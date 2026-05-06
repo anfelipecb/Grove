@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, LayoutDashboard, Network, Users } from "lucide-react";
+import { CalendarRange, ClipboardList, LayoutDashboard, Network, Users } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/calendar", label: "Calendar", icon: CalendarRange },
   { href: "/communities", label: "Communities", icon: Users },
   { href: "/onboarding", label: "Onboarding", icon: ClipboardList },
   { href: "/mycelium", label: "Mycelium", icon: Network },

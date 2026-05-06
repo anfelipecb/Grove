@@ -24,10 +24,11 @@ Grove is an ADHD-aware AI accountability and community coordination platform. Th
 | `/sign-in`, `/sign-up` | Clerk hosted auth. |
 | `/onboarding` | Five-step wizard (intake → domain weights → save). Requires auth. |
 | `/dashboard` | Goals, XP, profile summary; requires auth + `onboarding_step >= 5`. Includes a reassessment CTA that reopens `/onboarding?mode=assess` for calibration rather than a fresh signup. |
+| `/calendar` | Month and agenda views for personal goal times (`due_at`) and community sessions (`starts_at`); dedicated planning surface (not the main dashboard). Requires auth + onboarding complete. |
 | `/communities` | Community list, feed, sessions, Mycelium side chat. |
 | `/mycelium` | Legacy Mycelium workbench (session summary tooling). |
 
-**Onboarding:** `profiles.onboarding_step` is `0–5`. `5` means completed; middleware sends incomplete users to `/onboarding` when they hit `/dashboard`, `/communities`, or `/mycelium`.
+**Onboarding:** `profiles.onboarding_step` is `0–5`. `5` means completed; middleware sends incomplete users to `/onboarding` when they hit `/dashboard`, `/calendar`, `/communities`, or `/mycelium`.
 **Assessment mode:** `/onboarding?mode=assess` is for recalibration. Preserve the current user row and avoid duplicate memberships/goal inserts when saving this mode; use Mycelium chat when the user needs help refining goals.
 
 ## API routes (`apps/web/src/app/api`)
