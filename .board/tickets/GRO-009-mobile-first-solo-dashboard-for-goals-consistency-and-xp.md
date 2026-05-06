@@ -2,12 +2,12 @@
 id: "GRO-009"
 title: "Mobile-first solo dashboard for goals consistency and XP"
 slug: "mobile-first-solo-dashboard-for-goals-consistency-and-xp"
-status: "doing"
+status: "review"
 priority: "p1"
 owner: "agent-2"
 branch: "ticket/gro-009-mobile-first-solo-dashboard-for-goals-consistency-and-xp"
 worktree: "../Grove-agent-2"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/7"
 labels: []
 depends_on: []
 created_at: "2026-05-06T20:58:19.749Z"
