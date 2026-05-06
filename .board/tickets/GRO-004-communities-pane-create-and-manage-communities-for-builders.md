@@ -2,11 +2,11 @@
 id: "GRO-004"
 title: "Communities pane: create and manage communities for builders"
 slug: "communities-pane-create-and-manage-communities-for-builders"
-status: "ready"
+status: "doing"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-1"
+branch: "ticket/gro-004-communities-pane-create-and-manage-communities-for-builders"
+worktree: "../Grove-agent-1"
 pr_url: ""
 labels:
   - "communities"
@@ -15,7 +15,7 @@ labels:
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-06T06:05:25.824Z"
-updated_at: "2026-05-06T06:10:00.000Z"
+updated_at: "2026-05-06T06:29:40.723Z"
 ---
 
 ## Context
