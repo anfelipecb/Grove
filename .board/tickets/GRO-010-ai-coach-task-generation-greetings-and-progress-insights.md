@@ -2,7 +2,7 @@
 id: "GRO-010"
 title: "AI coach task generation greetings and progress insights"
 slug: "ai-coach-task-generation-greetings-and-progress-insights"
-status: "review"
+status: "done"
 priority: "p1"
 owner: "agent-2"
 branch: "ticket/gro-010-ai-coach-task-generation-greetings-and-progress-insights"
