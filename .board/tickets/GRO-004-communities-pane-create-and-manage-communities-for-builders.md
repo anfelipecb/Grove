@@ -7,7 +7,7 @@ priority: "p2"
 owner: "agent-1"
 branch: "ticket/gro-004-communities-pane-create-and-manage-communities-for-builders"
 worktree: "../Grove-agent-1"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/3"
 labels:
   - "communities"
   - "ux"
@@ -15,7 +15,7 @@ labels:
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-06T06:05:25.824Z"
-updated_at: "2026-05-06T06:29:40.723Z"
+updated_at: "2026-05-06T14:30:00.000Z"
 ---
 
 ## Context
