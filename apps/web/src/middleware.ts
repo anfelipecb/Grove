@@ -19,8 +19,6 @@ const requiresOnboardingComplete = createRouteMatcher([
   "/mycelium(.*)",
 ]);
 
-const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
-
 const protectedMiddleware = clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) {
     return NextResponse.next();
@@ -47,12 +45,6 @@ const protectedMiddleware = clerkMiddleware(async (auth, req) => {
   if (requiresOnboardingComplete(req)) {
     if (step === null || step < 5) {
       return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
-  }
-
-  if (isOnboardingRoute(req)) {
-    if (step !== null && step >= 5) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
 

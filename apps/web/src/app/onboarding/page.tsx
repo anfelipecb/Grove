@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { hasClerkPublishableKey } from "@/lib/clerk-auth";
+import { getServerUserId, hasClerkPublishableKey } from "@/lib/clerk-auth";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-export default function OnboardingPage({
+export const dynamic = "force-dynamic";
+
+export default async function OnboardingPage({
   searchParams,
 }: {
   searchParams?: { mode?: string };
@@ -17,5 +21,22 @@ export default function OnboardingPage({
       </main>
     );
   }
-  return <OnboardingFlow assessmentMode={searchParams?.mode === "assess"} />;
+
+  const userId = await getServerUserId();
+  if (!userId) {
+    redirect("/sign-in?redirect_url=/onboarding");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  let onboardingStep: number | null = null;
+  if (supabase) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("onboarding_step")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+    onboardingStep = (data?.onboarding_step as number | undefined) ?? null;
+  }
+
+  return <OnboardingFlow assessmentMode={searchParams?.mode === "assess" || (onboardingStep ?? 0) >= 5} />;
 }

@@ -88,8 +88,52 @@ export async function POST(request: Request) {
     .map(([k]) => k);
   const primaryDomain = sortedDomains[0] ?? "learning";
 
-  if (body.mode !== "assessment") {
-    const targets = body.profileCard.firstTargets.slice(0, 3);
+  const targets = body.profileCard.firstTargets.slice(0, 3);
+  if (body.mode === "assessment") {
+    const { data: activeGoals, error: goalsError } = await supabase
+      .from("goals")
+      .select("id")
+      .eq("profile_id", profileId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
+
+    if (goalsError) {
+      return Response.json({ error: goalsError.message }, { status: 500 });
+    }
+
+    const goalIds = (activeGoals ?? []).map((goal) => goal.id as string);
+    for (let i = 0; i < targets.length; i += 1) {
+      const title = targets[i];
+      const goalId = goalIds[i];
+      if (goalId) {
+        const { error: updateError } = await supabase
+          .from("goals")
+          .update({
+            title,
+            domain: primaryDomain,
+            subarea: null,
+            xp_value: 25,
+            status: "active",
+          })
+          .eq("id", goalId);
+        if (updateError) {
+          return Response.json({ error: updateError.message }, { status: 500 });
+        }
+      } else {
+        const { error: goalError } = await supabase.from("goals").insert({
+          profile_id: profileId,
+          title,
+          domain: primaryDomain,
+          subarea: null,
+          xp_value: 25,
+          status: "active",
+        });
+        if (goalError) {
+          return Response.json({ error: goalError.message }, { status: 500 });
+        }
+      }
+    }
+  } else {
     for (const title of targets) {
       const { error: goalError } = await supabase.from("goals").insert({
         profile_id: profileId,
