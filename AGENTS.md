@@ -84,6 +84,7 @@ XP should value effort, resistance, importance, urgency, and community contribut
 ## Parallel Board Workflow
 
 - `.board/tickets/*.md` is the shared ticket system for parallel agent work. Treat those markdown files as the source of truth.
+- **Orchestrator — sync after every ticket:** As soon as you create or materially update a ticket under `.board/tickets/`, **commit and push to the trunk branch** (`master` in this repo) **before** agents in worktrees start work. Uncommitted tickets are invisible to other checkouts and cause “ticket file not in this worktree” errors. In each worktree, run `git fetch` and merge/rebase `master` before claiming.
 - Ticket statuses are `backlog`, `ready`, `doing`, `in_review`, `blocked`, and `done`.
 - The orchestrator is responsible for decomposing work so active tickets do not collide. Do not run two tickets in parallel if they touch the same files, module ownership, or migration surface.
 - Create tickets with `pnpm board:new "Ticket title"`.
