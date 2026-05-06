@@ -2,16 +2,16 @@
 id: "GRO-011"
 title: "Calendar views for personal tasks and community schedules"
 slug: "calendar-views-for-personal-tasks-and-community-schedules"
-status: "ready"
+status: "doing"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-1"
+branch: "ticket/gro-011-calendar-views-for-personal-tasks-and-community-schedules"
+worktree: "../Grove-agent-1"
 pr_url: ""
-labels: ["calendar", "planning", "tasks", "community"]
+labels: []
 depends_on: []
 created_at: "2026-05-06T20:58:25.007Z"
-updated_at: "2026-05-06T21:05:00.000Z"
+updated_at: "2026-05-06T21:51:13.966Z"
 ---
 
 ## Context
