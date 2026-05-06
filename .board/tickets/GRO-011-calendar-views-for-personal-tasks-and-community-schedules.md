@@ -2,7 +2,7 @@
 id: "GRO-011"
 title: "Calendar views for personal tasks and community schedules"
 slug: "calendar-views-for-personal-tasks-and-community-schedules"
-status: "doing"
+status: "done"
 priority: "p2"
 owner: "agent-1"
 branch: "ticket/gro-011-calendar-views-for-personal-tasks-and-community-schedules"
