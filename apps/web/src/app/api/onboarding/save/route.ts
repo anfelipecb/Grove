@@ -22,6 +22,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  const isAssessment = body.mode === "assessment";
+
   const userSupabase = await createServerSupabaseClient();
   const supabase = userSupabase ?? createServiceSupabaseClient();
   if (!supabase) {
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
   const primaryDomain = sortedDomains[0] ?? "learning";
 
   const targets = body.profileCard.firstTargets.slice(0, 3);
-  if (body.mode === "assessment") {
+  if (isAssessment) {
     const { data: activeGoals, error: goalsError } = await supabase
       .from("goals")
       .select("id")
@@ -149,25 +151,29 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: community } = await supabase
-    .from("communities")
-    .select("id")
-    .eq("slug", "grove-welcome")
-    .maybeSingle();
+  // First-time onboarding: ensure welcome community membership (RLS-safe insert + migration-based update on conflict).
+  // Reassessment: skip entirely — existing members should not trigger duplicate upserts.
+  if (!isAssessment) {
+    const { data: community } = await supabase
+      .from("communities")
+      .select("id")
+      .eq("slug", "grove-welcome")
+      .maybeSingle();
 
-  if (community) {
-    const { error: memError } = await supabase
-      .from("memberships")
-      .upsert(
-        {
-          community_id: community.id,
-          profile_id: profileId,
-          role: "member",
-        },
-        { onConflict: "community_id,profile_id" },
-      );
-    if (memError) {
-      return Response.json({ error: memError.message }, { status: 500 });
+    if (community) {
+      const { error: memError } = await supabase
+        .from("memberships")
+        .upsert(
+          {
+            community_id: community.id,
+            profile_id: profileId,
+            role: "member",
+          },
+          { onConflict: "community_id,profile_id" },
+        );
+      if (memError) {
+        return Response.json({ error: memError.message }, { status: 500 });
+      }
     }
   }
 
