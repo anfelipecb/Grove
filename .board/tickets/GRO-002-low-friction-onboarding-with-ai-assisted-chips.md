@@ -2,19 +2,19 @@
 id: "GRO-002"
 title: "Low-friction onboarding with AI-assisted chips"
 slug: "low-friction-onboarding-with-ai-assisted-chips"
-status: "doing"
+status: "done"
 priority: "p1"
 owner: "agent-2"
 branch: "ticket/gro-002-low-friction-onboarding-with-ai-assisted-chips"
 worktree: "../Grove-agent-2"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/2"
 labels:
   - "onboarding"
   - "ux"
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-06T05:21:48.484Z"
-updated_at: "2026-05-06T05:40:33.586Z"
+updated_at: "2026-05-06T12:30:00.000Z"
 ---
 
 ## Context

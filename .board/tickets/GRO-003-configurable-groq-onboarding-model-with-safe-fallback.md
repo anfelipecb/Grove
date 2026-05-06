@@ -2,7 +2,7 @@
 id: "GRO-003"
 title: "Configurable Groq onboarding model with safe fallback"
 slug: "configurable-groq-onboarding-model-with-safe-fallback"
-status: "doing"
+status: "done"
 priority: "p2"
 owner: "agent-1"
 branch: "ticket/gro-003-configurable-groq-onboarding-model-with-safe-fallback"
@@ -14,7 +14,7 @@ labels:
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-06T05:21:48.505Z"
-updated_at: "2026-05-06T12:00:00.000Z"
+updated_at: "2026-05-06T12:30:00.000Z"
 ---
 
 ## Context
