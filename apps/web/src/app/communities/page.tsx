@@ -1,21 +1,24 @@
-import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
-import { redirect } from "next/navigation";
 import { CommunitiesView } from "@/components/communities-view";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { demoSessionActiveServer, getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
+import { redirect } from "next/navigation";
+import { createDemoAwareServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommunitiesPage() {
-  if (!isClerkConfigured()) {
-    return <main className="p-8 text-stone-700">Set Clerk environment variables to use Communities.</main>;
-  }
+  const demo = demoSessionActiveServer();
 
   const userId = await getServerUserId();
   if (!userId) {
     redirect("/sign-in?redirect_url=/communities");
   }
 
-  const supabase = await createServerSupabaseClient();
+  const { client: supabase } = await createDemoAwareServerClient();
+
+  if (!demo && !isClerkConfigured()) {
+    return <main className="p-8 text-stone-700">Set Clerk environment variables to use Communities.</main>;
+  }
+
   if (!supabase) {
     return <main className="p-8 text-stone-700">Supabase is not configured.</main>;
   }
@@ -62,5 +65,5 @@ export default async function CommunitiesPage() {
     role: "owner" | "organizer" | "member";
   }[];
 
-  return <CommunitiesView communities={communities} profileId={profileId} />;
+  return <CommunitiesView communities={communities} demoMode={demo} profileId={profileId} />;
 }

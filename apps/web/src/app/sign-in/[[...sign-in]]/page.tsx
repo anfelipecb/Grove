@@ -1,6 +1,8 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
-import { hasClerkPublishableKey, isClerkConfigured } from "@/lib/clerk-auth";
+import { isClerkConfigured } from "@/lib/clerk-auth";
+import { hasClerkPublishableKey } from "@/lib/clerk-publishable";
+import { shouldShowDemoPublicEntry } from "@/lib/demo-mode";
 
 export default function SignInPage() {
   if (!hasClerkPublishableKey()) {
@@ -37,6 +39,24 @@ export default function SignInPage() {
           },
         }}
       />
+      {shouldShowDemoPublicEntry() ? (
+        <div className="max-w-sm rounded-md border border-dashed border-moss/35 bg-white/60 px-4 py-3 text-center text-xs text-stone-700">
+          <p className="font-semibold text-bark">Local product demo</p>
+          <div className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-1">
+            <Link href="/demo/start?scenario=onboarding" className="text-moss hover:underline">
+              Onboarding
+            </Link>
+            <span className="text-stone-400">·</span>
+            <Link href="/demo/start?scenario=dashboard" className="text-moss hover:underline">
+              Dashboard
+            </Link>
+            <span className="text-stone-400">·</span>
+            <Link href="/demo/exit" className="text-stone-600 hover:underline">
+              Exit demo
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

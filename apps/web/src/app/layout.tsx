@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getClerkPublishableKeyEffective } from "@/lib/clerk-publishable";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,14 +9,14 @@ export const metadata: Metadata = {
   applicationName: "Grove (grove-growth-together)",
 };
 
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
+const clerkPublishableKeyEffective = getClerkPublishableKeyEffective();
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {clerkPublishableKey ? (
-          <ClerkProvider publishableKey={clerkPublishableKey}>{children}</ClerkProvider>
+        {clerkPublishableKeyEffective ? (
+          <ClerkProvider publishableKey={clerkPublishableKeyEffective}>{children}</ClerkProvider>
         ) : (
           children
         )}

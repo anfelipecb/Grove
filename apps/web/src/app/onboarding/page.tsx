@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { getServerUserId, hasClerkPublishableKey } from "@/lib/clerk-auth";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { demoSessionActiveServer, getServerUserId } from "@/lib/clerk-auth";
+import { hasClerkPublishableKey } from "@/lib/clerk-publishable";
+import { createDemoAwareServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,9 @@ export default async function OnboardingPage({
 }: {
   searchParams?: { mode?: string };
 }) {
-  if (!hasClerkPublishableKey()) {
+  const demo = demoSessionActiveServer();
+
+  if (!demo && !hasClerkPublishableKey()) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center text-ink">
         <p className="text-sm text-stone-700">Set Clerk publishable key to use onboarding.</p>
@@ -27,7 +30,7 @@ export default async function OnboardingPage({
     redirect("/sign-in?redirect_url=/onboarding");
   }
 
-  const supabase = await createServerSupabaseClient();
+  const { client: supabase } = await createDemoAwareServerClient();
   let onboardingStep: number | null = null;
   if (supabase) {
     const { data } = await supabase
@@ -38,5 +41,10 @@ export default async function OnboardingPage({
     onboardingStep = (data?.onboarding_step as number | undefined) ?? null;
   }
 
-  return <OnboardingFlow assessmentMode={searchParams?.mode === "assess" || (onboardingStep ?? 0) >= 5} />;
+  return (
+    <OnboardingFlow
+      demoMode={demo}
+      assessmentMode={searchParams?.mode === "assess" || (onboardingStep ?? 0) >= 5}
+    />
+  );
 }

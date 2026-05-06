@@ -1,5 +1,6 @@
 import { LandingExperience } from "@/components/landing-experience";
 import { getServerUserId } from "@/lib/clerk-auth";
+import { shouldShowDemoPublicEntry } from "@/lib/demo-mode";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-fern/45 via-stone-50/95 to-white text-ink">
-      <LandingExperience />
+      <LandingExperience showDemoLinks={shouldShowDemoPublicEntry()} />
     </main>
   );
 }

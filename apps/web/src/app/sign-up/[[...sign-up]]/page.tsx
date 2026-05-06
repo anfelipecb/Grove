@@ -1,6 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
-import { hasClerkPublishableKey, isClerkConfigured } from "@/lib/clerk-auth";
+import { isClerkConfigured } from "@/lib/clerk-auth";
+import { hasClerkPublishableKey } from "@/lib/clerk-publishable";
 
 export default function SignUpPage() {
   if (!hasClerkPublishableKey()) {

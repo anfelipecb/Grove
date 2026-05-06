@@ -1,4 +1,4 @@
-import { suggestXp, type GoalDraft } from "@grove/core";
+import { LIFE_DOMAINS, suggestXp, type GoalDraft, type LifeDomainId } from "@grove/core";
 
 export const demoProfile = {
   name: "Andres",
@@ -8,6 +8,33 @@ export const demoProfile = {
   seniority: "Sprout",
   totalXp: 420,
 };
+
+/** Default domain weights for seeded demo profile (matches onboarding equal split shape). */
+export function demoEqualDomainWeights(): Record<LifeDomainId, number> {
+  const n = LIFE_DOMAINS.length;
+  const base = Math.floor(100 / n);
+  const w = {} as Record<LifeDomainId, number>;
+  let rem = 100 - base * n;
+  LIFE_DOMAINS.forEach((d, i) => {
+    w[d.id] = base + (i < rem ? 1 : 0);
+  });
+  return w;
+}
+
+/** `profiles` upsert payload fields used by demo seed (aligns with dashboard copy). */
+export function demoProfileRowFields(clerkUserId: string) {
+  return {
+    clerk_user_id: clerkUserId,
+    display_name: demoProfile.name,
+    email: "demo@grove.local",
+    private_focus_notes: {
+      focus_disclosure: "",
+      support_style: demoProfile.supportStyle,
+    },
+    public_support_preferences: {},
+    xp_domain_weights: demoEqualDomainWeights(),
+  };
+}
 
 export const demoGoals: GoalDraft[] = [
   {
@@ -46,6 +73,18 @@ export const demoGoals: GoalDraft[] = [
     }).xp,
   },
 ];
+
+/** Row shape for `goals` insert from static demo goals. */
+export function demoGoalInsertsForProfile(profileId: string) {
+  return demoGoals.map((g) => ({
+    profile_id: profileId,
+    title: g.title,
+    domain: g.domain,
+    subarea: g.subarea,
+    xp_value: g.xp,
+    status: "active" as const,
+  }));
+}
 
 export const communityFeed = [
   {
