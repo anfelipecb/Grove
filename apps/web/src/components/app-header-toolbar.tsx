@@ -17,6 +17,7 @@ const defaultAppearance: UserButtonAppearance = {
     userButtonAvatarBox: "h-8 w-8 ring-2 ring-moss/20 ring-offset-1 ring-offset-white",
   },
 };
+const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
 
 /**
  * Keeps primary nav and account control on one row: scrollable links + fixed UserButton.
@@ -38,12 +39,18 @@ export function AppHeaderToolbar({ userButtonAppearance, className }: AppHeaderT
         data-testid="header-account"
       >
         <span className="hidden text-xs font-medium text-stone-600 sm:inline">Account</span>
-        <UserButton
-          afterSignOutUrl="/"
-          appearance={
-            userButtonAppearance ?? defaultAppearance
-          }
-        />
+        {clerkPublishableKey ? (
+          <UserButton
+            afterSignOutUrl="/"
+            appearance={
+              userButtonAppearance ?? defaultAppearance
+            }
+          />
+        ) : (
+          <span className="rounded-full border border-dashed border-stone-300 px-2 py-1 text-xs font-medium text-stone-500">
+            Local mode
+          </span>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grove Parallel Board</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Board</p>
+          <h1>Ticket Overview</h1>
+          <p class="subcopy">Live state view for parallel work. Drag tickets between sections to update the queue.</p>
+        </div>
+        <div class="topbar-meta">
+          <p id="last-sync" class="muted"></p>
+          <button id="refresh-board" class="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="hud">
+        <div id="summary" class="summary-grid"></div>
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <main id="board" class="state-stack"></main>
+
+      <section class="agents-section">
+        <div class="section-heading">
+          <div>
+            <h2>Agents</h2>
+            <p class="muted">Fixed worktrees, shown only as context for the current queue.</p>
+          </div>
+        </div>
+        <div id="agents" class="agents-grid"></div>
+      </section>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

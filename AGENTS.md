@@ -81,6 +81,26 @@ XP should value effort, resistance, importance, urgency, and community contribut
 - Do not commit `.env*`, vendor secrets, downloaded source PDFs, or class documents.
 - Commit regularly at meaningful checkpoints.
 
+## Parallel Board Workflow
+
+- `.board/tickets/*.md` is the shared ticket system for parallel agent work. Treat those markdown files as the source of truth.
+- Ticket statuses are `backlog`, `ready`, `doing`, `in_review`, `blocked`, and `done`.
+- The orchestrator is responsible for decomposing work so active tickets do not collide. Do not run two tickets in parallel if they touch the same files, module ownership, or migration surface.
+- Create tickets with `pnpm board:new "Ticket title"`.
+- Use `pnpm board:dev` for the local drag-and-drop board. Moving a card updates the ticket markdown file.
+- Initialize the reusable worktrees with `pnpm board:agents:init`. The two agent worktrees live at `../Grove-agent-1` and `../Grove-agent-2`.
+- Only tickets in `ready` are claimable. `backlog` means not yet scoped; `blocked` means not currently claimable.
+- Claim a ticket from the queue with `pnpm board:ticket:start GRO-001 agent-1` or `agent-2`. That is the canonical claim action: it checks out `ticket/<id>-<slug>` in the selected worktree and updates the ticket metadata.
+- Agents do not automatically discover the correct worktree from the board. The orchestrator must launch each agent with its working directory set to the claimed worktree path.
+- Before claiming a ticket, read the current `doing` and `in_review` tickets and confirm the write scope does not overlap. If it overlaps, leave the ticket in `ready` or move it to `blocked` until the dependency clears.
+- A claimed ticket must have exactly one owner, one worktree, and one active branch. Do not manually assign the same ticket to both agents.
+- Keep at most one active ticket per agent. The working limit is two total tickets in `doing`.
+- Move a ticket to `in_review` only after the branch is committed and the PR is open. Move it to `done` only after merge or explicit closure.
+- When a PR exists, write its URL into the ticket `pr_url` field so the board can link directly to the review.
+- If a claimed ticket is returned to the queue, clear its owner, branch, and worktree fields before treating it as claimable again.
+- After a merged ticket, run `pnpm board:agent:reset agent-1` or `agent-2` to return the reusable worktree to its parking branch. The reset deletes the local ticket branch only when it is already merged into `master`.
+- When opening a PR from a worktree, include the ticket ID in the branch name and PR title so board state, branch state, and review state stay aligned.
+
 ## Supabase + Clerk
 
 - Use Supabase's native third-party auth integration for Clerk.

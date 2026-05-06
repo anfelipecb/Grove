@@ -1,0 +1,52 @@
+{
+  "name": "Grove Parallel Board",
+  "baseBranch": "master",
+  "port": 4317,
+  "statuses": [
+    {
+      "id": "backlog",
+      "label": "Backlog",
+      "description": "Captured work that is not fully scoped yet."
+    },
+    {
+      "id": "ready",
+      "label": "Ready",
+      "description": "Scoped work that can be pulled into a worktree."
+    },
+    {
+      "id": "doing",
+      "label": "Doing",
+      "description": "Active implementation in one of the reusable worktrees.",
+      "wipLimit": 2
+    },
+    {
+      "id": "in_review",
+      "label": "In Review",
+      "description": "Committed work with a PR open or waiting on review."
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked",
+      "description": "Waiting on a dependency, merge, or decision."
+    },
+    {
+      "id": "done",
+      "label": "Done",
+      "description": "Merged, closed, or intentionally archived."
+    }
+  ],
+  "worktrees": [
+    {
+      "id": "agent-1",
+      "label": "Agent 1",
+      "path": "../Grove-agent-1",
+      "parkingBranch": "board/agent-1"
+    },
+    {
+      "id": "agent-2",
+      "label": "Agent 2",
+      "path": "../Grove-agent-2",
+      "parkingBranch": "board/agent-2"
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+:root {
+  color-scheme: light dark;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.45;
+  --bg: #f3f4f6;
+  --bg-elevated: #e5e7eb;
+  --surface: rgba(255, 255, 255, 0.94);
+  --surface-strong: #ffffff;
+  --surface-muted: #f8fafc;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --border: #d1d5db;
+  --border-strong: #cbd5e1;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  --backlog-soft: #e5e7eb;
+  --backlog-text: #374151;
+  --ready-soft: #dbeafe;
+  --ready-text: #1d4ed8;
+  --doing-soft: #fef3c7;
+  --doing-text: #92400e;
+  --review-soft: #ede9fe;
+  --review-text: #6d28d9;
+  --blocked-soft: #fee2e2;
+  --blocked-text: #b91c1c;
+  --done-soft: #dcfce7;
+  --done-text: #15803d;
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --bg-elevated: #111827;
+    --surface: rgba(15, 23, 42, 0.94);
+    --surface-strong: #111827;
+    --surface-muted: #0b1220;
+    --text: #e5e7eb;
+    --text-muted: #94a3b8;
+    --border: #1f2937;
+    --border-strong: #334155;
+    --accent: #60a5fa;
+    --accent-soft: rgba(59, 130, 246, 0.18);
+    --shadow: 0 12px 28px rgba(2, 6, 23, 0.38);
+    --backlog-soft: rgba(148, 163, 184, 0.18);
+    --backlog-text: #cbd5e1;
+    --ready-soft: rgba(96, 165, 250, 0.18);
+    --ready-text: #93c5fd;
+    --doing-soft: rgba(245, 158, 11, 0.18);
+    --doing-text: #fbbf24;
+    --review-soft: rgba(167, 139, 250, 0.18);
+    --review-text: #c4b5fd;
+    --blocked-soft: rgba(248, 113, 113, 0.18);
+    --blocked-text: #fca5a5;
+    --done-soft: rgba(74, 222, 128, 0.18);
+    --done-text: #86efac;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(148, 163, 184, 0.08), transparent 220px),
+    var(--bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 24px 20px 48px;
+}
+
+.topbar,
+.hud,
+.state-stack,
+.agents-section {
+  margin: 0 auto 18px;
+  max-width: 980px;
+}
+
+.topbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.subcopy,
+.muted {
+  color: var(--text-muted);
+}
+
+.subcopy {
+  margin-top: 8px;
+  max-width: 620px;
+}
+
+.topbar-meta {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.button {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 14px;
+  min-height: 40px;
+  box-shadow: var(--shadow);
+}
+
+.message {
+  min-height: 22px;
+  color: var(--text-muted);
+}
+
+.message.error {
+  color: var(--blocked-text);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.agent-card,
+.summary-card,
+.ticket-card,
+.state-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.agent-card {
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.agent-header,
+.ticket-header,
+.ticket-meta,
+.section-header,
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.summary-pill,
+.status-pill,
+.priority-pill,
+.meta-pill {
+  border-radius: 999px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 68px;
+  padding: 14px 16px;
+  background: var(--surface-strong);
+}
+
+.summary-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.summary-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.summary-pill,
+.status-pill,
+.priority-pill,
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+.status-pill,
+.priority-pill,
+.meta-pill {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.status-pill.clean {
+  background: var(--done-soft);
+  color: var(--done-text);
+}
+
+.status-pill.dirty {
+  background: var(--blocked-soft);
+  color: var(--blocked-text);
+}
+
+.state-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.state-section {
+  padding: 16px;
+}
+
+.state-section.drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.section-header {
+  margin-bottom: 14px;
+}
+
+.section-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.column-description,
+.path-label,
+.branch-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.ticket-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ticket-card {
+  padding: 14px 15px;
+  display: grid;
+  gap: 10px;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.ticket-card[draggable="true"] {
+  cursor: grab;
+}
+
+.ticket-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.ticket-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ticket-id {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ticket-preview {
+  color: var(--text-muted);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.ticket-meta {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.meta-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.summary-card[data-status-id="backlog"],
+.state-section[data-status-id="backlog"] .summary-pill,
+.state-section[data-status-id="backlog"] .section-pill {
+  background: var(--backlog-soft);
+  color: var(--backlog-text);
+}
+
+.summary-card[data-status-id="ready"],
+.state-section[data-status-id="ready"] .summary-pill,
+.state-section[data-status-id="ready"] .section-pill {
+  background: var(--ready-soft);
+  color: var(--ready-text);
+}
+
+.summary-card[data-status-id="doing"],
+.state-section[data-status-id="doing"] .summary-pill,
+.state-section[data-status-id="doing"] .section-pill {
+  background: var(--doing-soft);
+  color: var(--doing-text);
+}
+
+.summary-card[data-status-id="in_review"],
+.state-section[data-status-id="in_review"] .summary-pill,
+.state-section[data-status-id="in_review"] .section-pill {
+  background: var(--review-soft);
+  color: var(--review-text);
+}
+
+.summary-card[data-status-id="blocked"],
+.state-section[data-status-id="blocked"] .summary-pill,
+.state-section[data-status-id="blocked"] .section-pill {
+  background: var(--blocked-soft);
+  color: var(--blocked-text);
+}
+
+.summary-card[data-status-id="done"],
+.state-section[data-status-id="done"] .summary-pill,
+.state-section[data-status-id="done"] .section-pill {
+  background: var(--done-soft);
+  color: var(--done-text);
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 8px 0 2px;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    padding: 20px 14px 40px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar-meta {
+    justify-items: start;
+  }
+}
