@@ -7,14 +7,12 @@ import {
   Bell,
   CalendarCheck,
   CheckCircle2,
-  CircleGauge,
-  Coins,
+  Flame,
   Leaf,
   Library,
   MessageSquareText,
   Plus,
   Sprout,
-  Users,
 } from "lucide-react";
 import {
   DEFAULT_SUBAREAS,
@@ -27,6 +25,9 @@ import {
 } from "@grove/core";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
+import { DashboardInfoRow, DashboardPanel, dashboardInputClassName } from "@/components/dashboard/dashboard-ui";
+import { formatDueLabel } from "@/components/dashboard/due-label";
+import { computeXpConsistency } from "@/components/dashboard/xp-consistency";
 
 export type DashboardGoalRow = {
   id: string;
@@ -35,6 +36,7 @@ export type DashboardGoalRow = {
   subarea: string | null;
   xp_value: number;
   status: string;
+  due_at: string | null;
 };
 
 export type DashboardXpEventRow = {
@@ -58,8 +60,11 @@ export type GroveDashboardProps = {
 
 const iconClass = "h-4 w-4";
 
-const inputBase =
-  "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
+function parseDueAt(dueLocal: string): string | null {
+  if (dueLocal.trim() === "") return null;
+  const t = new Date(dueLocal);
+  return Number.isNaN(t.getTime()) ? null : t.toISOString();
+}
 
 export function GroveDashboard({
   demoMode = false,
@@ -83,6 +88,7 @@ export function GroveDashboard({
   const [totalXp, setTotalXp] = useState(initialTotalXp);
   const [spendablePoints, setSpendablePoints] = useState(initialSpendable);
   const [title, setTitle] = useState("");
+  const [dueLocal, setDueLocal] = useState("");
   const [domain, setDomain] = useState<LifeDomainId>("learning");
   const [subarea, setSubarea] = useState(DEFAULT_SUBAREAS.learning[0]);
   const [resistance, setResistance] = useState<XpInput["resistance"]>("medium");
@@ -100,6 +106,9 @@ export function GroveDashboard({
       style ? ` Preferred support: ${style}.` : ""
     }`;
   }, [displayName, focusNotes]);
+
+  const consistency = useMemo(() => computeXpConsistency(xpEvents), [xpEvents]);
+  const nextGoal = goals[0] ?? null;
 
   const completedLocalXp = 0;
   const seniorityTotal = totalXp + completedLocalXp;
@@ -120,11 +129,14 @@ export function GroveDashboard({
     [communityContribution, resistance],
   );
 
+  const addDisabled = !demoMode && !supabase;
+
   const addGoal = useCallback(async () => {
     const trimmed = title.trim();
     if (!trimmed) return;
     setError(null);
     const xp = suggested.xp;
+    const dueAt = parseDueAt(dueLocal);
 
     if (demoMode) {
       const res = await fetch("/api/demo/goals", {
@@ -135,6 +147,7 @@ export function GroveDashboard({
           domain,
           subarea,
           xp_value: xp,
+          due_at: dueAt,
         }),
       });
       const payload = (await res.json()) as { error?: string; goal?: DashboardGoalRow };
@@ -145,6 +158,7 @@ export function GroveDashboard({
       if (payload.goal) {
         setGoals((g) => [payload.goal as DashboardGoalRow, ...g]);
         setTitle("");
+        setDueLocal("");
       }
       return;
     }
@@ -159,8 +173,9 @@ export function GroveDashboard({
         subarea,
         xp_value: xp,
         status: "active",
+        due_at: dueAt,
       })
-      .select("id, title, domain, subarea, xp_value, status")
+      .select("id, title, domain, subarea, xp_value, status, due_at")
       .single();
     if (insertError) {
       setError(insertError.message);
@@ -169,8 +184,9 @@ export function GroveDashboard({
     if (data) {
       setGoals((g) => [data as DashboardGoalRow, ...g]);
       setTitle("");
+      setDueLocal("");
     }
-  }, [title, supabase, profileId, domain, subarea, suggested.xp, demoMode]);
+  }, [title, dueLocal, supabase, profileId, domain, subarea, suggested.xp, demoMode]);
 
   const completeGoal = useCallback(
     async (goal: DashboardGoalRow) => {
@@ -252,295 +268,290 @@ export function GroveDashboard({
     [supabase, profileId, suggested.xp, totalXp, spendablePoints, demoMode],
   );
 
-  const primaryCommunity = communityLabels[0] ?? "Your communities";
+  const addForm = (
+    <div className="grid gap-3">
+      <input
+        className={dashboardInputClassName}
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="Concrete next action"
+      />
+      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+        Planned time (optional)
+        <input
+          type="datetime-local"
+          className={dashboardInputClassName}
+          value={dueLocal}
+          onChange={(event) => setDueLocal(event.target.value)}
+        />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <select
+          className={dashboardInputClassName}
+          value={domain}
+          onChange={(event) => {
+            const nextDomain = event.target.value as LifeDomainId;
+            setDomain(nextDomain);
+            setSubarea(DEFAULT_SUBAREAS[nextDomain][0]);
+          }}
+        >
+          {LIFE_DOMAINS.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className={dashboardInputClassName}
+          value={subarea}
+          onChange={(event) => setSubarea(event.target.value)}
+        >
+          {DEFAULT_SUBAREAS[domain].map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <select
+          className={dashboardInputClassName}
+          value={resistance}
+          onChange={(event) => setResistance(event.target.value as XpInput["resistance"])}
+        >
+          <option value="low">Low resistance</option>
+          <option value="medium">Medium resistance</option>
+          <option value="high">High resistance</option>
+          <option value="avoidant">Avoidant</option>
+        </select>
+        <label className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={communityContribution}
+            onChange={(event) => setCommunityContribution(event.target.checked)}
+          />
+          Community
+        </label>
+      </div>
+      <button
+        className="inline-flex items-center justify-center gap-2 rounded-md bg-bark px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:opacity-50"
+        type="button"
+        disabled={addDisabled}
+        onClick={addGoal}
+      >
+        <Plus className={iconClass} aria-hidden="true" />
+        Add {suggested.xp} XP target
+      </button>
+    </div>
+  );
+
+  const supportPanel = (
+    <DashboardPanel title="Support" icon={<MessageSquareText className={iconClass} />}>
+      <div className="space-y-4">
+        <dl className="space-y-3">
+          <DashboardInfoRow label="Account" value={displayName} />
+          <DashboardInfoRow label="Private focus data" value="Only you + RLS" />
+        </dl>
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowAssessment((value) => !value)}
+            className="inline-flex w-full items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent sm:w-auto"
+          >
+            {showAssessment ? "Hide calibration" : "Calibrate onboarding"}
+          </button>
+          {showAssessment ? (
+            <div className="mt-3 grid gap-3 rounded-md border border-border bg-muted/40 p-4 text-sm">
+              <p className="leading-6 text-muted-foreground">
+                Reopen onboarding to adjust goals, friction, and support style. For a quick chat first, head to
+                Communities and Mycelium.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/onboarding?mode=assess"
+                  className="inline-flex flex-1 items-center justify-center rounded-md bg-bark px-3 py-2 font-semibold text-white transition hover:bg-moss min-[380px]:flex-none"
+                >
+                  Reopen onboarding
+                </Link>
+                <Link
+                  href="/communities"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-border bg-card px-3 py-2 font-semibold text-foreground transition hover:bg-accent min-[380px]:flex-none"
+                >
+                  Mycelium in Communities
+                </Link>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </DashboardPanel>
+  );
 
   return (
     <main className="min-h-screen bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5">
+      <div className="mx-auto max-w-7xl">
         <header className="space-y-4 border-b border-border pb-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-bark text-white shadow-panel">
-                <Leaf className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-normal">Grove</h1>
-                <p className="text-sm text-stone-600">Personal follow-through and community participation.</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-bark text-white shadow-panel dark:shadow-panel-dark">
+              <Leaf className="h-6 w-6" aria-hidden="true" />
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm sm:flex sm:flex-nowrap">
-              <Metric icon={<Sprout className={iconClass} />} label={seniority.label} value={`${seniorityTotal} XP`} />
-              <Metric icon={<Users className={iconClass} />} label="Community" value={primaryCommunity} />
-              <Metric icon={<Bell className={iconClass} />} label="Points" value={`${spendablePoints} pts`} />
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tracking-normal sm:text-2xl">Grove</h1>
+              <p className="text-sm text-muted-foreground">Your personal loop—goals, consistency, XP.</p>
             </div>
           </div>
           <AppHeaderToolbar demoMode={demoMode} />
         </header>
 
         {error ? (
-          <p className="rounded-md border border-clay bg-clay/10 px-3 py-2 text-sm text-bark" role="alert">
+          <p className="mt-4 rounded-md border border-clay bg-clay/10 px-3 py-2 text-sm text-bark" role="alert">
             {error}
           </p>
         ) : null}
 
-        <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <Panel title="Today" icon={<CircleGauge className={iconClass} />}>
-            <div className="grid gap-4 md:grid-cols-[1fr_260px]">
-              <div>
-                <p className="text-sm leading-6 text-stone-700">{summaryBlurb}</p>
-                <div className="mt-4 h-3 overflow-hidden rounded-sm bg-stone-200">
-                  <div className="h-full bg-moss" style={{ width: `${tierProgress}%` }} />
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
+          <div className="flex flex-col gap-5">
+            <section className="rounded-2xl border border-border bg-card/95 p-4 shadow-sm dark:shadow-panel-dark sm:p-5">
+              <p className="text-sm text-muted-foreground">
+                Hi, <span className="font-medium text-foreground">{displayName}</span>
+              </p>
+              <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-4">
+                <div>
+                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Sprout className="h-3.5 w-3.5 text-moss" aria-hidden />
+                    Total XP
+                  </p>
+                  <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{seniorityTotal}</p>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-stone-600">
-                  <span>{seniority.label}</span>
-                  <span>{nextTier ? `${nextTier.label} at ${nextTier.minXp} XP` : "Top tier"}</span>
+                <div>
+                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Bell className="h-3.5 w-3.5 text-moss" aria-hidden />
+                    Points
+                  </p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-moss">{spendablePoints}</p>
+                </div>
+                <div className="min-w-[min(100%,12rem)] flex-1">
+                  <p className="text-xs text-muted-foreground">{seniority.label}</p>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-moss" style={{ width: `${tierProgress}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {nextTier ? `${nextTier.label} at ${nextTier.minXp} XP` : "Top tier"}
+                  </p>
                 </div>
               </div>
-              <div className="rounded-md border border-fern bg-fern/70 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-bark">
-                  <MessageSquareText className={iconClass} aria-hidden="true" />
-                  Mycelium
-                </div>
-                <p className="mt-3 text-sm leading-6 text-stone-700">
-                  Open the Community pane to ask what needs doing next—or surface commitments from your group.
-                </p>
-              </div>
-            </div>
-          </Panel>
+              <p className="mt-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{summaryBlurb}</p>
+            </section>
 
-          <Panel title="Add Target" icon={<Plus className={iconClass} />}>
-            <div className="grid gap-3">
-              <input
-                className={inputBase}
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Concrete next action"
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <select
-                  className={inputBase}
-                  value={domain}
-                  onChange={(event) => {
-                    const nextDomain = event.target.value as LifeDomainId;
-                    setDomain(nextDomain);
-                    setSubarea(DEFAULT_SUBAREAS[nextDomain][0]);
-                  }}
-                >
-                  {LIFE_DOMAINS.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-                <select className={inputBase} value={subarea} onChange={(event) => setSubarea(event.target.value)}>
-                  {DEFAULT_SUBAREAS[domain].map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                <select
-                  className={inputBase}
-                  value={resistance}
-                  onChange={(event) => setResistance(event.target.value as XpInput["resistance"])}
-                >
-                  <option value="low">Low resistance</option>
-                  <option value="medium">Medium resistance</option>
-                  <option value="high">High resistance</option>
-                  <option value="avoidant">Avoidant</option>
-                </select>
-                <label className="flex items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={communityContribution}
-                    onChange={(event) => setCommunityContribution(event.target.checked)}
-                  />
-                  Community
-                </label>
-              </div>
-              <button
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-bark px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:opacity-50"
-                type="button"
-                disabled={!supabase}
-                onClick={addGoal}
-              >
-                <Plus className={iconClass} aria-hidden="true" />
-                Add {suggested.xp} XP target
-              </button>
-            </div>
-          </Panel>
-        </section>
+            <DashboardPanel title="Consistency" icon={<Flame className={iconClass} />}>
+              <p className="text-sm leading-relaxed text-muted-foreground">{consistency.message}</p>
+            </DashboardPanel>
 
-        <section className="grid gap-5 lg:grid-cols-[1fr_0.9fr_0.8fr]">
-          <Panel title="Targets" icon={<CheckCircle2 className={iconClass} />}>
-            <div className="space-y-3">
-              {goals.length === 0 ? (
-                <p className="text-sm text-stone-600">No active targets—add one or complete onboarding goals.</p>
-              ) : null}
-              {goals.map((goal) => (
-                <button
-                  key={goal.id}
-                  type="button"
-                  onClick={() => completeGoal(goal)}
-                  className="flex w-full items-start gap-3 rounded-md border border-stone-300 bg-white p-3 text-left transition hover:border-moss"
-                >
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-stone-400" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{goal.title}</span>
-                    <span className="mt-1 block text-xs text-stone-600">
-                      {goal.subarea ?? goal.domain} · tap to mark done
-                    </span>
-                  </span>
-                  <span className="rounded-sm bg-marigold/20 px-2 py-1 text-xs font-semibold text-bark">
-                    {goal.xp_value} XP
-                  </span>
-                </button>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Community" icon={<CalendarCheck className={iconClass} />}>
-            <div className="space-y-3">
-              <CommunityRow
-                label="Your spaces"
-                value={communityLabels.length ? `${communityLabels.length} joined` : "Join via Communities"}
-                detail={communityLabels.join(", ") || "grove-welcome"}
-              />
-              <CommunityRow label="Next step" value="Open feed" detail="Commitments + wins" />
-            </div>
-          </Panel>
-
-          <Panel title="Rewards" icon={<Coins className={iconClass} />}>
-            <div className="space-y-3">
-              <Reward label="Guilt-free game session" points="40 pts" />
-              <Reward label="Protected rest block" points="35 pts" />
-            </div>
-          </Panel>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-[1fr_320px]">
-          <Panel title="Recent XP" icon={<Library className={iconClass} />}>
-            <div className="grid gap-3 md:grid-cols-2">
-              {xpEvents.length === 0 ? (
-                <p className="text-sm text-stone-600">Complete a target to log XP here.</p>
+            <div className="rounded-xl border border-dashed border-border bg-muted/25 p-4 sm:p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next action</p>
+              {nextGoal ? (
+                <>
+                  <p className="mt-2 text-base font-semibold leading-snug">{nextGoal.title}</p>
+                  <p className="mt-1 text-sm text-muted-foreground capitalize">{nextGoal.subarea ?? nextGoal.domain}</p>
+                  {formatDueLabel(nextGoal.due_at) ? (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CalendarCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      Due {formatDueLabel(nextGoal.due_at)}
+                    </p>
+                  ) : null}
+                </>
               ) : (
-                xpEvents.slice(0, 8).map((item) => (
-                  <article key={item.id} className="rounded-md border border-stone-300 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-moss">event</span>
-                      <span className="text-xs font-semibold text-clay">+{item.xp} XP</span>
-                    </div>
-                    <h2 className="mt-3 text-sm font-semibold leading-snug">{item.reason}</h2>
-                    <p className="mt-2 text-xs text-stone-600">{new Date(item.created_at).toLocaleString()}</p>
-                  </article>
-                ))
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Add a target to lock in your next win—keep it small and visible.
+                </p>
               )}
             </div>
-          </Panel>
 
-          <Panel title="Support" icon={<MessageSquareText className={iconClass} />}>
-            <div className="space-y-4">
-              <dl className="space-y-3 text-sm">
-                <InfoRow label="Account" value={displayName} />
-                <InfoRow label="Private focus data" value="Only you + RLS" />
-              </dl>
-              <div className="border-t border-stone-200 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAssessment((value) => !value)}
-                  className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
-                >
-                  {showAssessment ? "Hide assessment" : "Assess onboarding"}
-                </button>
-                {showAssessment ? (
-                  <div className="mt-3 grid gap-3 rounded-md border border-stone-200 bg-stone-50 p-4 text-sm">
-                    <p className="leading-6 text-stone-700">
-                      Reopen onboarding to recalibrate goals, friction, and support style. If the answers feel off, open
-                      Mycelium and talk it through before saving.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href="/onboarding?mode=assess"
-                        className="inline-flex items-center justify-center rounded-md bg-bark px-3 py-2 font-semibold text-white transition hover:bg-moss"
-                      >
-                        Reopen onboarding
-                      </Link>
-                      <Link
-                        href="/communities"
-                        className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 font-semibold text-bark transition hover:border-moss"
-                      >
-                        Talk to Mycelium
-                      </Link>
-                    </div>
-                  </div>
+            <DashboardPanel title="Active goals" icon={<CheckCircle2 className={iconClass} />}>
+              <div className="space-y-3">
+                {goals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No active targets yet. Add one when you&apos;re ready.</p>
                 ) : null}
+                {goals.map((goal) => {
+                  const dueStr = formatDueLabel(goal.due_at);
+                  return (
+                    <button
+                      key={goal.id}
+                      type="button"
+                      onClick={() => completeGoal(goal)}
+                      className="flex w-full items-start gap-3 rounded-lg border border-border bg-card p-3 text-left transition hover:border-moss/50 hover:bg-accent/30"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-border" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-foreground">{goal.title}</span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <span className="capitalize">{goal.subarea ?? goal.domain}</span>
+                          {dueStr ? (
+                            <span className="inline-flex items-center gap-0.5">
+                              <CalendarCheck className="h-3 w-3" aria-hidden />
+                              {dueStr}
+                            </span>
+                          ) : null}
+                          <span className="text-muted-foreground/80">· tap to complete</span>
+                        </span>
+                      </span>
+                      <span className="rounded-md bg-marigold/20 px-2 py-1 text-xs font-semibold text-bark dark:text-foreground">
+                        {goal.xp_value} XP
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            </DashboardPanel>
+
+            <DashboardPanel title="Recent XP" icon={<Library className={iconClass} />}>
+              {xpEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Complete a target to log XP here.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {xpEvents.slice(0, 5).map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium leading-snug">{item.reason}</span>
+                      <span className="flex shrink-0 items-center justify-between gap-2 text-xs sm:justify-end">
+                        <span className="font-semibold text-clay">+{item.xp} XP</span>
+                        <span className="text-muted-foreground">{new Date(item.created_at).toLocaleString()}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </DashboardPanel>
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-4 text-xs text-muted-foreground">
+              <Link href="/communities" className="font-medium text-foreground underline-offset-4 hover:underline">
+                Communities
+              </Link>
+              <span aria-hidden>·</span>
+              <span>{communityLabels.length ? `${communityLabels.length} joined` : "Join a space when ready"}</span>
+              <span aria-hidden>·</span>
+              <span>Rewards — spend points soon</span>
             </div>
-          </Panel>
-        </section>
+          </div>
+
+          <aside className="flex flex-col gap-5 lg:sticky lg:top-4">
+            <details
+              className="group rounded-xl border border-border bg-card/90 shadow-panel dark:shadow-panel-dark open:shadow-md"
+              open={initialGoals.length === 0}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  <Plus className={iconClass} aria-hidden />
+                  Add target
+                </span>
+                <span className="text-xs font-normal text-muted-foreground group-open:hidden">Tap to expand</span>
+              </summary>
+              <div className="border-t border-border p-4 pt-0">{addForm}</div>
+            </details>
+            {supportPanel}
+          </aside>
+        </div>
       </div>
     </main>
-  );
-}
-
-function Panel({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="text-moss">{icon}</span>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-700">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-stone-300 bg-white px-3 py-2">
-      <div className="flex items-center gap-2 text-xs text-stone-600">
-        <span className="text-moss">{icon}</span>
-        {label}
-      </div>
-      <div className="mt-1 truncate text-sm font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function CommunityRow({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-stone-300 bg-white px-3 py-2">
-      <div>
-        <div className="text-sm font-medium">{value}</div>
-        <div className="text-xs text-stone-600">{label}</div>
-      </div>
-      <div className="max-w-[40%] text-right text-xs text-stone-600">{detail}</div>
-    </div>
-  );
-}
-
-function Reward({ label, points }: { label: string; points: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm">
-      <span>{label}</span>
-      <span className="font-semibold text-clay">{points}</span>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <dt className="text-stone-600">{label}</dt>
-      <dd className="text-right font-medium">{value}</dd>
-    </div>
   );
 }
