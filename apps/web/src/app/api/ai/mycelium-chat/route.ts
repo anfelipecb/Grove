@@ -4,7 +4,7 @@ import {
   CRISIS_SUPPORT_MESSAGE,
   type AiMessage,
 } from "@grove/core";
-import { createServiceSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return Response.json({ safety: true, message: CRISIS_SUPPORT_MESSAGE }, { status: 200 });
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = (await createServerSupabaseClient()) ?? createServiceSupabaseClient();
   if (!supabase) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 });
   }

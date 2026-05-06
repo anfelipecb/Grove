@@ -70,10 +70,10 @@ export function GroveDashboard({
   initialXpEvents,
   communityLabels,
 }: GroveDashboardProps) {
-  const { getToken } = useAuth();
+  const auth = useAuth();
   const supabase = useMemo(
-    () => createBrowserSupabaseClient(() => getToken()),
-    [getToken],
+    () => createBrowserSupabaseClient(() => auth.getToken?.() ?? Promise.resolve(null)),
+    [auth.getToken],
   );
 
   const [goals, setGoals] = useState(initialGoals);
