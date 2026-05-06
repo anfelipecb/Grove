@@ -2,16 +2,16 @@
 id: "GRO-008"
 title: "App shell theme system and solo-community layer switching"
 slug: "app-shell-theme-system-and-solo-community-layer-switching"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["design", "theme", "shell", "frontend"]
+owner: "agent-2"
+branch: "ticket/gro-008-app-shell-theme-system-and-solo-community-layer-switching"
+worktree: "../Grove-agent-2"
+pr_url: "https://github.com/anfelipecb/Grove/pull/5"
+labels: []
 depends_on: []
 created_at: "2026-05-06T20:58:17.133Z"
-updated_at: "2026-05-06T21:05:00.000Z"
+updated_at: "2026-05-06T21:20:39.961Z"
 ---
 
 ## Context
