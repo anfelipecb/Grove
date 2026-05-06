@@ -86,6 +86,22 @@ export function demoGoalInsertsForProfile(profileId: string) {
   }));
 }
 
+/** Canned coach API payloads for demo sessions (no Groq). */
+export const demoCoachGreeting = {
+  greeting:
+    "Good to see you, Andres. Your demo targets are lined up—pick the smallest visible step next.",
+  insight:
+    "Demo data: small consistent wins beat big bursts. Use Add on a suggestion or complete a target to log XP.",
+};
+
+export const demoCoachSuggestions: { title: string; domain: LifeDomainId; rationale: string }[] = demoGoals
+  .slice(0, 3)
+  .map((g) => ({
+    title: `Today: ${g.title}`,
+    domain: g.domain,
+    rationale: "From your seeded demo goals — tap Add to pre-fill the target form.",
+  }));
+
 export const communityFeed = [
   {
     kind: "Session",

@@ -38,6 +38,8 @@ Grove is an ADHD-aware AI accountability and community coordination platform. Th
 | `POST` | `/api/ai/profile` | Intake → `MemberProfileCard` (Groq or local). |
 | `POST` | `/api/ai/domain-weights` | Suggested life-domain weights from goals/friction. |
 | `POST` | `/api/ai/mycelium-chat` | Coach chat with goals + community commitments context. |
+| `POST` | `/api/ai/coach-greeting` | Short dashboard greeting + progress insight from profile/goals/XP (Groq or static/demo fallbacks). |
+| `POST` | `/api/ai/coach-suggestions` | 1–3 suggested next tasks with life domains (Groq or static/demo fallbacks). |
 | `POST` | `/api/ai/session-summary` | Session notes → structured summary. |
 | `POST` | `/api/onboarding/save` | Upsert profile, onboarding row, goals, join `grove-welcome` (user JWT + RLS first; service role optional fallback). |
 | `POST` | `/api/xp` | XP suggestion (core helper). |
