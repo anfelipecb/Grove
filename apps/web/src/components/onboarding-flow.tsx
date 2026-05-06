@@ -56,11 +56,17 @@ function mergeLines(chips: string[], text: string): string {
   return [...set].join("\n");
 }
 
-export function OnboardingFlow({ assessmentMode = false }: { assessmentMode?: boolean }) {
-  return <OnboardingFlowInner assessmentMode={assessmentMode} />;
+export function OnboardingFlow({
+  assessmentMode = false,
+  demoMode = false,
+}: {
+  assessmentMode?: boolean;
+  demoMode?: boolean;
+}) {
+  return <OnboardingFlowInner assessmentMode={assessmentMode} demoMode={demoMode} />;
 }
 
-export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolean }) {
+export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMode: boolean; demoMode: boolean }) {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const errorBoxRef = useRef<HTMLDivElement>(null);
@@ -95,10 +101,11 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
   }, []);
 
   useEffect(() => {
+    if (demoMode) return;
     if (isLoaded && !isSignedIn) {
       router.replace("/sign-in?redirect_url=/onboarding");
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [demoMode, isLoaded, isSignedIn, router]);
 
   useEffect(() => {
     if (error && errorBoxRef.current) {
@@ -303,7 +310,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
     }
   }
 
-  if (!isLoaded || !isSignedIn) {
+  if (!isLoaded || (!demoMode && !isSignedIn)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
         <p className="text-sm">Loading…</p>
@@ -340,6 +347,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
               </p>
             </div>
             <AppHeaderToolbar
+              demoMode={demoMode}
               userButtonAppearance={{
                 elements: {
                   userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-background",

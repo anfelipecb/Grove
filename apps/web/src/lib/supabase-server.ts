@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { isClerkConfigured } from "@/lib/clerk-auth";
+import { DEMO_COOKIE_TRUST, isLocalDemoEligible } from "@/lib/demo-mode";
 
 /**
  * Supabase client for Server Components / Route Handlers.
@@ -40,4 +42,24 @@ export function createServiceSupabaseClient(): SupabaseClient | null {
     return null;
   }
   return createClient(url, key);
+}
+
+/**
+ * When a trusted local-demo session cookie is active, prefer service-role so SSR works without Clerk JWT.
+ * Never returns service-role outside NODE_ENV===development && NEXT_PUBLIC_DEMO_MODE=true.
+ */
+export async function createDemoAwareServerClient(): Promise<{
+  client: SupabaseClient | null;
+  demo: boolean;
+}> {
+  const demo =
+    isLocalDemoEligible() && cookies().get(DEMO_COOKIE_TRUST)?.value === "1";
+
+  if (demo) {
+    const svc = createServiceSupabaseClient();
+    return { client: svc, demo: true };
+  }
+
+  const userClient = await createServerSupabaseClient();
+  return { client: userClient, demo: false };
 }

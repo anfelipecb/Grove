@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import type { ComponentProps } from "react";
 import { useEffect, useState } from "react";
@@ -7,6 +8,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { twMerge } from "tailwind-merge";
 import { useAppLayer } from "@/components/app-layer-context";
+import { getClerkPublishableKeyEffective } from "@/lib/clerk-publishable";
 import { NavLinks } from "@/components/nav-links";
 
 type UserButtonAppearance = NonNullable<ComponentProps<typeof UserButton>["appearance"]>;
@@ -15,6 +17,8 @@ type AppHeaderToolbarProps = {
   /** Override Clerk UserButton styling (e.g. onboarding larger avatar). */
   userButtonAppearance?: UserButtonAppearance;
   className?: string;
+  /** Local dev demo session — avoid Clerk UserButton when unauthenticated. */
+  demoMode?: boolean;
 };
 
 const defaultAppearance: UserButtonAppearance = {
@@ -24,7 +28,7 @@ const defaultAppearance: UserButtonAppearance = {
   },
 };
 
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
+const clerkPublishableKey = getClerkPublishableKeyEffective();
 
 function LayerSegment() {
   const { layer, goPersonal, goCommunity } = useAppLayer();
@@ -113,7 +117,7 @@ function ThemeSegment() {
 /**
  * Primary nav, layer switch, theme switch, and account control: scrollable links + fixed controls.
  */
-export function AppHeaderToolbar({ userButtonAppearance, className }: AppHeaderToolbarProps) {
+export function AppHeaderToolbar({ userButtonAppearance, className, demoMode }: AppHeaderToolbarProps) {
   return (
     <div
       className={twMerge(
@@ -135,8 +139,17 @@ export function AppHeaderToolbar({ userButtonAppearance, className }: AppHeaderT
         className="flex shrink-0 items-center gap-1.5 border-border bg-muted/50 px-2.5 py-1.5 sm:border-l"
         data-testid="header-account"
       >
-        <span className="hidden text-xs font-medium text-muted-foreground sm:inline">Account</span>
-        {clerkPublishableKey ? (
+        <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
+          {demoMode ? "Demo" : "Account"}
+        </span>
+        {demoMode ? (
+          <Link
+            href="/demo/exit"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+          >
+            Exit demo
+          </Link>
+        ) : clerkPublishableKey ? (
           <UserButton
             afterSignOutUrl="/"
             appearance={userButtonAppearance ?? defaultAppearance}

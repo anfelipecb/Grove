@@ -7,7 +7,7 @@ priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/6"
 labels: ["demo", "auth", "testing", "onboarding"]
 depends_on: []
 created_at: "2026-05-06T20:58:14.414Z"

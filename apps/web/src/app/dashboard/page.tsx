@@ -1,12 +1,20 @@
 import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
-import { redirect } from "next/navigation";
 import { GroveDashboard, type DashboardGoalRow, type DashboardXpEventRow } from "@/components/grove-dashboard";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
+import { createDemoAwareServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  if (!isClerkConfigured()) {
+  const userId = await getServerUserId();
+
+  if (!userId) {
+    redirect("/sign-in?redirect_url=/dashboard");
+  }
+
+  const { client: supabase, demo: demoReads } = await createDemoAwareServerClient();
+
+  if (!demoReads && !isClerkConfigured()) {
     return (
       <main className="p-8 text-stone-700">
         <p>Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to use the dashboard.</p>
@@ -14,16 +22,14 @@ export default async function DashboardPage() {
     );
   }
 
-  const userId = await getServerUserId();
-  if (!userId) {
-    redirect("/sign-in?redirect_url=/dashboard");
-  }
-
-  const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return (
       <main className="p-8 text-stone-700">
-        <p>Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and a publishable key.</p>
+        <p>Supabase is not configured.</p>
+        <p className="mt-2 text-sm">
+          Demo mode needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or publishable key with a Clerk
+          session).
+        </p>
       </main>
     );
   }
@@ -78,6 +84,7 @@ export default async function DashboardPage() {
 
   return (
     <GroveDashboard
+      demoMode={demoReads}
       profileId={profileId}
       displayName={profile.display_name as string}
       totalXp={profile.total_xp as number}

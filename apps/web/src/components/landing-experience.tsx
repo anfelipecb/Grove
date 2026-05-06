@@ -28,7 +28,7 @@ const tabs = [
   },
 ] as const;
 
-export function LandingExperience() {
+export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: boolean }) {
   const [active, setActive] = useState<(typeof tabs)[number]["id"]>("mycelium");
   const panel = tabs.find((t) => t.id === active) ?? tabs[1];
 
@@ -62,7 +62,7 @@ export function LandingExperience() {
               <p className="text-xs text-stone-600 dark:text-muted-foreground">Grow together</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
             <Link
               href="/sign-in"
               className="rounded-xl border border-white/40 bg-white/30 px-4 py-2.5 text-sm font-semibold text-bark shadow-glass backdrop-blur-md transition hover:bg-white/50 hover:shadow-lg dark:border-white/10 dark:bg-zinc-900/50 dark:text-foreground dark:shadow-glass-dark dark:hover:bg-zinc-800/70"
@@ -76,6 +76,28 @@ export function LandingExperience() {
               Get started
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
+            {showDemoLinks ? (
+              <div className="flex w-full flex-col gap-2 rounded-xl border border-dashed border-moss/40 bg-white/35 px-3 py-2 text-xs shadow-glass backdrop-blur-md sm:min-w-[240px] sm:flex-1">
+                <span className="font-semibold text-bark">Local demo (no Clerk sign-in)</span>
+                <div className="flex flex-wrap gap-2">
+                  <Link href="/demo/start?scenario=onboarding" className="font-semibold text-moss hover:underline">
+                    Onboarding
+                  </Link>
+                  <span className="text-stone-400" aria-hidden="true">
+                    ·
+                  </span>
+                  <Link href="/demo/start?scenario=dashboard" className="font-semibold text-moss hover:underline">
+                    Dashboard
+                  </Link>
+                  <span className="text-stone-400" aria-hidden="true">
+                    ·
+                  </span>
+                  <Link href="/demo/exit" className="text-stone-600 hover:text-bark hover:underline">
+                    Exit demo
+                  </Link>
+                </div>
+              </div>
+            ) : null}
           </div>
         </header>
 

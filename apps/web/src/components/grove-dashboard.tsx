@@ -45,6 +45,7 @@ export type DashboardXpEventRow = {
 };
 
 export type GroveDashboardProps = {
+  demoMode?: boolean;
   profileId: string;
   displayName: string;
   totalXp: number;
@@ -61,6 +62,7 @@ const inputBase =
   "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
 
 export function GroveDashboard({
+  demoMode = false,
   profileId,
   displayName,
   totalXp: initialTotalXp,
@@ -72,8 +74,8 @@ export function GroveDashboard({
 }: GroveDashboardProps) {
   const auth = useAuth();
   const supabase = useMemo(
-    () => createBrowserSupabaseClient(() => auth.getToken?.() ?? Promise.resolve(null)),
-    [auth.getToken],
+    () => (demoMode ? null : createBrowserSupabaseClient(() => auth.getToken?.() ?? Promise.resolve(null))),
+    [demoMode, auth],
   );
 
   const [goals, setGoals] = useState(initialGoals);
@@ -120,9 +122,34 @@ export function GroveDashboard({
 
   const addGoal = useCallback(async () => {
     const trimmed = title.trim();
-    if (!trimmed || !supabase) return;
+    if (!trimmed) return;
     setError(null);
     const xp = suggested.xp;
+
+    if (demoMode) {
+      const res = await fetch("/api/demo/goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: trimmed,
+          domain,
+          subarea,
+          xp_value: xp,
+        }),
+      });
+      const payload = (await res.json()) as { error?: string; goal?: DashboardGoalRow };
+      if (!res.ok) {
+        setError(payload.error ?? "Could not add goal.");
+        return;
+      }
+      if (payload.goal) {
+        setGoals((g) => [payload.goal as DashboardGoalRow, ...g]);
+        setTitle("");
+      }
+      return;
+    }
+
+    if (!supabase) return;
     const { data, error: insertError } = await supabase
       .from("goals")
       .insert({
@@ -143,13 +170,41 @@ export function GroveDashboard({
       setGoals((g) => [data as DashboardGoalRow, ...g]);
       setTitle("");
     }
-  }, [title, supabase, profileId, domain, subarea, suggested.xp]);
+  }, [title, supabase, profileId, domain, subarea, suggested.xp, demoMode]);
 
   const completeGoal = useCallback(
     async (goal: DashboardGoalRow) => {
-      if (!supabase || goal.status !== "active") return;
+      if (goal.status !== "active") return;
       setError(null);
       const xpGain = goal.xp_value || suggested.xp;
+
+      if (demoMode) {
+        const res = await fetch(`/api/demo/goals/${goal.id}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ xp: xpGain }),
+        });
+        const payload = (await res.json()) as {
+          error?: string;
+          xpEvent?: DashboardXpEventRow;
+          profile?: { totalXp: number; spendablePoints: number };
+        };
+        if (!res.ok) {
+          setError(payload.error ?? "Could not complete goal.");
+          return;
+        }
+        if (payload.profile) {
+          setTotalXp(payload.profile.totalXp);
+          setSpendablePoints(payload.profile.spendablePoints);
+        }
+        if (payload.xpEvent) {
+          setXpEvents((ev) => [payload.xpEvent as DashboardXpEventRow, ...ev]);
+        }
+        setGoals((g) => g.filter((item) => item.id !== goal.id));
+        return;
+      }
+
+      if (!supabase) return;
       const { error: u1 } = await supabase
         .from("goals")
         .update({ status: "completed", completed_at: new Date().toISOString() })
@@ -194,7 +249,7 @@ export function GroveDashboard({
         ...ev,
       ]);
     },
-    [supabase, profileId, suggested.xp, totalXp, spendablePoints],
+    [supabase, profileId, suggested.xp, totalXp, spendablePoints, demoMode],
   );
 
   const primaryCommunity = communityLabels[0] ?? "Your communities";
@@ -219,7 +274,7 @@ export function GroveDashboard({
               <Metric icon={<Bell className={iconClass} />} label="Points" value={`${spendablePoints} pts`} />
             </div>
           </div>
-          <AppHeaderToolbar />
+          <AppHeaderToolbar demoMode={demoMode} />
         </header>
 
         {error ? (
