@@ -2,16 +2,16 @@
 id: "GRO-009"
 title: "Mobile-first solo dashboard for goals consistency and XP"
 slug: "mobile-first-solo-dashboard-for-goals-consistency-and-xp"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-2"
+branch: "ticket/gro-009-mobile-first-solo-dashboard-for-goals-consistency-and-xp"
+worktree: "../Grove-agent-2"
 pr_url: ""
-labels: ["dashboard", "mobile", "solo-loop", "frontend"]
-depends_on: ["GRO-008"]
+labels: []
+depends_on: []
 created_at: "2026-05-06T20:58:19.749Z"
-updated_at: "2026-05-06T21:05:00.000Z"
+updated_at: "2026-05-06T21:41:40.445Z"
 ---
 
 ## Context
