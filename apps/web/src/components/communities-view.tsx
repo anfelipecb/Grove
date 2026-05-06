@@ -1,17 +1,22 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { CalendarCheck, Library, Users } from "lucide-react";
+import { CalendarCheck, Library, Pencil, Plus, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 import { MyceliumChat } from "@/components/mycelium-chat";
+
+export type MembershipRole = "owner" | "organizer" | "member";
 
 export type CommunityListItem = {
   membershipId: string;
   communityId: string;
   name: string;
   slug: string;
+  description: string | null;
+  role: MembershipRole;
 };
 
 type FeedRow = {
@@ -31,7 +36,18 @@ type SessionRow = {
 
 const panel = "rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel";
 
-export function CommunitiesView({ communities }: { communities: CommunityListItem[] }) {
+function canManageCommunity(role: MembershipRole): boolean {
+  return role === "owner" || role === "organizer";
+}
+
+export function CommunitiesView({
+  communities,
+  profileId,
+}: {
+  communities: CommunityListItem[];
+  profileId: string;
+}) {
+  const router = useRouter();
   const { getToken } = useAuth();
   const supabase = useMemo(() => createBrowserSupabaseClient(() => getToken()), [getToken]);
 
@@ -40,7 +56,37 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+
+  const [createName, setCreateName] = useState("");
+  const [createSlug, setCreateSlug] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createPending, setCreatePending] = useState(false);
+
+  const [manageName, setManageName] = useState("");
+  const [manageDescription, setManageDescription] = useState("");
+  const [manageError, setManageError] = useState<string | null>(null);
+  const [managePending, setManagePending] = useState(false);
+
+  useEffect(() => {
+    const ids = new Set(communities.map((c) => c.communityId));
+    if (selectedId && !ids.has(selectedId)) {
+      setSelectedId(communities[0]?.communityId ?? null);
+    }
+  }, [communities, selectedId]);
+
   const selected = communities.find((c) => c.communityId === selectedId) ?? null;
+  const canManage = selected ? canManageCommunity(selected.role) : false;
+
+  useEffect(() => {
+    if (manageOpen && selected) {
+      setManageName(selected.name);
+      setManageDescription(selected.description ?? "");
+      setManageError(null);
+    }
+  }, [manageOpen, selected]);
 
   const refresh = useCallback(async () => {
     if (!supabase || !selectedId) {
@@ -73,8 +119,211 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
     void refresh();
   }, [refresh]);
 
+  async function submitCreate() {
+    setCreateError(null);
+    setCreatePending(true);
+    try {
+      const res = await fetch("/api/communities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: createName,
+          slug: createSlug,
+          description: createDescription.trim() || null,
+        }),
+      });
+      const data = (await res.json()) as { error?: string; community?: { id: string } };
+      if (!res.ok) {
+        setCreateError(data.error ?? "Could not create community.");
+        return;
+      }
+      const newId = data.community?.id;
+      setCreateOpen(false);
+      setCreateName("");
+      setCreateSlug("");
+      setCreateDescription("");
+      if (newId) setSelectedId(newId);
+      router.refresh();
+    } finally {
+      setCreatePending(false);
+    }
+  }
+
+  async function submitManage() {
+    if (!selected) return;
+    setManageError(null);
+    setManagePending(true);
+    try {
+      const res = await fetch(`/api/communities/${selected.communityId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: manageName.trim(),
+          description: manageDescription.trim() || null,
+        }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setManageError(data.error ?? "Could not save changes.");
+        return;
+      }
+      setManageOpen(false);
+      router.refresh();
+    } finally {
+      setManagePending(false);
+    }
+  }
+
   return (
-    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
+    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8" data-profile-id={profileId}>
+      {createOpen ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-bark/40 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !createPending) setCreateOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-labelledby="create-community-title"
+            className={`${panel} z-50 w-full max-w-md`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="create-community-title" className="text-lg font-semibold text-bark">
+              Create community
+            </h2>
+            <p className="mt-1 text-xs text-stone-600">
+              URL slug is permanent—pick something memorable for your cohort (letters, numbers, hyphens).
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-medium text-stone-700">
+                Name
+                <input
+                  type="text"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  placeholder="Build night cohort"
+                  disabled={createPending}
+                />
+              </label>
+              <label className="block text-sm font-medium text-stone-700">
+                Slug
+                <input
+                  type="text"
+                  value={createSlug}
+                  onChange={(e) => setCreateSlug(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 font-mono text-sm lowercase"
+                  placeholder="build-night-east"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  disabled={createPending}
+                />
+              </label>
+              <label className="block text-sm font-medium text-stone-700">
+                Description (optional)
+                <textarea
+                  value={createDescription}
+                  onChange={(e) => setCreateDescription(e.target.value)}
+                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  disabled={createPending}
+                />
+              </label>
+            </div>
+            {createError ? <p className="mt-3 text-sm text-red-700">{createError}</p> : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                disabled={createPending}
+                onClick={() => setCreateOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-moss bg-moss px-3 py-2 text-sm font-semibold text-white hover:bg-moss/90 disabled:opacity-60"
+                disabled={createPending}
+                onClick={() => void submitCreate()}
+              >
+                {createPending ? "Creating…" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {manageOpen && selected ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-bark/40 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !managePending) setManageOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-labelledby="manage-community-title"
+            className={`${panel} z-50 w-full max-w-md`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="manage-community-title" className="text-lg font-semibold text-bark">
+              Manage community
+            </h2>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-medium text-stone-700">
+                Name
+                <input
+                  type="text"
+                  value={manageName}
+                  onChange={(e) => setManageName(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  disabled={managePending}
+                />
+              </label>
+              <label className="block text-sm font-medium text-stone-700">
+                Description
+                <textarea
+                  value={manageDescription}
+                  onChange={(e) => setManageDescription(e.target.value)}
+                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  disabled={managePending}
+                />
+              </label>
+              <label className="block text-sm font-medium text-stone-500">
+                URL slug (read-only)
+                <input
+                  type="text"
+                  readOnly
+                  value={selected.slug}
+                  className="mt-1 w-full cursor-not-allowed rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-sm text-stone-600"
+                />
+              </label>
+            </div>
+            {manageError ? <p className="mt-3 text-sm text-red-700">{manageError}</p> : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                disabled={managePending}
+                onClick={() => setManageOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-moss bg-moss px-3 py-2 text-sm font-semibold text-white hover:bg-moss/90 disabled:opacity-60"
+                disabled={managePending}
+                onClick={() => void submitManage()}
+              >
+                {managePending ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
         <header className="space-y-4 border-b border-stone-300 pb-4">
           <div>
@@ -86,13 +335,33 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
 
         <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[220px_1fr_340px]">
           <aside className={panel}>
-            <div className="mb-3 flex items-center gap-2 text-moss">
-              <Users className="h-4 w-4" aria-hidden="true" />
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Your communities</h2>
+            <div className="mb-3 flex items-center justify-between gap-2 text-moss">
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Your communities</h2>
+              </span>
             </div>
+            <button
+              type="button"
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-md border border-moss bg-moss px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-moss/90"
+              onClick={() => {
+                setCreateError(null);
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create community
+            </button>
             <ul className="space-y-2">
               {communities.length === 0 ? (
-                <li className="text-sm text-stone-600">No memberships yet—complete onboarding.</li>
+                <li className="text-sm text-stone-600">
+                  <p>You are not in any communities yet.</p>
+                  <p className="mt-2 font-medium text-bark">Start a space</p>
+                  <p className="mt-1 text-stone-600">
+                    Builders and organizers can create a community here. Onboarding joins you to Grove Welcome when
+                    you finish setup.
+                  </p>
+                </li>
               ) : (
                 communities.map((c) => (
                   <li key={c.communityId}>
@@ -111,6 +380,16 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
                 ))
               )}
             </ul>
+            {selected && canManage ? (
+              <button
+                type="button"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"
+                onClick={() => setManageOpen(true)}
+              >
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                Manage selected
+              </button>
+            ) : null}
           </aside>
 
           <section className="grid gap-4 lg:grid-cols-1">
@@ -165,10 +444,7 @@ export function CommunitiesView({ communities }: { communities: CommunityListIte
           </section>
 
           <aside className={`${panel} flex min-h-[420px] flex-col gap-3`}>
-            <MyceliumChat
-              communityId={selected?.communityId}
-              communityName={selected?.name ?? "Grove"}
-            />
+            <MyceliumChat communityId={selected?.communityId} communityName={selected?.name ?? "Grove"} />
           </aside>
         </div>
       </div>

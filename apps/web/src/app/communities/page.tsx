@@ -34,20 +34,23 @@ export default async function CommunitiesPage() {
 
   const { data: memberships } = await supabase
     .from("memberships")
-    .select("id, community_id, communities(id, name, slug)")
+    .select("id, role, community_id, communities(id, name, slug, description)")
     .eq("profile_id", profileId);
 
   const communities = (memberships ?? [])
     .map((row) => {
       const raw = row.communities as unknown;
       const c = Array.isArray(raw) ? raw[0] : raw;
-      const com = c as { id: string; name: string; slug: string } | null | undefined;
+      const com = c as { id: string; name: string; slug: string; description: string | null } | null | undefined;
       if (!com?.id) return null;
+      const role = row.role as "owner" | "organizer" | "member" | undefined;
       return {
         membershipId: row.id as string,
         communityId: com.id,
         name: com.name,
         slug: com.slug,
+        description: com.description ?? null,
+        role: role ?? "member",
       };
     })
     .filter(Boolean) as {
@@ -55,7 +58,9 @@ export default async function CommunitiesPage() {
     communityId: string;
     name: string;
     slug: string;
+    description: string | null;
+    role: "owner" | "organizer" | "member";
   }[];
 
-  return <CommunitiesView communities={communities} />;
+  return <CommunitiesView communities={communities} profileId={profileId} />;
 }
