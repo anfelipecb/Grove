@@ -7,7 +7,7 @@ priority: "p2"
 owner: "agent-1"
 branch: "ticket/gro-011-calendar-views-for-personal-tasks-and-community-schedules"
 worktree: "../Grove-agent-1"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/8"
 labels: []
 depends_on: []
 created_at: "2026-05-06T20:58:25.007Z"
