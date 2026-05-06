@@ -2,7 +2,7 @@
 id: "GRO-009"
 title: "Mobile-first solo dashboard for goals consistency and XP"
 slug: "mobile-first-solo-dashboard-for-goals-consistency-and-xp"
-status: "backlog"
+status: "ready"
 priority: "p1"
 owner: ""
 branch: ""
