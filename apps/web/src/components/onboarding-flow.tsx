@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "lucide-react";
@@ -55,7 +56,11 @@ function mergeLines(chips: string[], text: string): string {
   return [...set].join("\n");
 }
 
-export function OnboardingFlow() {
+export function OnboardingFlow({ assessmentMode = false }: { assessmentMode?: boolean }) {
+  return <OnboardingFlowInner assessmentMode={assessmentMode} />;
+}
+
+export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolean }) {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const errorBoxRef = useRef<HTMLDivElement>(null);
@@ -275,6 +280,7 @@ export function OnboardingFlow() {
           intake: fullIntake,
           profileCard,
           xpDomainWeights: weights,
+          mode: assessmentMode ? "assessment" : "initial",
         }),
       });
       const saveRaw = await saveRes.text();
@@ -316,9 +322,16 @@ export function OnboardingFlow() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
                 <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Grove onboarding
+                {assessmentMode ? "Grove onboarding reassessment" : "Grove onboarding"}
               </div>
-              <h1 className="mt-2 text-2xl font-semibold">Grow together—starting with what matters to you.</h1>
+              <h1 className="mt-2 text-2xl font-semibold">
+                {assessmentMode ? "Recalibrate what matters and keep moving." : "Grow together—starting with what matters to you."}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-700">
+                {assessmentMode
+                  ? "Use this to adjust your goals, friction signals, and support style if the first pass no longer fits. You can also open Mycelium for a short calibration chat."
+                  : "We’ll keep this practical: concrete next actions, not a personality quiz."}
+              </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
                 <div className="h-full bg-moss transition-all" style={{ width: `${progress}%` }} />
               </div>
@@ -342,8 +355,10 @@ export function OnboardingFlow() {
             {step === 0 && (
               <div className="grid gap-4">
                 <p className="text-sm leading-6 text-stone-700">
-                  Welcome. Grove pairs a private growth loop with community coordination. We&apos;ll keep this practical:
-                  concrete next actions, not a personality quiz.
+                  Welcome. Grove pairs a private growth loop with community coordination.
+                  {assessmentMode
+                    ? " This pass is for recalibration, not a fresh sign-up."
+                    : " We’ll keep this practical: concrete next actions, not a personality quiz."}
                 </p>
                 <Field label="What should we call you?">
                   <input
@@ -554,7 +569,7 @@ export function OnboardingFlow() {
                   className="inline-flex items-center gap-2 rounded-md bg-bark px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:opacity-40"
                 >
                   <Sparkles className="h-4 w-4" aria-hidden="true" />
-                  {loading ? "Saving…" : "Finish & open Grove"}
+                  {loading ? "Saving…" : assessmentMode ? "Save recalibration" : "Finish & open Grove"}
                 </button>
               )}
             </div>
@@ -568,7 +583,31 @@ export function OnboardingFlow() {
             {safetyMessage ? (
               <p className="rounded-md border border-clay bg-clay/10 p-4 text-sm leading-6 text-bark">{safetyMessage}</p>
             ) : profile ? (
-              <ProfileCard profile={profile} />
+              <div className="grid gap-3">
+                <ProfileCard profile={profile} />
+                {assessmentMode ? (
+                  <div className="rounded-md border border-stone-200 bg-stone-50 p-4">
+                    <p className="text-sm font-medium text-bark">Need a second pass?</p>
+                    <p className="mt-1 text-sm leading-6 text-stone-700">
+                      Open Mycelium to talk through what changed, then come back and save the adjusted onboarding.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href="/communities"
+                        className="inline-flex items-center justify-center rounded-md bg-bark px-3 py-2 text-sm font-semibold text-white transition hover:bg-moss"
+                      >
+                        Talk to Mycelium
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
+                      >
+                        Back to dashboard
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className="flex min-h-72 flex-col justify-center rounded-md border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm leading-6 text-stone-600">
                 <p>

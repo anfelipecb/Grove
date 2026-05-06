@@ -2,7 +2,11 @@ import Link from "next/link";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { hasClerkPublishableKey } from "@/lib/clerk-auth";
 
-export default function OnboardingPage() {
+export default function OnboardingPage({
+  searchParams,
+}: {
+  searchParams?: { mode?: string };
+}) {
   if (!hasClerkPublishableKey()) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center text-ink">
@@ -13,5 +17,5 @@ export default function OnboardingPage() {
       </main>
     );
   }
-  return <OnboardingFlow />;
+  return <OnboardingFlow assessmentMode={searchParams?.mode === "assess"} />;
 }

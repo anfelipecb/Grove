@@ -8,6 +8,7 @@ type SaveBody = {
   intake: IntakeDraft;
   profileCard: MemberProfileCard;
   xpDomainWeights: Record<LifeDomainId, number>;
+  mode?: "initial" | "assessment";
 };
 
 export async function POST(request: Request) {
@@ -87,18 +88,20 @@ export async function POST(request: Request) {
     .map(([k]) => k);
   const primaryDomain = sortedDomains[0] ?? "learning";
 
-  const targets = body.profileCard.firstTargets.slice(0, 3);
-  for (const title of targets) {
-    const { error: goalError } = await supabase.from("goals").insert({
-      profile_id: profileId,
-      title,
-      domain: primaryDomain,
-      subarea: null,
-      xp_value: 25,
-      status: "active",
-    });
-    if (goalError) {
-      return Response.json({ error: goalError.message }, { status: 500 });
+  if (body.mode !== "assessment") {
+    const targets = body.profileCard.firstTargets.slice(0, 3);
+    for (const title of targets) {
+      const { error: goalError } = await supabase.from("goals").insert({
+        profile_id: profileId,
+        title,
+        domain: primaryDomain,
+        subarea: null,
+        xp_value: 25,
+        status: "active",
+      });
+      if (goalError) {
+        return Response.json({ error: goalError.message }, { status: 500 });
+      }
     }
   }
 
@@ -109,21 +112,18 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (community) {
-    const { data: existing } = await supabase
+    const { error: memError } = await supabase
       .from("memberships")
-      .select("id")
-      .eq("community_id", community.id)
-      .eq("profile_id", profileId)
-      .maybeSingle();
-    if (!existing) {
-      const { error: memError } = await supabase.from("memberships").insert({
-        community_id: community.id,
-        profile_id: profileId,
-        role: "member",
-      });
-      if (memError) {
-        return Response.json({ error: memError.message }, { status: 500 });
-      }
+      .upsert(
+        {
+          community_id: community.id,
+          profile_id: profileId,
+          role: "member",
+        },
+        { onConflict: "community_id,profile_id" },
+      );
+    if (memError) {
+      return Response.json({ error: memError.message }, { status: 500 });
     }
   }
 

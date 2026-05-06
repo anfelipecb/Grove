@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 import { useMemo, useState, useCallback } from "react";
 import {
   Bell,
@@ -85,6 +86,7 @@ export function GroveDashboard({
   const [resistance, setResistance] = useState<XpInput["resistance"]>("medium");
   const [communityContribution, setCommunityContribution] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAssessment, setShowAssessment] = useState(false);
 
   const summaryBlurb = useMemo(() => {
     const style = focusNotes?.support_style as string | undefined;
@@ -382,10 +384,43 @@ export function GroveDashboard({
           </Panel>
 
           <Panel title="Support" icon={<MessageSquareText className={iconClass} />}>
-            <dl className="space-y-3 text-sm">
-              <InfoRow label="Account" value={displayName} />
-              <InfoRow label="Private focus data" value="Only you + RLS" />
-            </dl>
+            <div className="space-y-4">
+              <dl className="space-y-3 text-sm">
+                <InfoRow label="Account" value={displayName} />
+                <InfoRow label="Private focus data" value="Only you + RLS" />
+              </dl>
+              <div className="border-t border-stone-200 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAssessment((value) => !value)}
+                  className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
+                >
+                  {showAssessment ? "Hide assessment" : "Assess onboarding"}
+                </button>
+                {showAssessment ? (
+                  <div className="mt-3 grid gap-3 rounded-md border border-stone-200 bg-stone-50 p-4 text-sm">
+                    <p className="leading-6 text-stone-700">
+                      Reopen onboarding to recalibrate goals, friction, and support style. If the answers feel off, open
+                      Mycelium and talk it through before saving.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href="/onboarding?mode=assess"
+                        className="inline-flex items-center justify-center rounded-md bg-bark px-3 py-2 font-semibold text-white transition hover:bg-moss"
+                      >
+                        Reopen onboarding
+                      </Link>
+                      <Link
+                        href="/communities"
+                        className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 font-semibold text-bark transition hover:border-moss"
+                      >
+                        Talk to Mycelium
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </Panel>
         </section>
       </div>
