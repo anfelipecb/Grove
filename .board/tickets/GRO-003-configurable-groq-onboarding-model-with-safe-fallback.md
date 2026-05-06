@@ -7,14 +7,14 @@ priority: "p2"
 owner: "agent-1"
 branch: "ticket/gro-003-configurable-groq-onboarding-model-with-safe-fallback"
 worktree: "../Grove-agent-1"
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/1"
 labels:
   - "onboarding"
   - "ai"
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-06T05:21:48.505Z"
-updated_at: "2026-05-06T05:40:07.061Z"
+updated_at: "2026-05-06T12:00:00.000Z"
 ---
 
 ## Context
