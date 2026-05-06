@@ -200,9 +200,9 @@ export function GroveDashboard({
   const primaryCommunity = communityLabels[0] ?? "Your communities";
 
   return (
-    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-5">
-        <header className="space-y-4 border-b border-stone-300 pb-5">
+        <header className="space-y-4 border-b border-border pb-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-md bg-bark text-white shadow-panel">

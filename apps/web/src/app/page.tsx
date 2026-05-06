@@ -11,7 +11,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-fern/45 via-stone-50/95 to-white text-ink">
+    <main className="min-h-screen bg-gradient-to-b from-fern/45 via-stone-50/95 to-white text-foreground dark:from-zinc-950 dark:via-neutral-950 dark:to-black">
       <LandingExperience />
     </main>
   );

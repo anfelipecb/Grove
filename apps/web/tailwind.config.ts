@@ -1,10 +1,20 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        muted: "hsl(var(--muted) / <alpha-value>)",
+        "muted-foreground": "hsl(var(--muted-foreground) / <alpha-value>)",
+        border: "hsl(var(--border) / <alpha-value>)",
+        card: "hsl(var(--card) / <alpha-value>)",
+        "card-foreground": "hsl(var(--card-foreground) / <alpha-value>)",
+        accent: "hsl(var(--accent) / <alpha-value>)",
+        "accent-foreground": "hsl(var(--accent-foreground) / <alpha-value>)",
         bark: "#243229",
         moss: "#4d7c55",
         fern: "#dcebd2",
@@ -14,7 +24,12 @@ const config: Config = {
       },
       boxShadow: {
         panel: "0 10px 30px rgba(30, 42, 34, 0.08)",
+        "panel-dark": "0 10px 30px rgba(0, 0, 0, 0.35)",
         glass: "0 8px 32px rgba(30, 42, 34, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+        "glass-dark": "0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+      },
+      ringOffsetColor: {
+        background: "hsl(var(--background) / <alpha-value>)",
       },
       keyframes: {
         "landing-float": {

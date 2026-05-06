@@ -16,7 +16,7 @@ import {
 } from "@/components/onboarding-suggestions";
 
 const inputBase =
-  "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
+  "w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
 
 const GOAL_CHIPS = [
   "Ship something visible",
@@ -305,7 +305,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
 
   if (!isLoaded || !isSignedIn) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-stone-600">
+      <main className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
         <p className="text-sm">Loading…</p>
       </main>
     );
@@ -315,9 +315,9 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
   return (
-    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <header className="sticky top-0 z-30 -mx-4 border-b border-stone-200/80 bg-stone-50/85 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <header className="sticky top-0 z-30 -mx-4 border-b border-border bg-background/90 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <div className="flex flex-col gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
@@ -332,7 +332,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
                   ? "Use this to adjust your goals, friction signals, and support style if the first pass no longer fits. You can also open Mycelium for a short calibration chat."
                   : "We’ll keep this practical: concrete next actions, not a personality quiz."}
               </p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                 <div className="h-full bg-moss transition-all" style={{ width: `${progress}%` }} />
               </div>
               <p className="mt-2 text-xs text-stone-600">
@@ -342,7 +342,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
             <AppHeaderToolbar
               userButtonAppearance={{
                 elements: {
-                  userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-white",
+                  userButtonAvatarBox: "h-9 w-9 ring-2 ring-moss/25 ring-offset-1 ring-offset-background",
                   userButtonBox: "flex-row-reverse",
                 },
               }}
@@ -351,7 +351,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel">
+          <div className="rounded-md border border-border bg-card/90 p-4 shadow-panel dark:shadow-panel-dark">
             {step === 0 && (
               <div className="grid gap-4">
                 <p className="text-sm leading-6 text-stone-700">
@@ -538,7 +538,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
                   setStep((s) => Math.max(0, s - 1));
                   if (step <= 3) setWeightsLoaded(false);
                 }}
-                className="inline-flex items-center gap-2 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-bark disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-bark disabled:opacity-40"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 Back
@@ -575,7 +575,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
             </div>
           </div>
 
-          <div className="rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel">
+          <div className="rounded-md border border-border bg-card/90 p-4 shadow-panel dark:shadow-panel-dark">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               Preview
@@ -586,7 +586,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
               <div className="grid gap-3">
                 <ProfileCard profile={profile} />
                 {assessmentMode ? (
-                  <div className="rounded-md border border-stone-200 bg-stone-50 p-4">
+                  <div className="rounded-md border border-border bg-muted p-4">
                     <p className="text-sm font-medium text-bark">Need a second pass?</p>
                     <p className="mt-1 text-sm leading-6 text-stone-700">
                       Open Mycelium to talk through what changed, then come back and save the adjusted onboarding.
@@ -600,7 +600,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
                       </Link>
                       <Link
                         href="/dashboard"
-                        className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
+                        className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
                       >
                         Back to dashboard
                       </Link>
@@ -609,7 +609,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
                 ) : null}
               </div>
             ) : (
-              <div className="flex min-h-72 flex-col justify-center rounded-md border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm leading-6 text-stone-600">
+              <div className="flex min-h-72 flex-col justify-center rounded-md border border-dashed border-border bg-muted p-6 text-center text-sm leading-6 text-muted-foreground">
                 <p>
                   When you finish, Mycelium will draft a profile card here: next actions, likely friction, and a
                   community entry point—grounded in what you entered.
@@ -625,7 +625,7 @@ export function OnboardingFlowInner({ assessmentMode }: { assessmentMode: boolea
 
 function ChipSubheading({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">{children}</p>
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
   );
 }
 
@@ -646,7 +646,7 @@ function OnboardingChipButtons({
     variant === "goal"
       ? "border-moss bg-moss/15 text-bark"
       : "border-clay bg-clay/15 text-bark";
-  const idle = "border-stone-300 bg-white text-stone-700 hover:border-moss";
+  const idle = "border-border bg-card text-muted-foreground hover:border-moss";
   return (
     <div className="flex flex-wrap gap-2">
       {labels.map((c) => (
@@ -699,7 +699,7 @@ function Section({ title, items }: { title: string; items: string[] }) {
       <h2 className="text-sm font-semibold text-bark">{title}</h2>
       <ul className="mt-2 space-y-2">
         {items.map((item) => (
-          <li key={item} className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-700">
+          <li key={item} className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
             {item}
           </li>
         ))}

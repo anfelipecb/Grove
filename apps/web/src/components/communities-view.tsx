@@ -34,7 +34,8 @@ type SessionRow = {
   agenda: string | null;
 };
 
-const panel = "rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel";
+const panel =
+  "rounded-md border border-border bg-card/90 p-4 shadow-panel dark:border-border dark:bg-card dark:shadow-panel-dark";
 
 function canManageCommunity(role: MembershipRole): boolean {
   return role === "owner" || role === "organizer";
@@ -175,7 +176,7 @@ export function CommunitiesView({
   }
 
   return (
-    <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8" data-profile-id={profileId}>
+    <main className="min-h-screen bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8" data-profile-id={profileId}>
       {createOpen ? (
         <div
           className="fixed inset-0 z-40 flex items-center justify-center bg-bark/40 p-4"
@@ -325,7 +326,7 @@ export function CommunitiesView({
       ) : null}
 
       <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
-        <header className="space-y-4 border-b border-stone-300 pb-4">
+        <header className="space-y-4 border-b border-border pb-4">
           <div>
             <h1 className="text-xl font-semibold text-bark">Communities</h1>
             <p className="text-sm text-stone-600">Feed, sessions, and Mycelium alongside your group.</p>
