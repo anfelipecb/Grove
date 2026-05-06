@@ -2,16 +2,16 @@
 id: "GRO-013"
 title: "Fix reassessment memberships RLS and expand Mycelium calibration planning"
 slug: "fix-reassessment-memberships-rls-and-expand-mycelium-calibration-planning"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-1"
+branch: "ticket/gro-013-fix-reassessment-memberships-rls-and-expand-mycelium-calibration-planning"
+worktree: "../Grove-agent-1"
 pr_url: ""
 labels: []
 depends_on: []
 created_at: "2026-05-06T23:47:50.643Z"
-updated_at: "2026-05-06T23:48:50.000Z"
+updated_at: "2026-05-06T23:51:55.746Z"
 ---
 
 ## Context
