@@ -120,6 +120,7 @@ export function GroveDashboard({
   const [xpEvents, setXpEvents] = useState(initialXpEvents);
   const [totalXp, setTotalXp] = useState(initialTotalXp);
   const [spendablePoints, setSpendablePoints] = useState(initialSpendable);
+  const [completedGoalCount, setCompletedGoalCount] = useState(completedGoalsCount);
   const [title, setTitle] = useState("");
   const [dueLocal, setDueLocal] = useState("");
   const [domain, setDomain] = useState<LifeDomainId>("learning");
@@ -239,7 +240,7 @@ export function GroveDashboard({
         totalXp: seniorityTotal,
         streakDays: consistency.streakDays,
         activeDaysLast7: consistency.activeDaysLast7,
-        completedGoals: completedGoalsCount,
+        completedGoals: completedGoalCount,
         joinedCommunities: joinedCommunitiesCount,
         activeCommitments: activeCommitmentsCount,
         completedCommitments: completedCommitmentsCount,
@@ -248,7 +249,7 @@ export function GroveDashboard({
     [
       activeCommitmentsCount,
       completedCommitmentsCount,
-      completedGoalsCount,
+      completedGoalCount,
       consistency.activeDaysLast7,
       consistency.streakDays,
       joinedCommunitiesCount,
@@ -263,7 +264,7 @@ export function GroveDashboard({
         totalXp: seniorityTotal,
         streakDays: consistency.streakDays,
         activeDaysLast7: consistency.activeDaysLast7,
-        completedGoals: completedGoalsCount,
+        completedGoals: completedGoalCount,
         joinedCommunities: joinedCommunitiesCount,
         activeCommitments: activeCommitmentsCount,
         completedCommitments: completedCommitmentsCount,
@@ -272,7 +273,7 @@ export function GroveDashboard({
     [
       activeCommitmentsCount,
       completedCommitmentsCount,
-      completedGoalsCount,
+      completedGoalCount,
       consistency.activeDaysLast7,
       consistency.streakDays,
       joinedCommunitiesCount,
@@ -379,6 +380,7 @@ export function GroveDashboard({
         if (payload.xpEvent) {
           setXpEvents((ev) => [payload.xpEvent as DashboardXpEventRow, ...ev]);
         }
+        setCompletedGoalCount((count) => count + 1);
         setGoals((g) => g.filter((item) => item.id !== goal.id));
         return;
       }
@@ -417,6 +419,7 @@ export function GroveDashboard({
       }
       setTotalXp((x) => x + xpGain);
       setSpendablePoints((x) => x + xpGain);
+      setCompletedGoalCount((count) => count + 1);
       setGoals((g) => g.filter((item) => item.id !== goal.id));
       setXpEvents((ev) => [
         {
@@ -665,7 +668,7 @@ export function GroveDashboard({
                 <ProgressStatCard
                   icon={<Target className={iconClass} aria-hidden />}
                   label="Completed goals"
-                  value={String(completedGoalsCount)}
+                  value={String(completedGoalCount)}
                   detail="Visible proof that progress happened."
                 />
                 <ProgressStatCard
