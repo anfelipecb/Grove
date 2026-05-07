@@ -52,6 +52,7 @@ Grove is an ADHD-aware AI accountability and community coordination platform. Th
 ## Deployment
 
 - **Web:** Vercel. Project name: **`grove-growth-together`**. Production may be aliased (e.g. `grove-azure-three.vercel.app`); run **`vercel --prod` from the monorepo root** so `Root Directory: apps/web` is not doubled.
+- **Production deploy on `master`:** Link the GitHub repo to the Vercel project so pushes to **`master`** trigger production builds (this repo’s default branch is `master`, not `main`). From a linked checkout: `vercel git connect https://github.com/<org>/<repo>` (confirm the prompt). Project **`grove-growth-together`** should show **Production Branch: `master`** in the Vercel dashboard. CI (`.github/workflows/ci.yml`) runs **`pnpm gate:ci`** only; it does not call `vercel deploy`, so you do not need Vercel tokens in GitHub unless you add a separate deploy workflow.
 - Set `NEXT_PUBLIC_APP_URL` in Vercel to the canonical site URL (e.g. `https://grove-azure-three.vercel.app`).
 - **`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` are required** for sign-in/up, middleware, and server `auth()`. Without them the landing page loads but the dashboard shows a setup message and `/sign-up` explains missing Clerk.
 - **Worker/jobs:** Railway
