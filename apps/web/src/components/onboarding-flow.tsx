@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ClipboardList, ShieldCheck, Sparkles } from "lucide-react";
-import type { IntakeDraft, MemberProfileCard } from "@grove/core";
+import type { IntakeDraft, MemberProfileCard, MyceliumCalibrationPlan } from "@grove/core";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 import {
@@ -91,6 +91,13 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
   const [suggestedGoalLoading, setSuggestedGoalLoading] = useState(false);
   const [suggestedFrictionChips, setSuggestedFrictionChips] = useState<string[]>([]);
   const [suggestedFrictionLoading, setSuggestedFrictionLoading] = useState(false);
+  const [calPlan, setCalPlan] = useState<MyceliumCalibrationPlan | null>(null);
+  const [calLoading, setCalLoading] = useState(false);
+  const [calError, setCalError] = useState<string | null>(null);
+  const [calNotice, setCalNotice] = useState<string | null>(null);
+  const [pickedCalibGoals, setPickedCalibGoals] = useState<string[]>([]);
+  const [pickedCalibRewards, setPickedCalibRewards] = useState<number[]>([]);
+
 
   const toggleChip = useCallback((list: string[], value: string, setter: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -230,7 +237,150 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
     return () => ac.abort();
   }, [step, intake.name, intake.supportStyle, intake.focusDisclosure, goalChips, intake.goals]);
 
-  function parseJson<T>(raw: string): T | null {
+  async function runCalibrationPack() {
+    setCalLoading(true);
+    setCalError(null);
+    setCalNotice(null);
+    try {
+      const goalsText = mergeLines(goalChips, intake.goals);
+      const frictionText = mergeLines(frictionChips, intake.friction);
+      const draft: IntakeDraft = {
+        ...intake,
+        goals: goalsText,
+        friction: frictionText,
+      };
+      const res = await fetch("/api/ai/mycelium-calibrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intake: draft, xpDomainWeights: weights }),
+      });
+      const payload = parseJson<{ plan?: MyceliumCalibrationPlan; safety?: boolean; message?: string; error?: string }>(
+        await res.text(),
+      );
+      if (!payload) {
+        setCalError("Calibration response was unreadable.");
+        return;
+      }
+      if ("safety" in payload && payload.safety) {
+        setSafetyMessage(payload.message ?? "");
+        return;
+      }
+      if (!res.ok) {
+        setCalError(payload.error ?? `Calibration failed (${res.status}).`);
+        return;
+      }
+      if (!payload.plan) {
+        setCalError("No calibration plan returned.");
+        return;
+      }
+      setCalPlan(payload.plan);
+      setPickedCalibGoals([]);
+      setPickedCalibRewards([]);
+    } catch (e) {
+      setCalError(e instanceof Error ? e.message : "Calibration failed.");
+    } finally {
+      setCalLoading(false);
+    }
+  }
+
+  function toggleCalibGoal(title: string) {
+    setPickedCalibGoals((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
+    );
+  }
+
+  function toggleCalibReward(idx: number) {
+    setPickedCalibRewards((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx],
+    );
+  }
+
+  async function persistAdoptedRewards() {
+    if (!calPlan) return;
+    const rewards = calPlan.suggestedRewards
+      .map((r, idx) =>
+        pickedCalibRewards.includes(idx)
+          ? { title: r.title, cost: r.cost, visibility: (r.visibility ?? "private") as "private" | "community" }
+          : null,
+      )
+      .filter(Boolean) as { title: string; cost: number; visibility: "private" | "community" }[];
+    if (!rewards.length) {
+      setCalError("Select at least one reward to save.");
+      return;
+    }
+    setCalLoading(true);
+    setCalError(null);
+    setCalNotice(null);
+    try {
+      const res = await fetch("/api/onboarding/adopt-calibration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: true, rewards }),
+      });
+      const raw = await res.text();
+      const j = parseJson<{ ok?: boolean; error?: string; rewardsInserted?: string[] }>(raw);
+      if (!res.ok) {
+        setCalError(j?.error ?? raw.slice(0, 240));
+        return;
+      }
+      setCalNotice(`Saved rewards: ${(j?.rewardsInserted ?? []).join(", ") || "ok"}`);
+    } catch (e) {
+      setCalError(e instanceof Error ? e.message : "Reward save failed.");
+    } finally {
+      setCalLoading(false);
+    }
+  }
+
+  async function persistAdoptedExtraGoals() {
+    if (!calPlan) return;
+    const fallbackDomain =
+      ([...Object.entries(weights)] as [LifeDomainId, number][])
+        .sort((a, b) => b[1] - a[1])
+        .map(([k]) => k)[0] ?? "learning";
+    const selected = calPlan.balancedGoals.filter((g) => pickedCalibGoals.includes(g.title));
+    if (!selected.length) {
+      setCalError("Select at least one suggested goal row to insert.");
+      return;
+    }
+    const additionalGoals = selected.map((g) => ({
+      title: g.title,
+      domain: (g.domain ?? fallbackDomain) as LifeDomainId,
+    }));
+    setCalLoading(true);
+    setCalError(null);
+    setCalNotice(null);
+    try {
+      const res = await fetch("/api/onboarding/adopt-calibration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: true, additionalGoals }),
+      });
+      const raw = await res.text();
+      const j = parseJson<{ ok?: boolean; error?: string; goalsInserted?: string[] }>(raw);
+      if (!res.ok) {
+        setCalError(j?.error ?? raw.slice(0, 240));
+        return;
+      }
+      setCalNotice(`Added goals to Grove: ${(j?.goalsInserted ?? []).join(", ") || "ok"}`);
+    } catch (e) {
+      setCalError(e instanceof Error ? e.message : "Goal save failed.");
+    } finally {
+      setCalLoading(false);
+    }
+  }
+
+  function applyCalibrationTitlesToChips() {
+    if (!calPlan) return;
+    const titles = pickedCalibGoals.length
+      ? pickedCalibGoals
+      : calPlan.balancedGoals.map((g) => g.title);
+    const uniq = [...new Set(titles)];
+    setGoalChips((prev) => [...new Set([...uniq, ...prev])]);
+    setCalNotice("Applied suggestions to goal chips — finish onboarding to weave them through your profile.");
+  }
+
+
+    function parseJson<T>(raw: string): T | null {
     try {
       return JSON.parse(raw) as T;
     } catch {
@@ -599,7 +749,108 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                     <p className="mt-1 text-sm leading-6 text-stone-700">
                       Open Mycelium to talk through what changed, then come back and save the adjusted onboarding.
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-4 rounded-md border border-border bg-muted/40 p-3">
+                      <p className="text-sm font-medium text-bark">Mycelium calibration pack</p>
+                      <p className="mt-1 text-xs leading-5 text-stone-700">
+                        Structured suggestions (goals outline, rewards, summary). Saves only happen when you click the
+                        explicit buttons below.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={calLoading || !(intake.goals.trim() || goalChips.length)}
+                        onClick={() => void runCalibrationPack()}
+                        className="mt-3 inline-flex items-center rounded-md bg-bark px-3 py-1.5 text-xs font-semibold text-white hover:bg-moss disabled:opacity-40"
+                      >
+                        {calLoading ? "Generating…" : "Generate calibration suggestions"}
+                      </button>
+                      {calError ? <p className="mt-2 text-xs text-red-700">{calError}</p> : null}
+                      {calNotice ? <p className="mt-2 text-xs text-moss">{calNotice}</p> : null}
+                      {calPlan ? (
+                        <div className="mt-3 space-y-3 text-xs leading-5 text-stone-800">
+                          <section>
+                            <p className="font-semibold text-bark">Summary</p>
+                            <p>{calPlan.summary}</p>
+                          </section>
+                          {calPlan.whatChangedBullets?.length ? (
+                            <section>
+                              <p className="font-semibold text-bark">What calibration shifted</p>
+                              <ul className="list-disc pl-5">
+                                {calPlan.whatChangedBullets.map((b) => (
+                                  <li key={b}>{b}</li>
+                                ))}
+                              </ul>
+                            </section>
+                          ) : null}
+                          <section>
+                            <p className="font-semibold text-bark">Next stretch outline</p>
+                            <p className="whitespace-pre-wrap">{calPlan.planOutline}</p>
+                          </section>
+                          <section>
+                            <p className="font-semibold text-bark">Balanced goals — select rows</p>
+                            <ul className="mt-1 space-y-1">
+                              {calPlan.balancedGoals.map((g) => (
+                                <li key={g.title}>
+                                  <label className="flex cursor-pointer gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={pickedCalibGoals.includes(g.title)}
+                                      onChange={() => toggleCalibGoal(g.title)}
+                                    />
+                                    <span>{g.domain ? `${g.domain} · ` : ""}{g.title}</span>
+                                  </label>
+                                  {g.rationale ? <p className="pl-6 text-muted-foreground">{g.rationale}</p> : null}
+                                </li>
+                              ))}
+                            </ul>
+                            <button
+                              type="button"
+                              className="mt-2 mr-2 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-semibold text-bark hover:border-moss"
+                              onClick={applyCalibrationTitlesToChips}
+                            >
+                              Apply selected titles to chips
+                            </button>
+                            <button
+                              type="button"
+                              disabled={calLoading || !pickedCalibGoals.length}
+                              onClick={() => void persistAdoptedExtraGoals()}
+                              className="mt-2 rounded-md border border-moss/40 bg-moss/10 px-2 py-1 text-[11px] font-semibold text-bark hover:bg-moss/20 disabled:opacity-40"
+                            >
+                              Create selected goals in Grove now
+                            </button>
+                          </section>
+                          {calPlan.suggestedRewards.length ? (
+                            <section>
+                              <p className="font-semibold text-bark">Suggested rewards — select rows</p>
+                              <ul className="mt-1 space-y-1">
+                                {calPlan.suggestedRewards.map((r, idx) => (
+                                  <li key={r.title}>
+                                    <label className="flex cursor-pointer gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={pickedCalibRewards.includes(idx)}
+                                        onChange={() => toggleCalibReward(idx)}
+                                      />
+                                      <span>
+                                        {r.title} · {r.cost} pts{r.visibility ? ` (${r.visibility})` : ""}
+                                      </span>
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                              <button
+                                type="button"
+                                disabled={calLoading || !pickedCalibRewards.length}
+                                onClick={() => void persistAdoptedRewards()}
+                                className="mt-2 rounded-md bg-bark px-2 py-1 text-[11px] font-semibold text-white hover:bg-moss disabled:opacity-40"
+                              >
+                                Save selected rewards
+                              </button>
+                            </section>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                <div className="mt-3 flex flex-wrap gap-2">
                       <Link
                         href="/communities"
                         className="inline-flex items-center justify-center rounded-md bg-bark px-3 py-2 text-sm font-semibold text-white transition hover:bg-moss"
