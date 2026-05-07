@@ -22,7 +22,7 @@ export default async function CalendarPage() {
 
   if (!demoReads && !isClerkConfigured()) {
     return (
-      <main className="p-8 text-stone-700 dark:text-muted-foreground">
+      <main className="p-8 text-foreground">
         <p>Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to use the calendar.</p>
       </main>
     );
@@ -30,9 +30,9 @@ export default async function CalendarPage() {
 
   if (!supabase) {
     return (
-      <main className="p-8 text-stone-700 dark:text-muted-foreground">
+      <main className="p-8 text-foreground">
         <p>Supabase is not configured.</p>
-        <p className="mt-2 text-sm">
+        <p className="mt-2 text-sm text-muted-foreground">
           Demo mode needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or publishable key with a Clerk
           session).
         </p>
@@ -48,7 +48,7 @@ export default async function CalendarPage() {
 
   if (error) {
     return (
-      <main className="p-8 text-bark dark:text-foreground">
+      <main className="p-8 text-foreground">
         <p>Could not load profile: {error.message}</p>
       </main>
     );

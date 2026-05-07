@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const dashboardInputClassName =
-  "w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
+  "w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-moss/20 transition focus:border-moss focus:ring-4 dark:ring-moss/40";
 
 export function DashboardPanel({
   title,
