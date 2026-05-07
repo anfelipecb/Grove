@@ -1,5 +1,10 @@
 import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
-import { GroveDashboard, type DashboardGoalRow, type DashboardXpEventRow } from "@/components/grove-dashboard";
+import {
+  GroveDashboard,
+  type DashboardGoalRow,
+  type DashboardRewardRow,
+  type DashboardXpEventRow,
+} from "@/components/grove-dashboard";
 import { redirect } from "next/navigation";
 import { createDemoAwareServerClient } from "@/lib/supabase-server";
 
@@ -54,24 +59,48 @@ export default async function DashboardPage() {
 
   const profileId = profile.id as string;
 
-  const { data: goals } = await supabase
-    .from("goals")
-    .select("id, title, domain, subarea, xp_value, status, due_at, created_at")
-    .eq("profile_id", profileId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false });
-
-  const { data: xpEvents } = await supabase
-    .from("xp_events")
-    .select("id, reason, xp, created_at")
-    .eq("profile_id", profileId)
-    .order("created_at", { ascending: false })
-    .limit(24);
-
-  const { data: memberships } = await supabase
-    .from("memberships")
-    .select("communities(name)")
-    .eq("profile_id", profileId);
+  const [
+    { data: goals },
+    { data: xpEvents },
+    { data: memberships },
+    { count: completedGoalsCount },
+    { count: activeCommitmentsCount },
+    { count: completedCommitmentsCount },
+    { data: rewards },
+    { count: rewardCount },
+  ] = await Promise.all([
+    supabase
+      .from("goals")
+      .select("id, title, domain, subarea, xp_value, status, due_at, created_at")
+      .eq("profile_id", profileId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("xp_events")
+      .select("id, reason, xp, created_at")
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false })
+      .limit(24),
+    supabase.from("memberships").select("communities(name)").eq("profile_id", profileId),
+    supabase.from("goals").select("id", { count: "exact", head: true }).eq("profile_id", profileId).eq("status", "completed"),
+    supabase
+      .from("commitments")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+      .eq("status", "active"),
+    supabase
+      .from("commitments")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+      .eq("status", "completed"),
+    supabase
+      .from("rewards")
+      .select("id, title, cost, visibility, created_at")
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase.from("rewards").select("id", { count: "exact", head: true }).eq("profile_id", profileId),
+  ]);
 
   const communityLabels =
     memberships
@@ -93,6 +122,12 @@ export default async function DashboardPage() {
       initialGoals={(goals ?? []) as DashboardGoalRow[]}
       initialXpEvents={(xpEvents ?? []) as DashboardXpEventRow[]}
       communityLabels={communityLabels as string[]}
+      completedGoalsCount={completedGoalsCount ?? 0}
+      joinedCommunitiesCount={communityLabels.length}
+      activeCommitmentsCount={activeCommitmentsCount ?? 0}
+      completedCommitmentsCount={completedCommitmentsCount ?? 0}
+      initialRewards={(rewards ?? []) as DashboardRewardRow[]}
+      rewardCount={rewardCount ?? 0}
     />
   );
 }
