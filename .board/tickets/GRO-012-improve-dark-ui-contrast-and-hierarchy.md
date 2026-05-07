@@ -2,7 +2,7 @@
 id: "GRO-012"
 title: "Improve dark UI contrast and hierarchy"
 slug: "improve-dark-ui-contrast-and-hierarchy"
-status: "in_review"
+status: "done"
 priority: "p1"
 owner: "agent-2"
 branch: "ticket/gro-012-improve-dark-ui-contrast-and-hierarchy"
@@ -11,7 +11,7 @@ pr_url: "https://github.com/anfelipecb/Grove/pull/12"
 labels: []
 depends_on: []
 created_at: "2026-05-06T23:47:47.961Z"
-updated_at: "2026-05-07T00:55:00.000Z"
+updated_at: "2026-05-07T01:01:00.000Z"
 ---
 
 ## Context

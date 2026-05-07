@@ -2,7 +2,7 @@
 id: "GRO-014"
 title: "Add user stats progression and unlockable rewards"
 slug: "add-user-stats-progression-and-unlockable-rewards"
-status: "in_review"
+status: "done"
 priority: "p2"
 owner: "codex"
 branch: "ticket/gro-014-add-user-stats-progression-and-unlockable-rewards"
@@ -11,7 +11,7 @@ pr_url: "https://github.com/anfelipecb/Grove/pull/11"
 labels: []
 depends_on: []
 created_at: "2026-05-06T23:47:53.291Z"
-updated_at: "2026-05-07T00:31:00.000Z"
+updated_at: "2026-05-07T01:01:00.000Z"
 ---
 
 ## Context
