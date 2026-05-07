@@ -2,16 +2,16 @@
 id: "GRO-012"
 title: "Improve dark UI contrast and hierarchy"
 slug: "improve-dark-ui-contrast-and-hierarchy"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "agent-2"
+branch: "ticket/gro-012-improve-dark-ui-contrast-and-hierarchy"
+worktree: "../Grove-agent-2"
 pr_url: ""
 labels: []
 depends_on: []
 created_at: "2026-05-06T23:47:47.961Z"
-updated_at: "2026-05-06T23:48:50.000Z"
+updated_at: "2026-05-07T00:19:26.326Z"
 ---
 
 ## Context
