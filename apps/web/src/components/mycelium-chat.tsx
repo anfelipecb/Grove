@@ -51,27 +51,29 @@ export function MyceliumChat({
     <div className="flex h-full min-h-[380px] flex-col">
       <div className="mb-2 flex items-center gap-2 text-moss">
         <MessageSquareText className="h-4 w-4" aria-hidden="true" />
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Mycelium</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground">Mycelium</h2>
       </div>
       {safety ? (
-        <p className="mb-2 rounded-md border border-clay bg-clay/10 p-3 text-sm text-bark">{safety}</p>
+        <p className="mb-2 rounded-md border border-clay bg-clay/10 p-3 text-sm text-bark dark:text-foreground">{safety}</p>
       ) : null}
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-md border border-stone-200 bg-stone-50/80 p-3 text-sm">
+      <div className="flex-1 space-y-3 overflow-y-auto rounded-md border border-border bg-muted/40 p-3 text-sm text-foreground">
         {messages.map((m, i) => (
           <div
             key={`${i}-${m.role}`}
             className={`max-w-[95%] rounded-md px-3 py-2 leading-6 ${
-              m.role === "user" ? "ml-auto bg-moss text-white" : "bg-white text-stone-800 shadow-sm"
+              m.role === "user"
+                ? "ml-auto bg-moss text-white"
+                : "border border-border bg-card text-foreground shadow-sm dark:shadow-none"
             }`}
           >
             {m.content}
           </div>
         ))}
-        {loading ? <p className="text-xs text-stone-500">Thinking…</p> : null}
+        {loading ? <p className="text-xs text-muted-foreground">Thinking…</p> : null}
       </div>
       <div className="mt-3 flex gap-2">
         <input
-          className="min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 focus:border-moss focus:ring-4"
+          className="min-w-0 flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
           placeholder="What should we tackle next?"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -86,7 +88,7 @@ export function MyceliumChat({
           type="button"
           onClick={() => void send()}
           disabled={loading}
-          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md bg-bark px-3 py-2 text-white transition hover:bg-moss disabled:opacity-50"
+          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md bg-bark px-3 py-2 text-white transition hover:bg-moss disabled:pointer-events-none disabled:opacity-50"
         >
           <Send className="h-4 w-4" aria-hidden="true" />
         </button>

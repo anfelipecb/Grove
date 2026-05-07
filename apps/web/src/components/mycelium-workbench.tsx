@@ -6,7 +6,7 @@ import type { SessionSummary } from "@grove/core";
 import { AppHeaderToolbar } from "@/components/app-header-toolbar";
 
 const inputBase =
-  "w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-moss/20 transition focus:border-moss focus:ring-4";
+  "w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-moss/20 transition focus:border-moss focus:ring-4 dark:ring-moss/40";
 
 const starterNotes = `Decided: Grove v1 should treat solo goals and community participation as equal pillars.
 Andres: will commit the repo scaffold and share it with AgentsForGood.
@@ -58,7 +58,7 @@ export function MyceliumWorkbench() {
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel">
+          <div className="rounded-md border border-border bg-card/95 p-4 shadow-panel dark:shadow-panel-dark">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
               <CalendarCheck className="h-4 w-4" aria-hidden="true" />
               Session notes
@@ -82,19 +82,19 @@ export function MyceliumWorkbench() {
             </div>
           </div>
 
-          <div className="rounded-md border border-stone-300 bg-white/85 p-4 shadow-panel">
+          <div className="rounded-md border border-border bg-card/95 p-4 shadow-panel dark:shadow-panel-dark">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-moss">
               <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
               Feed-ready memory
             </div>
             {safetyMessage ? (
-              <p className="rounded-md border border-clay bg-clay/10 p-4 text-sm leading-6 text-bark">
+              <p className="rounded-md border border-clay bg-clay/10 p-4 text-sm leading-6 text-bark dark:text-foreground">
                 {safetyMessage}
               </p>
             ) : summary ? (
               <Summary summary={summary} />
             ) : (
-              <div className="flex min-h-72 items-center justify-center rounded-md border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm leading-6 text-stone-600">
+              <div className="flex min-h-72 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm leading-6 text-muted-foreground">
                 Mycelium will produce a session summary, decisions, commitments, and newcomer context.
               </div>
             )}
@@ -109,27 +109,27 @@ function Summary({ summary }: { summary: SessionSummary }) {
   return (
     <article className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">{summary.title}</h2>
-        <p className="mt-2 text-sm leading-6 text-stone-700">{summary.shortSummary}</p>
+        <h2 className="text-lg font-semibold text-foreground">{summary.title}</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{summary.shortSummary}</p>
       </div>
       <List title="Decisions" items={summary.decisions} />
       <section>
-        <h3 className="text-sm font-semibold text-bark">Commitments</h3>
+        <h3 className="text-sm font-semibold text-foreground">Commitments</h3>
         <div className="mt-2 space-y-2">
           {summary.commitments.map((commitment) => (
             <div
               key={`${commitment.ownerName}-${commitment.task}`}
-              className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm"
+              className="rounded-md border border-border bg-card px-3 py-2 text-sm"
             >
-              <span className="font-semibold text-bark">{commitment.ownerName}</span>
-              <span className="text-stone-700"> · {commitment.task}</span>
+              <span className="font-semibold text-foreground">{commitment.ownerName}</span>
+              <span className="text-muted-foreground"> · {commitment.task}</span>
             </div>
           ))}
         </div>
       </section>
-      <div className="rounded-md border border-fern bg-fern/70 p-4">
-        <h3 className="text-sm font-semibold text-bark">Newcomer context</h3>
-        <p className="mt-2 text-sm leading-6 text-stone-700">{summary.newcomerContext}</p>
+      <div className="rounded-md border border-fern/60 bg-fern/40 p-4 dark:border-moss/40 dark:bg-moss/15">
+        <h3 className="text-sm font-semibold text-foreground">Newcomer context</h3>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{summary.newcomerContext}</p>
       </div>
     </article>
   );
@@ -138,10 +138,10 @@ function Summary({ summary }: { summary: SessionSummary }) {
 function List({ title, items }: { title: string; items: string[] }) {
   return (
     <section>
-      <h3 className="text-sm font-semibold text-bark">{title}</h3>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       <ul className="mt-2 space-y-2">
         {items.map((item) => (
-          <li key={item} className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-700">
+          <li key={item} className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
             {item}
           </li>
         ))}

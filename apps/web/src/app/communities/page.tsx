@@ -16,11 +16,11 @@ export default async function CommunitiesPage() {
   const { client: supabase } = await createDemoAwareServerClient();
 
   if (!demo && !isClerkConfigured()) {
-    return <main className="p-8 text-stone-700">Set Clerk environment variables to use Communities.</main>;
+    return <main className="p-8 text-foreground">Set Clerk environment variables to use Communities.</main>;
   }
 
   if (!supabase) {
-    return <main className="p-8 text-stone-700">Supabase is not configured.</main>;
+    return <main className="p-8 text-foreground">Supabase is not configured.</main>;
   }
 
   const { data: profile } = await supabase

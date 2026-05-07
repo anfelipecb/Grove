@@ -488,7 +488,7 @@ export function GroveDashboard({
         </header>
 
         {error ? (
-          <p className="mt-4 rounded-md border border-clay bg-clay/10 px-3 py-2 text-sm text-bark" role="alert">
+          <p className="mt-4 rounded-md border border-clay bg-clay/10 px-3 py-2 text-sm text-bark dark:text-foreground" role="alert">
             {error}
           </p>
         ) : null}

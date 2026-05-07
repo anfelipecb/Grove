@@ -484,7 +484,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
               <h1 className="mt-2 text-2xl font-semibold">
                 {assessmentMode ? "Recalibrate what matters and keep moving." : "Grow together—starting with what matters to you."}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-700">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground">
                 {assessmentMode
                   ? "Use this to adjust your goals, friction signals, and support style if the first pass no longer fits. You can also open Mycelium for a short calibration chat."
                   : "We’ll keep this practical: concrete next actions, not a personality quiz."}
@@ -492,7 +492,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                 <div className="h-full bg-moss transition-all" style={{ width: `${progress}%` }} />
               </div>
-              <p className="mt-2 text-xs text-stone-600">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Step {step + 1} of {totalSteps}
               </p>
             </div>
@@ -512,7 +512,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
           <div className="rounded-md border border-border bg-card/90 p-4 shadow-panel dark:shadow-panel-dark">
             {step === 0 && (
               <div className="grid gap-4">
-                <p className="text-sm leading-6 text-stone-700">
+                <p className="text-sm leading-6 text-foreground">
                   Welcome. Grove pairs a private growth loop with community coordination.
                   {assessmentMode
                     ? " This pass is for recalibration, not a fresh sign-up."
@@ -531,8 +531,8 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
 
             {step === 1 && (
               <div className="grid gap-4">
-                <p className="text-sm font-medium text-bark">What do you want to grow over the next few weeks?</p>
-                <p className="text-sm leading-6 text-stone-700">
+                <p className="text-sm font-medium text-bark dark:text-foreground">What do you want to grow over the next few weeks?</p>
+                <p className="text-sm leading-6 text-foreground">
                   Tap anything that fits—Mycelium also suggests a few based on your name. You can add a line or two
                   later if you want.
                 </p>
@@ -540,7 +540,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                   <div className="grid gap-2">
                     <ChipSubheading>Suggested for you</ChipSubheading>
                     {suggestedGoalLoading ? (
-                      <p className="text-sm text-stone-600">Loading suggestions…</p>
+                      <p className="text-sm text-muted-foreground">Loading suggestions…</p>
                     ) : (
                       <OnboardingChipButtons
                         labels={suggestedGoalChips}
@@ -574,15 +574,15 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
 
             {step === 2 && (
               <div className="grid gap-4">
-                <p className="text-sm font-medium text-bark">What usually slows you down?</p>
-                <p className="text-sm leading-6 text-stone-700">
+                <p className="text-sm font-medium text-bark dark:text-foreground">What usually slows you down?</p>
+                <p className="text-sm leading-6 text-foreground">
                   Pick what resonates—we&apos;ll suggest patterns based on what you want to grow. Details are optional.
                 </p>
                 {(suggestedFrictionLoading || suggestedFrictionChips.length > 0) && (
                   <div className="grid gap-2">
                     <ChipSubheading>Suggested for you</ChipSubheading>
                     {suggestedFrictionLoading ? (
-                      <p className="text-sm text-stone-600">Loading suggestions…</p>
+                      <p className="text-sm text-muted-foreground">Loading suggestions…</p>
                     ) : (
                       <OnboardingChipButtons
                         labels={suggestedFrictionChips}
@@ -629,16 +629,16 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
 
             {step === 3 && (
               <div className="grid gap-4">
-                <p className="text-sm leading-6 text-stone-700">
+                <p className="text-sm leading-6 text-foreground">
                   Mycelium suggests how to balance attention across life domains. Tune the sliders—this is advisory, not
                   a rule.
                 </p>
                 {loading && !weightsLoaded ? (
-                  <p className="text-sm text-stone-600">Calibrating weights…</p>
+                  <p className="text-sm text-muted-foreground">Calibrating weights…</p>
                 ) : (
                   LIFE_DOMAINS.map((d) => (
                     <label key={d.id} className="grid gap-1">
-                      <span className="text-xs font-semibold text-stone-700">{d.label}</span>
+                      <span className="text-xs font-semibold text-foreground">{d.label}</span>
                       <input
                         type="range"
                         min={1}
@@ -696,7 +696,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                   setStep((s) => Math.max(0, s - 1));
                   if (step <= 3) setWeightsLoaded(false);
                 }}
-                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-bark disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-bark dark:text-foreground disabled:opacity-40"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 Back
@@ -739,19 +739,19 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
               Preview
             </div>
             {safetyMessage ? (
-              <p className="rounded-md border border-clay bg-clay/10 p-4 text-sm leading-6 text-bark">{safetyMessage}</p>
+              <p className="rounded-md border border-clay bg-clay/10 p-4 text-sm leading-6 text-bark dark:text-foreground">{safetyMessage}</p>
             ) : profile ? (
               <div className="grid gap-3">
                 <ProfileCard profile={profile} />
                 {assessmentMode ? (
                   <div className="rounded-md border border-border bg-muted p-4">
-                    <p className="text-sm font-medium text-bark">Need a second pass?</p>
-                    <p className="mt-1 text-sm leading-6 text-stone-700">
+                    <p className="text-sm font-medium text-bark dark:text-foreground">Need a second pass?</p>
+                    <p className="mt-1 text-sm leading-6 text-foreground">
                       Open Mycelium to talk through what changed, then come back and save the adjusted onboarding.
                     </p>
                     <div className="mt-4 rounded-md border border-border bg-muted/40 p-3">
-                      <p className="text-sm font-medium text-bark">Mycelium calibration pack</p>
-                      <p className="mt-1 text-xs leading-5 text-stone-700">
+                      <p className="text-sm font-medium text-bark dark:text-foreground">Mycelium calibration pack</p>
+                      <p className="mt-1 text-xs leading-5 text-foreground">
                         Structured suggestions (goals outline, rewards, summary). Saves only happen when you click the
                         explicit buttons below.
                       </p>
@@ -766,14 +766,14 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                       {calError ? <p className="mt-2 text-xs text-red-700">{calError}</p> : null}
                       {calNotice ? <p className="mt-2 text-xs text-moss">{calNotice}</p> : null}
                       {calPlan ? (
-                        <div className="mt-3 space-y-3 text-xs leading-5 text-stone-800">
+                        <div className="mt-3 space-y-3 text-xs leading-5 text-foreground">
                           <section>
-                            <p className="font-semibold text-bark">Summary</p>
+                            <p className="font-semibold text-bark dark:text-foreground">Summary</p>
                             <p>{calPlan.summary}</p>
                           </section>
                           {calPlan.whatChangedBullets?.length ? (
                             <section>
-                              <p className="font-semibold text-bark">What calibration shifted</p>
+                              <p className="font-semibold text-bark dark:text-foreground">What calibration shifted</p>
                               <ul className="list-disc pl-5">
                                 {calPlan.whatChangedBullets.map((b) => (
                                   <li key={b}>{b}</li>
@@ -782,11 +782,11 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                             </section>
                           ) : null}
                           <section>
-                            <p className="font-semibold text-bark">Next stretch outline</p>
+                            <p className="font-semibold text-bark dark:text-foreground">Next stretch outline</p>
                             <p className="whitespace-pre-wrap">{calPlan.planOutline}</p>
                           </section>
                           <section>
-                            <p className="font-semibold text-bark">Balanced goals — select rows</p>
+                            <p className="font-semibold text-bark dark:text-foreground">Balanced goals — select rows</p>
                             <ul className="mt-1 space-y-1">
                               {calPlan.balancedGoals.map((g) => (
                                 <li key={g.title}>
@@ -804,7 +804,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                             </ul>
                             <button
                               type="button"
-                              className="mt-2 mr-2 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-semibold text-bark hover:border-moss"
+                              className="mt-2 mr-2 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-semibold text-bark dark:text-foreground hover:border-moss"
                               onClick={applyCalibrationTitlesToChips}
                             >
                               Apply selected titles to chips
@@ -813,14 +813,14 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                               type="button"
                               disabled={calLoading || !pickedCalibGoals.length}
                               onClick={() => void persistAdoptedExtraGoals()}
-                              className="mt-2 rounded-md border border-moss/40 bg-moss/10 px-2 py-1 text-[11px] font-semibold text-bark hover:bg-moss/20 disabled:opacity-40"
+                              className="mt-2 rounded-md border border-moss/40 bg-moss/10 px-2 py-1 text-[11px] font-semibold text-bark dark:text-foreground hover:bg-moss/20 disabled:opacity-40"
                             >
                               Create selected goals in Grove now
                             </button>
                           </section>
                           {calPlan.suggestedRewards.length ? (
                             <section>
-                              <p className="font-semibold text-bark">Suggested rewards — select rows</p>
+                              <p className="font-semibold text-bark dark:text-foreground">Suggested rewards — select rows</p>
                               <ul className="mt-1 space-y-1">
                                 {calPlan.suggestedRewards.map((r, idx) => (
                                   <li key={r.title}>
@@ -859,7 +859,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
                       </Link>
                       <Link
                         href="/dashboard"
-                        className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-bark transition hover:border-moss"
+                        className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-bark dark:text-foreground transition hover:border-moss"
                       >
                         Back to dashboard
                       </Link>
@@ -903,8 +903,8 @@ function OnboardingChipButtons({
 }) {
   const active =
     variant === "goal"
-      ? "border-moss bg-moss/15 text-bark"
-      : "border-clay bg-clay/15 text-bark";
+      ? "border-moss bg-moss/15 text-bark dark:text-foreground"
+      : "border-clay bg-clay/15 text-bark dark:text-foreground";
   const idle = "border-border bg-card text-muted-foreground hover:border-moss";
   return (
     <div className="flex flex-wrap gap-2">
@@ -928,7 +928,7 @@ function OnboardingChipButtons({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="grid gap-2">
-      <span className="text-sm font-semibold text-stone-700">{label}</span>
+      <span className="text-sm font-semibold text-foreground">{label}</span>
       {children}
     </label>
   );
@@ -937,16 +937,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function ProfileCard({ profile }: { profile: MemberProfileCard }) {
   return (
     <article className="space-y-4">
-      <p className="text-sm leading-6 text-stone-700">{profile.summary}</p>
+      <p className="text-sm leading-6 text-foreground">{profile.summary}</p>
       <Section title="First targets" items={profile.firstTargets} />
       <Section title="Likely friction" items={profile.likelyFriction} />
       <Section title="Nudge guidelines" items={profile.nudgeGuidelines} />
-      <div className="rounded-md border border-fern bg-fern/70 p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-bark">
+      <div className="rounded-md border border-fern/60 bg-fern/40 p-4 dark:border-moss/40 dark:bg-moss/15">
+        <div className="flex items-center gap-2 text-sm font-semibold text-bark dark:text-foreground">
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
           Community entry point
         </div>
-        <p className="mt-2 text-sm leading-6 text-stone-700">{profile.communityEntryPoint}</p>
+        <p className="mt-2 text-sm leading-6 text-foreground">{profile.communityEntryPoint}</p>
       </div>
     </article>
   );
@@ -955,7 +955,7 @@ function ProfileCard({ profile }: { profile: MemberProfileCard }) {
 function Section({ title, items }: { title: string; items: string[] }) {
   return (
     <section>
-      <h2 className="text-sm font-semibold text-bark">{title}</h2>
+      <h2 className="text-sm font-semibold text-bark dark:text-foreground">{title}</h2>
       <ul className="mt-2 space-y-2">
         {items.map((item) => (
           <li key={item} className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">

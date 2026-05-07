@@ -21,12 +21,13 @@
   color-scheme: dark;
   --background: 0 0% 0%;
   --foreground: 0 0% 96%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 64%;
-  --border: 0 0% 20%;
+  /* Slightly lift muted fills, borders, and secondary text so hierarchy reads on true black. */
+  --muted: 0 0% 13%;
+  --muted-foreground: 0 0% 71%;
+  --border: 0 0% 26%;
   --card: 0 0% 6%;
   --card-foreground: 0 0% 96%;
-  --accent: 0 0% 15%;
+  --accent: 0 0% 17%;
   --accent-foreground: 0 0% 96%;
   --layer-accent: 215 18% 52%;
 }

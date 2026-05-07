@@ -223,52 +223,52 @@ export function CommunitiesView({
             className={`${panel} z-50 w-full max-w-md`}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="create-community-title" className="text-lg font-semibold text-bark">
+            <h2 id="create-community-title" className="text-lg font-semibold text-foreground">
               Create community
             </h2>
-            <p className="mt-1 text-xs text-stone-600">
+            <p className="mt-1 text-xs text-muted-foreground">
               URL slug is permanent—pick something memorable for your cohort (letters, numbers, hyphens).
             </p>
             <div className="mt-4 space-y-3">
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-foreground">
                 Name
                 <input
                   type="text"
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
                   placeholder="Build night cohort"
                   disabled={createPending}
                 />
               </label>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-foreground">
                 Slug
                 <input
                   type="text"
                   value={createSlug}
                   onChange={(e) => setCreateSlug(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 font-mono text-sm lowercase"
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 font-mono text-sm lowercase text-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
                   placeholder="build-night-east"
                   autoCapitalize="off"
                   spellCheck={false}
                   disabled={createPending}
                 />
               </label>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-foreground">
                 Description (optional)
                 <textarea
                   value={createDescription}
                   onChange={(e) => setCreateDescription(e.target.value)}
-                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
                   disabled={createPending}
                 />
               </label>
             </div>
-            {createError ? <p className="mt-3 text-sm text-red-700">{createError}</p> : null}
+            {createError ? <p className="mt-3 text-sm text-red-700 dark:text-red-300">{createError}</p> : null}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                className="rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
                 disabled={createPending}
                 onClick={() => setCreateOpen(false)}
               >
@@ -301,44 +301,44 @@ export function CommunitiesView({
             className={`${panel} z-50 w-full max-w-md`}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="manage-community-title" className="text-lg font-semibold text-bark">
+            <h2 id="manage-community-title" className="text-lg font-semibold text-foreground">
               Manage community
             </h2>
             <div className="mt-4 space-y-3">
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-foreground">
                 Name
                 <input
                   type="text"
                   value={manageName}
                   onChange={(e) => setManageName(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
                   disabled={managePending}
                 />
               </label>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-foreground">
                 Description
                 <textarea
                   value={manageDescription}
                   onChange={(e) => setManageDescription(e.target.value)}
-                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-stone-300 px-3 py-2 text-sm"
+                  className="mt-1 min-h-[88px] w-full resize-y rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none ring-moss/20 focus:border-moss focus:ring-4 dark:ring-moss/40"
                   disabled={managePending}
                 />
               </label>
-              <label className="block text-sm font-medium text-stone-500">
+              <label className="block text-sm font-medium text-muted-foreground">
                 URL slug (read-only)
                 <input
                   type="text"
                   readOnly
                   value={selected.slug}
-                  className="mt-1 w-full cursor-not-allowed rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-sm text-stone-600"
+                  className="mt-1 w-full cursor-not-allowed rounded-md border border-border bg-muted/60 px-3 py-2 font-mono text-sm text-muted-foreground"
                 />
               </label>
             </div>
-            {manageError ? <p className="mt-3 text-sm text-red-700">{manageError}</p> : null}
+            {manageError ? <p className="mt-3 text-sm text-red-700 dark:text-red-300">{manageError}</p> : null}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                className="rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
                 disabled={managePending}
                 onClick={() => setManageOpen(false)}
               >
@@ -360,8 +360,8 @@ export function CommunitiesView({
       <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
         <header className="space-y-4 border-b border-border pb-4">
           <div>
-            <h1 className="text-xl font-semibold text-bark">Communities</h1>
-            <p className="text-sm text-stone-600">Feed, sessions, and Mycelium alongside your group.</p>
+            <h1 className="text-xl font-semibold text-foreground">Communities</h1>
+            <p className="text-sm text-muted-foreground">Feed, sessions, and Mycelium alongside your group.</p>
           </div>
           <AppHeaderToolbar demoMode={demoMode} />
         </header>
@@ -371,7 +371,7 @@ export function CommunitiesView({
             <div className="mb-3 flex items-center justify-between gap-2 text-moss">
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Your communities</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your communities</h2>
               </span>
             </div>
             <button
@@ -393,10 +393,10 @@ export function CommunitiesView({
             </button>
             <ul className="space-y-2">
               {communityList.length === 0 ? (
-                <li className="text-sm text-stone-600">
+                <li className="text-sm text-muted-foreground">
                   <p>You are not in any communities yet.</p>
-                  <p className="mt-2 font-medium text-bark">Start a space</p>
-                  <p className="mt-1 text-stone-600">
+                  <p className="mt-2 font-medium text-foreground">Start a space</p>
+                  <p className="mt-1 text-muted-foreground">
                     Builders and organizers can create a community here. Onboarding joins you to Grove Welcome when
                     you finish setup.
                   </p>
@@ -409,8 +409,8 @@ export function CommunitiesView({
                       onClick={() => setSelectedId(c.communityId)}
                       className={`w-full rounded-md border px-3 py-2 text-left text-sm font-medium transition ${
                         selectedId === c.communityId
-                          ? "border-moss bg-moss/10 text-bark"
-                          : "border-stone-300 bg-white text-stone-700 hover:border-moss"
+                          ? "border-moss bg-moss/15 text-foreground"
+                          : "border-border bg-card text-foreground hover:border-moss hover:bg-accent/80"
                       }`}
                     >
                       {c.name}
@@ -428,7 +428,7 @@ export function CommunitiesView({
                     ? "Manage community in local demo requires a Clerk JWT for API routes."
                     : undefined
                 }
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-50"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:opacity-50"
                 onClick={() => setManageOpen(true)}
               >
                 <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -441,12 +441,12 @@ export function CommunitiesView({
             <div className={panel}>
               <div className="mb-3 flex items-center gap-2 text-moss">
                 <Library className="h-4 w-4" aria-hidden="true" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Feed</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Feed</h2>
               </div>
               {loading ? (
-                <p className="text-sm text-stone-600">Loading…</p>
+                <p className="text-sm text-muted-foreground">Loading…</p>
               ) : feed.length === 0 ? (
-                <p className="text-sm text-stone-600">
+                <p className="text-sm text-muted-foreground">
                   {demoMode
                     ? "Local demo: live feed posts need a Clerk-signed Supabase session in the browser. Memberships and layout still match production contracts."
                     : "No posts yet in this space."}
@@ -454,15 +454,15 @@ export function CommunitiesView({
               ) : (
                 <ul className="space-y-3">
                   {feed.map((post) => (
-                    <li key={post.id} className="rounded-md border border-stone-200 bg-white p-3">
+                    <li key={post.id} className="rounded-md border border-border bg-card p-3">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-semibold uppercase tracking-wide text-moss">{post.kind}</span>
-                        <time className="text-xs text-stone-500">
+                        <time className="text-xs text-muted-foreground">
                           {new Date(post.created_at).toLocaleDateString()}
                         </time>
                       </div>
-                      <h3 className="mt-2 text-sm font-semibold">{post.title}</h3>
-                      <p className="mt-1 text-sm leading-6 text-stone-700">{post.body}</p>
+                      <h3 className="mt-2 text-sm font-semibold text-foreground">{post.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{post.body}</p>
                     </li>
                   ))}
                 </ul>
@@ -472,10 +472,10 @@ export function CommunitiesView({
             <div className={panel}>
               <div className="mb-3 flex items-center gap-2 text-moss">
                 <CalendarCheck className="h-4 w-4" aria-hidden="true" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-700">Sessions</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sessions</h2>
               </div>
               {sessions.length === 0 ? (
-                <p className="text-sm text-stone-600">
+                <p className="text-sm text-muted-foreground">
                   {demoMode
                     ? "Local demo: session list loads when the browser has a Supabase JWT from Clerk."
                     : "No sessions scheduled yet."}
@@ -483,12 +483,12 @@ export function CommunitiesView({
               ) : (
                 <ul className="space-y-2">
                   {sessions.map((s) => (
-                    <li key={s.id} className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm">
-                      <div className="font-medium">{s.title}</div>
+                    <li key={s.id} className="rounded-md border border-border bg-card px-3 py-2 text-sm">
+                      <div className="font-medium text-foreground">{s.title}</div>
                       {s.starts_at ? (
-                        <div className="text-xs text-stone-600">{new Date(s.starts_at).toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(s.starts_at).toLocaleString()}</div>
                       ) : null}
-                      {s.agenda ? <div className="mt-1 text-xs text-stone-600">{s.agenda}</div> : null}
+                      {s.agenda ? <div className="mt-1 text-xs text-muted-foreground">{s.agenda}</div> : null}
                     </li>
                   ))}
                 </ul>
