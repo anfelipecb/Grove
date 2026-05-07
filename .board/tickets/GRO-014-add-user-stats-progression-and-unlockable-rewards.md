@@ -2,16 +2,16 @@
 id: "GRO-014"
 title: "Add user stats progression and unlockable rewards"
 slug: "add-user-stats-progression-and-unlockable-rewards"
-status: "ready"
+status: "doing"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
+owner: "codex"
+branch: "ticket/gro-014-add-user-stats-progression-and-unlockable-rewards"
+worktree: "."
 pr_url: ""
 labels: []
 depends_on: []
 created_at: "2026-05-06T23:47:53.291Z"
-updated_at: "2026-05-06T23:48:50.000Z"
+updated_at: "2026-05-07T00:24:00.000Z"
 ---
 
 ## Context

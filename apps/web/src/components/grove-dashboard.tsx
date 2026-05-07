@@ -2,25 +2,32 @@
 
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import {
   Bell,
   CalendarCheck,
   CheckCircle2,
   Flame,
+  Gift,
   Leaf,
   Library,
   MessageSquareText,
   Plus,
   Sprout,
+  Sparkles,
+  Target,
+  Trophy,
+  Users,
 } from "lucide-react";
 import {
   DEFAULT_SUBAREAS,
-  getNextSeniorityTier,
-  getSeniorityTier,
+  getClosestSurpriseUnlock,
+  getSeniorityProgress,
+  getSurpriseUnlocks,
   LIFE_DOMAINS,
   suggestXp,
   type LifeDomainId,
+  type SurpriseUnlock,
   type XpInput,
 } from "@grove/core";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
@@ -48,6 +55,14 @@ export type DashboardXpEventRow = {
   created_at: string;
 };
 
+export type DashboardRewardRow = {
+  id: string;
+  title: string;
+  cost: number;
+  visibility: string;
+  created_at: string;
+};
+
 export type GroveDashboardProps = {
   demoMode?: boolean;
   profileId: string;
@@ -58,6 +73,12 @@ export type GroveDashboardProps = {
   initialGoals: DashboardGoalRow[];
   initialXpEvents: DashboardXpEventRow[];
   communityLabels: string[];
+  completedGoalsCount: number;
+  joinedCommunitiesCount: number;
+  activeCommitmentsCount: number;
+  completedCommitmentsCount: number;
+  initialRewards: DashboardRewardRow[];
+  rewardCount: number;
 };
 
 const iconClass = "h-4 w-4";
@@ -66,6 +87,10 @@ function parseDueAt(dueLocal: string): string | null {
   if (dueLocal.trim() === "") return null;
   const t = new Date(dueLocal);
   return Number.isNaN(t.getTime()) ? null : t.toISOString();
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 export function GroveDashboard({
@@ -78,6 +103,12 @@ export function GroveDashboard({
   initialGoals,
   initialXpEvents,
   communityLabels,
+  completedGoalsCount,
+  joinedCommunitiesCount,
+  activeCommitmentsCount,
+  completedCommitmentsCount,
+  initialRewards,
+  rewardCount,
 }: GroveDashboardProps) {
   const auth = useAuth();
   const supabase = useMemo(
@@ -198,11 +229,57 @@ export function GroveDashboard({
 
   const completedLocalXp = 0;
   const seniorityTotal = totalXp + completedLocalXp;
-  const seniority = getSeniorityTier(seniorityTotal);
-  const nextTier = getNextSeniorityTier(seniorityTotal);
-  const tierProgress = nextTier
-    ? Math.min(100, Math.round(((seniorityTotal - seniority.minXp) / (nextTier.minXp - seniority.minXp)) * 100))
-    : 100;
+  const seniorityProgress = useMemo(() => getSeniorityProgress(seniorityTotal), [seniorityTotal]);
+  const seniority = seniorityProgress.currentTier;
+  const nextTier = seniorityProgress.nextTier;
+  const tierProgress = seniorityProgress.progressPercent;
+  const surpriseUnlocks = useMemo(
+    () =>
+      getSurpriseUnlocks({
+        totalXp: seniorityTotal,
+        streakDays: consistency.streakDays,
+        activeDaysLast7: consistency.activeDaysLast7,
+        completedGoals: completedGoalsCount,
+        joinedCommunities: joinedCommunitiesCount,
+        activeCommitments: activeCommitmentsCount,
+        completedCommitments: completedCommitmentsCount,
+        savedRewards: rewardCount,
+      }),
+    [
+      activeCommitmentsCount,
+      completedCommitmentsCount,
+      completedGoalsCount,
+      consistency.activeDaysLast7,
+      consistency.streakDays,
+      joinedCommunitiesCount,
+      rewardCount,
+      seniorityTotal,
+    ],
+  );
+  const unlockedSurprises = surpriseUnlocks.filter((unlock) => unlock.unlocked);
+  const nextUnlock = useMemo(
+    () =>
+      getClosestSurpriseUnlock({
+        totalXp: seniorityTotal,
+        streakDays: consistency.streakDays,
+        activeDaysLast7: consistency.activeDaysLast7,
+        completedGoals: completedGoalsCount,
+        joinedCommunities: joinedCommunitiesCount,
+        activeCommitments: activeCommitmentsCount,
+        completedCommitments: completedCommitmentsCount,
+        savedRewards: rewardCount,
+      }),
+    [
+      activeCommitmentsCount,
+      completedCommitmentsCount,
+      completedGoalsCount,
+      consistency.activeDaysLast7,
+      consistency.streakDays,
+      joinedCommunitiesCount,
+      rewardCount,
+      seniorityTotal,
+    ],
+  );
 
   const suggested = useMemo(
     () =>
@@ -536,11 +613,138 @@ export function GroveDashboard({
               <p className="text-sm leading-relaxed text-muted-foreground">{consistency.message}</p>
             </DashboardPanel>
 
+            <DashboardPanel title="Progression" icon={<Trophy className={iconClass} />}>
+              <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current seniority</p>
+                  <div className="mt-3 flex flex-wrap items-end gap-3">
+                    <p className="text-2xl font-semibold tracking-tight text-foreground">{seniority.label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {nextTier
+                        ? `${seniorityProgress.xpToNext} XP to ${nextTier.label}`
+                        : "Top seniority tier reached"}
+                    </p>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-moss" style={{ width: `${tierProgress}%` }} />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {nextTier
+                      ? `${seniorityProgress.xpIntoTier} XP earned in this tier`
+                      : "Keep stacking effort, contribution, and follow-through."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-moss/20 bg-moss/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Closest unlock</p>
+                  {nextUnlock ? (
+                    <>
+                      <p className="mt-3 text-lg font-semibold text-foreground">{nextUnlock.label}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextUnlock.description}</p>
+                      <p className="mt-3 text-sm font-medium text-foreground">
+                        Surprise: {nextUnlock.rewardTitle} · {nextUnlock.rewardCost} points
+                      </p>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-background/70">
+                        <div className="h-full bg-bark dark:bg-moss" style={{ width: `${nextUnlock.progressPercent}%` }} />
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span>{nextUnlock.progressLabel}</span>
+                        <span>{nextUnlock.remainingLabel}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                      You&apos;ve cleared every current surprise track. Add new goals or community commitments to keep
+                      broadening the system.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <ProgressStatCard
+                  icon={<Target className={iconClass} aria-hidden />}
+                  label="Completed goals"
+                  value={String(completedGoalsCount)}
+                  detail="Visible proof that progress happened."
+                />
+                <ProgressStatCard
+                  icon={<Flame className={iconClass} aria-hidden />}
+                  label="Active days"
+                  value={String(consistency.activeDaysLast7)}
+                  detail="Days with XP in the last week."
+                />
+                <ProgressStatCard
+                  icon={<Users className={iconClass} aria-hidden />}
+                  label="Communities"
+                  value={String(joinedCommunitiesCount)}
+                  detail={joinedCommunitiesCount > 0 ? communityLabels.join(", ") : "Join one when you want more accountability."}
+                />
+                <ProgressStatCard
+                  icon={<CheckCircle2 className={iconClass} aria-hidden />}
+                  label="Community follow-through"
+                  value={String(completedCommitmentsCount)}
+                  detail={`${pluralize(activeCommitmentsCount, "active commitment")} in flight`}
+                />
+              </div>
+            </DashboardPanel>
+
             <CoachSuggestions
               suggestions={coachSuggestions}
               loading={coachSuggestionsLoading}
               onAdopt={adoptSuggestion}
             />
+
+            <DashboardPanel title="Unlocked surprises" icon={<Sparkles className={iconClass} />}>
+              <div className="space-y-3">
+                {unlockedSurprises.length === 0 ? (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Nothing unlocked yet. The first surprise opens at 250 XP or with a few days of consistency, so keep
+                    the loop light and visible.
+                  </p>
+                ) : (
+                  unlockedSurprises.map((unlock) => (
+                    <SurpriseUnlockCard
+                      key={unlock.id}
+                      unlock={unlock}
+                      spendablePoints={spendablePoints}
+                    />
+                  ))
+                )}
+              </div>
+
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saved rewards</p>
+                  <span className="text-xs text-muted-foreground">{pluralize(rewardCount, "reward")}</span>
+                </div>
+                {initialRewards.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No custom rewards saved yet. Mycelium calibration can seed a few, and this panel will track them
+                    alongside unlocked surprises.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {initialRewards.map((reward) => (
+                      <li
+                        key={reward.id}
+                        className="flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{reward.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {reward.cost} points · added {new Date(reward.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                          {reward.visibility}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </DashboardPanel>
 
             <div className="rounded-xl border border-dashed border-border bg-muted/25 p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next action</p>
@@ -652,5 +856,60 @@ export function GroveDashboard({
         </div>
       </div>
     </main>
+  );
+}
+
+function ProgressStatCard({
+  icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card/80 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-moss">{icon}</span>
+        <span>{label}</span>
+      </div>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
+
+function SurpriseUnlockCard({
+  unlock,
+  spendablePoints,
+}: {
+  unlock: SurpriseUnlock;
+  spendablePoints: number;
+}) {
+  const affordable = spendablePoints >= unlock.rewardCost;
+
+  return (
+    <div className="rounded-xl border border-border bg-card/80 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-base font-semibold text-foreground">{unlock.label}</p>
+        <span className="rounded-full bg-moss/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-bark dark:text-foreground">
+          Unlocked
+        </span>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{unlock.description}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span className="inline-flex items-center gap-1 font-medium text-foreground">
+          <Gift className="h-3.5 w-3.5 text-moss" aria-hidden />
+          {unlock.rewardTitle}
+        </span>
+        <span className="text-muted-foreground">· {unlock.rewardCost} points</span>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {affordable ? "You can afford this now." : `${unlock.rewardCost - spendablePoints} more points if you want to cash it in.`}
+      </p>
+    </div>
   );
 }
