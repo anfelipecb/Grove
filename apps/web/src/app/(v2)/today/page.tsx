@@ -21,7 +21,7 @@ export default async function TodayPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, spendable_points")
+    .select("id, display_name, spendable_points, community_points")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -169,6 +169,7 @@ export default async function TodayPage() {
           streak={streak}
           communityPulse={communityPulse}
           unlockedSurpriseIds={unlockedSurpriseIds}
+          profileId={profile.id}
         />
       </div>
     </div>

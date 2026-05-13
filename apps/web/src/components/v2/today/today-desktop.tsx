@@ -24,6 +24,7 @@ export type TodayDesktopProps = {
   streak: number;
   communityPulse: CommunityPulse;
   unlockedSurpriseIds: string[];
+  profileId: string;
 };
 
 type CoachSuggestion = {
@@ -45,6 +46,7 @@ export function TodayDesktop({
   streak,
   communityPulse,
   unlockedSurpriseIds,
+  profileId,
 }: TodayDesktopProps) {
   const todayDate = new Date();
   const today = toDateStr(todayDate);
@@ -61,7 +63,7 @@ export function TodayDesktop({
   const [nudgeLoading, setNudgeLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/ai/coach-suggestions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) })
+    fetch("/api/ai/coach-suggestions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId }) })
       .then((r) => r.json())
       .then((data: { suggestions?: CoachSuggestion[] }) => {
         const first = data.suggestions?.[0] ?? null;
