@@ -19,6 +19,7 @@ import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 
 type DailyCardProps = {
@@ -166,6 +167,10 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
       )}
 
       <LogSessionForm onLog={handleLog} />
+
+      <div className="mt-4">
+        <FindTimePanel />
+      </div>
     </div>
   );
 }
