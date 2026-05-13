@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, Users, Sparkles, UserCircle } from "lucide-react";
+import { CalendarCheck, Users, Sparkles, UserCircle, LogOut } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
 import { twMerge } from "tailwind-merge";
 
 const tabs = [
@@ -18,6 +19,7 @@ function isActive(pathname: string, href: string) {
 
 export function V2Nav() {
   const pathname = usePathname();
+  const { signOut } = useClerk();
 
   return (
     <>
@@ -39,6 +41,14 @@ export function V2Nav() {
             {label}
           </Link>
         ))}
+        <button
+          onClick={() => void signOut({ redirectUrl: "/" })}
+          className="ml-auto flex items-center gap-1.5 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Sign out"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Sign out
+        </button>
       </header>
 
       {/* Mobile: bottom tab bar */}
