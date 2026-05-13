@@ -8,6 +8,7 @@ dist/
 coverage/
 out/
 *.tsbuildinfo
+.worktrees/
 
 # Local environment
 .env
@@ -20,7 +21,7 @@ out/
 .railway/
 
 # Local-only planning, class, and research material
-docs/
+docs/*.pdf
 research/
 
 # Playwright (web e2e)
@@ -34,3 +35,4 @@ grove-*.png
 # System files
 .DS_Store
 Thumbs.db
+.superpowers/
