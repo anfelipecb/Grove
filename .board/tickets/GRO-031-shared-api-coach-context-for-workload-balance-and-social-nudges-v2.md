@@ -16,7 +16,6 @@ labels:
 depends_on:
   - "GRO-016"
   - "GRO-021"
-  - "GRO-025"
 created_at: "2026-05-13T21:44:04.943Z"
 updated_at: "2026-05-13T22:10:00.000Z"
 ---
