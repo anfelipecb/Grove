@@ -2,11 +2,11 @@
 id: "GRO-015"
 title: "v2 branch scaffold and 3-tab nav layout"
 slug: "v2-branch-scaffold-and-3-tab-nav-layout"
-status: "in_review"
+status: "done"
 priority: "p1"
 owner: ""
-branch: "ticket/gro-015-v2-branch-scaffold-and-3-tab-nav-layout"
-worktree: ".worktrees/gro-015-v2-branch-scaffold-and-3-tab-nav-layout"
+branch: ""
+worktree: ""
 pr_url: "https://github.com/anfelipecb/Grove/pull/13"
 labels: []
 depends_on: []

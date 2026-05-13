@@ -2,7 +2,7 @@
 id: "GRO-017"
 title: "Today — daily card with task check-off and points"
 slug: "today-daily-card-with-task-check-off-and-points"
-status: "backlog"
+status: "ready"
 priority: "p1"
 owner: ""
 branch: ""
