@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isUniqueViolation, isValidCommunitySlug, normalizeSlugInput } from "./slug-utils";
@@ -90,6 +91,8 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  revalidatePath("/community");
 
   return Response.json({
     membershipId: membership.id as string,

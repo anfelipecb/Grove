@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { Loader2, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-moss/40";
 
 export function CommunityEntry() {
-  const router = useRouter();
   const [joinSlug, setJoinSlug] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinPending, setJoinPending] = useState(false);
@@ -34,7 +32,7 @@ export function CommunityEntry() {
         setJoinError(data.error ?? "Could not join.");
         return;
       }
-      router.refresh();
+      window.location.assign("/community");
     } finally {
       setJoinPending(false);
     }
@@ -62,7 +60,7 @@ export function CommunityEntry() {
       setCreateName("");
       setCreateSlug("");
       setCreateDescription("");
-      router.refresh();
+      window.location.assign("/community");
     } finally {
       setCreatePending(false);
     }

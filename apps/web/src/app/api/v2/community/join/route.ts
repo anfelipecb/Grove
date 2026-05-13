@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -76,6 +77,8 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: insertError?.message ?? "Could not join community." }, { status: 500 });
   }
+
+  revalidatePath("/community");
 
   return NextResponse.json({
     membershipId: inserted.id as string,

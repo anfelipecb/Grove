@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerUserId } from "@/lib/clerk-auth";
+
+export const dynamic = "force-dynamic";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { CommunityHome } from "@/components/v2/community/community-home";
 import { CommunityEntry } from "@/components/v2/community/community-entry";
