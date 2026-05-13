@@ -9,9 +9,9 @@ const SCOPES = [
   "https://www.googleapis.com/auth/calendar.events.readonly",
 ].join(" ");
 
-export async function GET() {
+export async function GET(req: Request) {
   const userId = await getServerUserId();
-  if (!userId) return NextResponse.redirect("/sign-in");
+  if (!userId) return NextResponse.redirect(new URL("/sign-in", req.url));
 
   if (!GOOGLE_CLIENT_ID) {
     return NextResponse.json(

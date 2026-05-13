@@ -76,7 +76,7 @@ export function TodayDesktop({
       })
       .catch(() => setNudge(null))
       .finally(() => setNudgeLoading(false));
-  }, []);
+  }, [profileId]);
 
   const handleComplete = async (id: string) => {
     setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: true } : t)));
