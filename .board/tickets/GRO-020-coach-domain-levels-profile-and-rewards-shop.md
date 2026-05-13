@@ -2,16 +2,16 @@
 id: "GRO-020"
 title: "Coach — domain levels profile and rewards shop"
 slug: "coach-domain-levels-profile-and-rewards-shop"
-status: "backlog"
+status: "done"
 priority: "p2"
-owner: ""
+owner: "cursor"
 branch: ""
 worktree: ""
-pr_url: ""
-labels: ["v2", "coach", "gamification"]
-depends_on: ["GRO-019"]
+pr_url: "https://github.com/anfelipecb/Grove/pull/18"
+labels: []
+depends_on: []
 created_at: "2026-05-13T15:43:42.130Z"
-updated_at: "2026-05-13T15:43:42.130Z"
+updated_at: "2026-05-13T16:37:03.215Z"
 ---
 
 ## Context

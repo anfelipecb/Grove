@@ -50,7 +50,7 @@ export default async function CoachPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, display_name")
+    .select("id, display_name, spendable_points")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -64,6 +64,7 @@ export default async function CoachPage() {
 
   const profileId = (profile?.id as string | undefined) ?? null;
   const displayName = (profile?.display_name as string | undefined) ?? "Member";
+  const spendablePoints = (profile?.spendable_points as number | undefined) ?? 0;
 
   let taskCount = 0;
   let activeGoals: ActiveGoalRow[] = [];
@@ -111,6 +112,7 @@ export default async function CoachPage() {
           demoMode={demo}
           displayName={displayName}
           profileId={profileId}
+          spendablePoints={spendablePoints}
         />
       ) : (
         <CoachWizard demoMode={demo} initialDisplayName={displayName} profileId={profileId} />

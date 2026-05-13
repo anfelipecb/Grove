@@ -142,7 +142,7 @@ export default async function TodayPage() {
   return (
     <div>
       {/* Mobile / tablet: max-w-lg centered, tabs UI */}
-      <div className="lg:hidden mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg lg:hidden">
         <PointsHeader
           displayName={profile.display_name ?? "there"}
           totalPoints={profile.spendable_points}
@@ -152,7 +152,7 @@ export default async function TodayPage() {
       </div>
 
       {/* Desktop: full-width 3-column layout */}
-      <div className="hidden lg:block px-6 py-4">
+      <div className="hidden px-6 py-4 lg:block">
         <div className="mb-6">
           <PointsHeader
             displayName={profile.display_name ?? "there"}

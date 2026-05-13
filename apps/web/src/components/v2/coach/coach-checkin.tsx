@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
+import { DomainLevels } from "@/components/v2/coach/domain-levels";
+import { RewardsShop } from "@/components/v2/coach/rewards-shop";
 import type { ExistingCoachGoal } from "@/components/v2/coach/types";
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
   demoMode: boolean;
   displayName: string;
   profileId: string;
+  spendablePoints: number;
 };
 
 type GreetingPayload = {
@@ -21,7 +24,7 @@ function domainLabel(domainId: LifeDomainId): string {
   return LIFE_DOMAINS.find((domain) => domain.id === domainId)?.label ?? domainId;
 }
 
-export function CoachCheckin({ activeGoals, demoMode, displayName, profileId }: Props) {
+export function CoachCheckin({ activeGoals, demoMode, displayName, profileId, spendablePoints }: Props) {
   const [editingGoal, setEditingGoal] = useState<ExistingCoachGoal | null>(null);
   const [addingGoal, setAddingGoal] = useState(false);
   const [greeting, setGreeting] = useState(`Welcome back, ${displayName}.`);
@@ -88,6 +91,13 @@ export function CoachCheckin({ activeGoals, demoMode, displayName, profileId }: 
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Coach nudge</p>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{greeting}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{insight}</p>
+      </section>
+
+      <section className="space-y-8 rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
+        <DomainLevels />
+        <div className="border-t border-border pt-8">
+          <RewardsShop spendablePoints={spendablePoints} />
+        </div>
       </section>
 
       <section className="rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
