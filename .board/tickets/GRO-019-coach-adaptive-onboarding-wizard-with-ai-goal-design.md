@@ -2,16 +2,21 @@
 id: "GRO-019"
 title: "Coach — adaptive onboarding wizard with AI goal design"
 slug: "coach-adaptive-onboarding-wizard-with-ai-goal-design"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "codex"
+branch: "ticket/gro-019-coach-adaptive-onboarding-wizard-with-ai-goal-design"
+worktree: ".worktrees/gro-019-coach-adaptive-onboarding-wizard-with-ai-goal-design"
 pr_url: ""
-labels: ["v2", "coach", "ai"]
-depends_on: ["GRO-015", "GRO-016"]
+labels:
+  - "v2"
+  - "coach"
+  - "ai"
+depends_on:
+  - "GRO-015"
+  - "GRO-016"
 created_at: "2026-05-13T15:43:41.836Z"
-updated_at: "2026-05-13T15:43:41.836Z"
+updated_at: "2026-05-13T16:03:56.148Z"
 ---
 
 ## Context
