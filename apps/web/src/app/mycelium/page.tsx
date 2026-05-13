@@ -1,6 +1,2 @@
-import { MyceliumWorkbench } from "@/components/mycelium-workbench";
-
-export default function MyceliumPage() {
-  return <MyceliumWorkbench />;
-}
-
+import { redirect } from "next/navigation";
+export default function MyceliumPage() { redirect("/community"); }
