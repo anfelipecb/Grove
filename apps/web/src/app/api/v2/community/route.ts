@@ -1,33 +1,23 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { CommunityHome } from "@/components/v2/community/community-home";
-import type { SharedGoal } from "@/components/v2/community/shared-goals-list";
-import type { CommunityMember } from "@/components/v2/community/member-activity";
-import type { UpcomingSession } from "@/components/v2/community/sessions-panel";
 
 function getMondayISO(): string {
   const now = new Date();
   const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
+  const diff = (day === 0 ? -6 : 1 - day);
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
   return monday.toISOString().slice(0, 10);
 }
 
-export default async function CommunityPage() {
+export async function GET() {
   const userId = await getServerUserId();
-  if (!userId) redirect("/sign-in");
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = await createServerSupabaseClient();
-  if (!supabase) {
-    return (
-      <div className="p-8 text-center text-sm text-muted-foreground">
-        Database not configured.
-      </div>
-    );
-  }
+  if (!supabase) return NextResponse.json({ error: "DB not configured" }, { status: 503 });
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -35,7 +25,7 @@ export default async function CommunityPage() {
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
-  if (!profile) redirect("/sign-in");
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const { data: membership } = await supabase
     .from("memberships")
@@ -46,15 +36,7 @@ export default async function CommunityPage() {
     .maybeSingle();
 
   if (!membership) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-8 text-center">
-        <span className="text-4xl">🌿</span>
-        <h1 className="text-xl font-bold text-foreground">Join a community</h1>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          You are not part of any community yet. Community joining will be available soon.
-        </p>
-      </div>
-    );
+    return NextResponse.json({ community: null });
   }
 
   const communityId = membership.community_id;
@@ -67,7 +49,11 @@ export default async function CommunityPage() {
     { data: goals },
     { data: upcomingSessions },
   ] = await Promise.all([
-    supabase.from("communities").select("id, name").eq("id", communityId).maybeSingle(),
+    supabase
+      .from("communities")
+      .select("id, name, slug")
+      .eq("id", communityId)
+      .maybeSingle(),
     supabase
       .from("memberships")
       .select("profile_id, profiles(id, display_name, community_points)")
@@ -87,19 +73,19 @@ export default async function CommunityPage() {
   ]);
 
   const memberCount = (members ?? []).length;
-  const goalIds = (goals ?? []).map((g) => g.id);
 
+  const goalIds = (goals ?? []).map((g) => g.id);
   const [{ data: goalTasks }, { data: userRsvps }] = await Promise.all([
     goalIds.length > 0
       ? supabase.from("tasks").select("id, goal_id").in("goal_id", goalIds)
-      : Promise.resolve({ data: [] as { id: string; goal_id: string }[] }),
+      : Promise.resolve({ data: [] }),
     upcomingSessions && upcomingSessions.length > 0
       ? supabase
           .from("attendance")
           .select("session_id, rsvp")
           .eq("profile_id", profile.id)
           .in("session_id", upcomingSessions.map((s) => s.id))
-      : Promise.resolve({ data: [] as { session_id: string; rsvp: string }[] }),
+      : Promise.resolve({ data: [] }),
   ]);
 
   const taskIds = (goalTasks ?? []).map((t) => t.id);
@@ -109,7 +95,7 @@ export default async function CommunityPage() {
         .select("task_id, profile_id, community_points_earned")
         .in("task_id", taskIds)
         .gte("completed_date", monday)
-    : { data: [] as { task_id: string; profile_id: string; community_points_earned: number }[] };
+    : { data: [] };
 
   const taskToGoal = new Map<string, string>();
   for (const t of goalTasks ?? []) taskToGoal.set(t.id, t.goal_id);
@@ -124,9 +110,18 @@ export default async function CommunityPage() {
     goalWeeklyCompletions.set(gid, (goalWeeklyCompletions.get(gid) ?? 0) + 1);
   }
 
+  const allTaskIds = taskIds;
+  const { data: allCompletions } = allTaskIds.length > 0
+    ? await supabase
+        .from("task_completions")
+        .select("profile_id, community_points_earned")
+        .in("task_id", allTaskIds)
+        .gte("completed_date", monday)
+    : { data: [] };
+
   const memberWeeklyPts = new Map<string, number>();
   const memberWeeklyTasks = new Map<string, number>();
-  for (const c of completionsThisWeek ?? []) {
+  for (const c of allCompletions ?? []) {
     memberWeeklyPts.set(c.profile_id, (memberWeeklyPts.get(c.profile_id) ?? 0) + (c.community_points_earned ?? 0));
     memberWeeklyTasks.set(c.profile_id, (memberWeeklyTasks.get(c.profile_id) ?? 0) + 1);
   }
@@ -134,19 +129,9 @@ export default async function CommunityPage() {
   const rsvpMap = new Map<string, string>();
   for (const r of userRsvps ?? []) rsvpMap.set(r.session_id, r.rsvp);
 
-  const sharedGoals: SharedGoal[] = (goals ?? []).map((g) => ({
-    id: g.id,
-    title: g.title,
-    domain: g.domain,
-    contributorCount: goalContributors.get(g.id)?.size ?? 0,
-    weeklyCompletions: goalWeeklyCompletions.get(g.id) ?? 0,
-  }));
-
-  const communityMembers: CommunityMember[] = (members ?? [])
+  const membersOut = (members ?? [])
     .map((m) => {
-      const p = Array.isArray(m.profiles)
-        ? (m.profiles as { id: string; display_name: string | null; community_points: number }[])[0]
-        : (m.profiles as { id: string; display_name: string | null; community_points: number } | null);
+      const p = Array.isArray(m.profiles) ? m.profiles[0] : (m.profiles as { id: string; display_name: string; community_points: number } | null);
       if (!p) return null;
       return {
         profileId: m.profile_id,
@@ -156,26 +141,28 @@ export default async function CommunityPage() {
         weeklyPoints: memberWeeklyPts.get(m.profile_id) ?? 0,
       };
     })
-    .filter((m): m is CommunityMember & { weeklyPoints: number } => m !== null)
-    .sort((a, b) => b.weeklyPoints - a.weeklyPoints)
+    .filter(Boolean)
+    .sort((a, b) => (b!.weeklyPoints - a!.weeklyPoints))
     .slice(0, 10);
 
-  const sessions: UpcomingSession[] = (upcomingSessions ?? []).map((s) => ({
-    id: s.id,
-    title: s.title,
-    startsAt: s.starts_at,
-    rsvp: (rsvpMap.get(s.id) as "yes" | "no" | "maybe" | undefined) ?? null,
-  }));
-
-  return (
-    <CommunityHome
-      community={{ id: community?.id ?? communityId, name: community?.name ?? "Community", memberCount }}
-      goals={sharedGoals}
-      members={communityMembers}
-      upcomingSessions={sessions}
-      isOrganizer={isOrganizer}
-      currentProfileId={profile.id}
-      communityPoints={profile.community_points ?? 0}
-    />
-  );
+  return NextResponse.json({
+    community: community ? { id: community.id, name: community.name, memberCount } : null,
+    goals: (goals ?? []).map((g) => ({
+      id: g.id,
+      title: g.title,
+      domain: g.domain,
+      contributorCount: goalContributors.get(g.id)?.size ?? 0,
+      weeklyCompletions: goalWeeklyCompletions.get(g.id) ?? 0,
+    })),
+    members: membersOut,
+    upcomingSessions: (upcomingSessions ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      startsAt: s.starts_at,
+      rsvp: rsvpMap.get(s.id) ?? null,
+    })),
+    isOrganizer,
+    currentProfileId: profile.id,
+    memberCount,
+  });
 }
