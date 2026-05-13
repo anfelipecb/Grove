@@ -64,6 +64,8 @@ export default async function TodayPage() {
 
   const streak = computeStreak(recentCompletions ?? [], today);
 
+  const activeTasks = (tasks ?? []).map((t) => ({ id: t.id, title: t.title, domain: t.domain }));
+
   return (
     <div className="mx-auto max-w-lg">
       <PointsHeader
@@ -71,7 +73,7 @@ export default async function TodayPage() {
         totalPoints={profile.spendable_points}
         streak={streak}
       />
-      <TodayTabs tasks={taskRows} />
+      <TodayTabs tasks={taskRows} activeTasks={activeTasks} />
     </div>
   );
 }
