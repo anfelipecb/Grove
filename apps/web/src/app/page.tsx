@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const userId = await getServerUserId();
   if (userId) {
-    redirect("/dashboard");
+    redirect("/today");
   }
 
   return (

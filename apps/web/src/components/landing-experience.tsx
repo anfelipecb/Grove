@@ -1,96 +1,135 @@
-"use client";
-
-import { ArrowRight, Leaf, Network, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Leaf, Sparkles, Users, CheckCircle2, Compass, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 
-const tabs = [
+const painPoints = [
   {
-    id: "you",
-    label: "Your rhythm",
-    icon: Leaf,
-    headline: "Goals that respect friction",
-    body: "Small next actions, not a mountain of plans. XP reflects effort and resistance—you stay in control of what counts.",
+    title: "You know what matters, but starting still feels heavy",
+    body: "The problem is rarely a lack of ambition. It is friction, context switching, and the quiet guilt that builds when a plan is too big to re-enter.",
   },
   {
-    id: "mycelium",
-    label: "Mycelium",
-    icon: Sparkles,
-    headline: "AI that coordinates, not preaches",
-    body: "Mycelium balances life domains, surfaces commitments, and keeps nudges short and non-clinical. A coach for follow-through, not a diagnosis.",
+    title: "Most tools punish the exact day you needed a softer reset",
+    body: "Miss one day, lose the streak, feel behind, stop opening the app. Grove is designed for getting back in motion without pretending the hard day never happened.",
   },
   {
-    id: "together",
-    label: "Together",
-    icon: Users,
-    headline: "Community as the growth loop",
-    body: "Sessions, feed, and side chat keep you connected. Showing up after a rough week still earns something—because isolation is the silent thief.",
+    title: "Community usually sits in a separate tab, disconnected from real follow-through",
+    body: "Grove treats showing up with other people as part of the system, not an optional social layer bolted on later.",
   },
 ] as const;
 
-export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: boolean }) {
-  const [active, setActive] = useState<(typeof tabs)[number]["id"]>("mycelium");
-  const panel = tabs.find((t) => t.id === active) ?? tabs[1];
+const productScenes = [
+  {
+    title: "Coach",
+    icon: Sparkles,
+    eyebrow: "Shape the goal",
+    body: "Start with one messy intention. Coach helps turn it into a few goals and small repeatable tasks that feel possible to begin.",
+    detail: "You do not get a blank page. You get structure, suggestions, and room to adjust.",
+  },
+  {
+    title: "Today",
+    icon: CalendarDays,
+    eyebrow: "See the next move",
+    body: "Your tasks live in today, not buried in a giant system. Required anchors and goal tasks sit side by side so you can start smaller and still make visible progress.",
+    detail: "The point is not perfect planning. The point is knowing what to do next.",
+  },
+  {
+    title: "Community",
+    icon: Users,
+    eyebrow: "Stay in motion together",
+    body: "Shared goals, sessions, and group momentum help you come back after a rough week instead of drifting alone.",
+    detail: "Grove treats community as fuel for follow-through, not decoration.",
+  },
+] as const;
 
+const firstWeek = [
+  {
+    day: "Day 1",
+    title: "You arrive with one honest sentence",
+    body: "Something like \"I want my work rhythm to stop collapsing every few days.\" Coach turns that into a few goal options and small tasks.",
+  },
+  {
+    day: "Day 2",
+    title: "Today shows a plan you can actually enter",
+    body: "A couple of required tasks keep the floor visible. Goal tasks help you move the bigger work without rebuilding the whole week each morning.",
+  },
+  {
+    day: "Day 4",
+    title: "You slip, then reopen the app without shame spiraling",
+    body: "The system is still there. You adjust, finish one small thing, and the day counts because effort still counts.",
+  },
+  {
+    day: "Day 7",
+    title: "Community makes the loop stronger",
+    body: "You can see shared momentum, upcoming sessions, and visible contribution, which makes follow-through feel social instead of private and brittle.",
+  },
+] as const;
+
+const proofPoints = [
+  "Coach helps you define the next small task instead of asking for a perfect plan.",
+  "Today keeps the surface short, current, and easier to re-enter after a lost day.",
+  "Community turns showing up into part of your growth loop, not a side quest.",
+] as const;
+
+export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: boolean }) {
   return (
     <div className="relative min-h-screen overflow-hidden text-foreground">
       <div
-        className="pointer-events-none absolute -left-32 top-20 h-96 w-96 rounded-full bg-moss/25 blur-[100px] motion-safe:animate-landing-float dark:opacity-30"
+        className="pointer-events-none absolute -left-28 top-24 h-[26rem] w-[26rem] rounded-full bg-moss/20 blur-[110px] motion-safe:animate-landing-float dark:opacity-30"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -right-24 top-40 h-[28rem] w-[28rem] rounded-full bg-fern/80 blur-[90px] motion-safe:animate-landing-float-slow dark:bg-zinc-700/40 dark:opacity-40"
+        className="pointer-events-none absolute right-[-6rem] top-16 h-[30rem] w-[30rem] rounded-full bg-marigold/18 blur-[120px] motion-safe:animate-landing-float-slow dark:opacity-20"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-marigold/20 blur-[80px] motion-safe:animate-landing-drift dark:opacity-25"
+        className="pointer-events-none absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fern/75 blur-[90px] motion-safe:animate-landing-drift dark:bg-zinc-700/25 dark:opacity-30"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent dark:via-white/10"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent dark:via-white/10"
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-4 py-12 sm:px-6 lg:gap-20 lg:px-8 lg:py-16">
-        <header className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-4 py-10 sm:px-6 lg:gap-24 lg:px-8 lg:py-16">
+        <header className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/50 bg-white/35 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60 dark:shadow-glass-dark">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/50 bg-white/40 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60 dark:shadow-glass-dark">
               <Leaf className="h-7 w-7 text-moss" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-moss">Grove</p>
-              <p className="text-xs text-stone-600 dark:text-muted-foreground">Grow together</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-moss">Grove</p>
+              <p className="text-xs text-stone-600 dark:text-muted-foreground">For people trying to follow through without disappearing</p>
             </div>
           </div>
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end lg:w-auto">
             <Link
               href="/sign-in"
-              className="rounded-xl border border-white/40 bg-white/30 px-4 py-2.5 text-sm font-semibold text-bark shadow-glass backdrop-blur-md transition hover:bg-white/50 hover:shadow-lg dark:border-white/10 dark:bg-zinc-900/50 dark:text-foreground dark:shadow-glass-dark dark:hover:bg-zinc-800/70"
+              className="rounded-xl border border-white/45 bg-white/35 px-4 py-2.5 text-sm font-semibold text-bark shadow-glass backdrop-blur-md transition hover:bg-white/55 hover:shadow-lg dark:border-white/10 dark:bg-zinc-900/55 dark:text-foreground dark:shadow-glass-dark dark:hover:bg-zinc-800/75"
             >
               Sign in
             </Link>
             <Link
               href="/sign-up"
-              className="inline-flex items-center gap-2 rounded-xl border border-moss/30 bg-moss/90 px-4 py-2.5 text-sm font-semibold text-white shadow-glass backdrop-blur-sm transition hover:bg-bark dark:border-moss/40 dark:hover:bg-moss"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-bark px-4 py-2.5 text-sm font-semibold text-white shadow-glass transition hover:bg-moss"
             >
-              Get started
+              Start with Coach
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
             {showDemoLinks ? (
-              <div className="flex w-full flex-col gap-2 rounded-xl border border-dashed border-moss/40 bg-white/35 px-3 py-2 text-xs shadow-glass backdrop-blur-md sm:min-w-[240px] sm:flex-1">
-                <span className="font-semibold text-bark">Local demo (no Clerk sign-in)</span>
+              <div className="flex w-full flex-col gap-2 rounded-2xl border border-dashed border-moss/35 bg-white/40 px-3 py-2 text-xs shadow-glass backdrop-blur-md sm:min-w-[260px] sm:flex-1">
+                <span className="font-semibold text-bark">Local demo, no Clerk sign-in</span>
                 <div className="flex flex-wrap gap-2">
                   <Link href="/demo/start?scenario=onboarding" className="font-semibold text-moss hover:underline">
                     Onboarding
                   </Link>
                   <span className="text-stone-400" aria-hidden="true">
-                    ·
+                    /
                   </span>
                   <Link href="/demo/start?scenario=dashboard" className="font-semibold text-moss hover:underline">
                     Dashboard
                   </Link>
                   <span className="text-stone-400" aria-hidden="true">
-                    ·
+                    /
                   </span>
                   <Link href="/demo/exit" className="text-stone-600 hover:text-bark hover:underline">
                     Exit demo
@@ -101,129 +140,230 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
           </div>
         </header>
 
-        <section className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/25 px-3 py-1 text-xs font-medium text-bark shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/55 dark:text-foreground">
-              <Network className="h-3.5 w-3.5 text-moss" aria-hidden="true" />
-              Self-improvement, coordinated—not automated away
+        <section className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
+          <div className="max-w-2xl">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/30 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-bark shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/50 dark:text-foreground">
+              <Compass className="h-3.5 w-3.5 text-moss" aria-hidden="true" />
+              Built for follow-through, not just tracking
             </p>
-            <h1 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-bark dark:text-foreground sm:text-5xl lg:text-[3.25rem]">
-              ADHD-aware accountability that keeps you connected—not alone.
+            <h1 className="mt-6 text-4xl font-semibold leading-[1.03] tracking-tight text-bark dark:text-foreground sm:text-5xl lg:text-[4.1rem]">
+              Some days you know exactly what matters and still cannot begin.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-700/95 dark:text-muted-foreground">
-              Grove links your private growth loop with real community: goals, friction-aware XP, and Mycelium—clear,
-              grounded help for plans, check-ins, and participation nudges.
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-700 dark:text-muted-foreground">
+              Grove helps you turn one messy intention into a few small tasks, keep them visible today, and stay connected to people who are also trying to follow through.
             </p>
+            <p className="mt-4 max-w-xl text-base leading-7 text-stone-600 dark:text-muted-foreground">
+              It is ADHD-aware by design. Coach helps shape the system. Today keeps the next move visible. Community makes it easier to come back after a hard day.
+            </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/sign-up"
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-moss to-moss/85 px-5 py-3.5 text-sm font-semibold text-white shadow-glass transition hover:from-bark hover:to-bark hover:shadow-lg"
+                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-moss to-bark px-5 py-3.5 text-sm font-semibold text-white shadow-glass transition hover:shadow-lg"
               >
-                Start your grove
-                <ArrowRight
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
+                Create your first goals
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
               <Link
                 href="/sign-in"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/50 bg-white/35 px-5 py-3.5 text-sm font-semibold text-bark shadow-glass backdrop-blur-md transition hover:bg-white/55 dark:border-white/10 dark:bg-zinc-900/55 dark:text-foreground dark:shadow-glass-dark dark:hover:bg-zinc-800/70"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/50 bg-white/35 px-5 py-3.5 text-sm font-semibold text-bark shadow-glass backdrop-blur-md transition hover:bg-white/55 dark:border-white/10 dark:bg-zinc-900/55 dark:text-foreground dark:shadow-glass-dark dark:hover:bg-zinc-800/75"
               >
                 I already have an account
               </Link>
             </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {proofPoints.map((point, index) => (
+                <article
+                  key={point}
+                  style={{ animationDelay: `${index * 140}ms` }}
+                  className="rounded-2xl border border-white/45 bg-white/38 p-4 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-moss" aria-hidden="true" />
+                  <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{point}</p>
+                </article>
+              ))}
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-white/50 bg-white/35 p-6 shadow-glass backdrop-blur-xl transition hover:bg-white/45 hover:shadow-xl dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark dark:hover:bg-zinc-900/55 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-moss">How it works</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {tabs.map((t) => {
-                const Icon = t.icon;
-                const isOn = active === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setActive(t.id)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
-                      isOn
-                        ? "border-moss/50 bg-moss/15 text-bark shadow-sm dark:text-foreground"
-                        : "border-white/40 bg-white/25 text-stone-700 hover:bg-white/40 dark:border-white/10 dark:bg-zinc-900/40 dark:text-muted-foreground dark:hover:bg-zinc-800/60"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
+          <aside className="relative overflow-hidden rounded-[2rem] border border-white/50 bg-white/40 p-6 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark sm:p-7">
             <div
-              key={panel.id}
-              className="mt-6 rounded-xl border border-white/35 bg-white/40 p-5 shadow-inner backdrop-blur-sm motion-safe:animate-fadeIn dark:border-white/10 dark:bg-zinc-950/50"
-            >
-              <h2 className="text-lg font-semibold text-bark dark:text-foreground">{panel.headline}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-stone-700 dark:text-muted-foreground">{panel.body}</p>
+              className="pointer-events-none absolute inset-x-6 top-5 h-px bg-[linear-gradient(90deg,transparent,rgba(77,124,85,0.55),transparent)] motion-safe:animate-landing-shine bg-[length:220%_100%]"
+              aria-hidden="true"
+            />
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">Your first day in Grove</p>
+            <h2 className="mt-3 text-2xl font-semibold text-bark dark:text-foreground">You should know what happens next</h2>
+            <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">
+              Sign-up should not drop you into an empty dashboard. Grove starts by helping you shape one real goal, then turns it into a handful of tasks you can enter today.
+            </p>
+
+            <div className="mt-7 space-y-4">
+              {[
+                {
+                  step: "01",
+                  title: "Tell Coach what feels stuck",
+                  body: "Start with plain language, not a perfect category.",
+                },
+                {
+                  step: "02",
+                  title: "Pick a few goals and small tasks",
+                  body: "Required anchors and goal tasks are suggested, then adjusted by you.",
+                },
+                {
+                  step: "03",
+                  title: "Land on Today with a plan you can enter",
+                  body: "Your work is already visible, short, and easier to restart.",
+                },
+                {
+                  step: "04",
+                  title: "Use Community to stay connected",
+                  body: "Shared goals and sessions make momentum easier to recover.",
+                },
+              ].map((item, index) => (
+                <div key={item.step} className="relative pl-12">
+                  {index !== 3 ? (
+                    <div className="absolute left-[1.05rem] top-8 h-[calc(100%+0.9rem)] w-px bg-gradient-to-b from-moss/80 to-transparent" aria-hidden="true" />
+                  ) : null}
+                  <div className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full border border-moss/30 bg-moss/12 text-xs font-semibold text-bark dark:text-foreground">
+                    {item.step}
+                  </div>
+                  <div className="rounded-2xl border border-white/45 bg-white/55 px-4 py-3 dark:border-white/10 dark:bg-zinc-950/55">
+                    <p className="text-sm font-semibold text-bark dark:text-foreground">{item.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{item.body}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <ul className="mt-6 space-y-3 text-sm leading-relaxed text-stone-700 dark:text-muted-foreground">
-              <li className="flex gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-moss" />
-                <span>
-                  <strong className="text-bark">Intake you own.</strong> Optional private context; no vibes-only
-                  coaching.
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-moss" />
-                <span>
-                  <strong className="text-bark">Participation matters.</strong> Feed, sessions, commitments—Mycelium in
-                  the margin so nothing gets lost.
-                </span>
-              </li>
-            </ul>
-          </div>
+
+            <div className="mt-6 rounded-2xl border border-dashed border-moss/35 bg-moss/8 px-4 py-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">
+              After sign-up, you are not asked to invent the system alone. Grove helps you make one.
+            </div>
+          </aside>
         </section>
 
-        <section className="grid gap-5 md:grid-cols-3">
-          {[
-            {
-              title: "Mycelium coach",
-              icon: Sparkles,
-              cardClass: "from-marigold/25 via-amber-50/30 to-white/40",
-              text: "Domain balance and bite-sized next steps from what you actually said—not generic advice.",
-            },
-            {
-              title: "Community pane",
-              icon: Users,
-              cardClass: "from-moss/15 via-fern/50 to-white/45",
-              text: "Feed and chat alongside your group so follow-through stays social, not solitary.",
-            },
-            {
-              title: "Privacy by default",
-              icon: Leaf,
-              cardClass: "from-stone-100/90 via-white/50 to-fern/20",
-              text: "Sensitive context stays private. Public preferences are opt-in; crisis wording routes to real help.",
-            },
-          ].map((card) => {
-            const Icon = card.icon;
-            return (
-              <article
-                key={card.title}
-                className={`group relative overflow-hidden rounded-2xl border border-white/45 bg-gradient-to-br ${card.cardClass} p-6 shadow-glass backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-white/60 hover:shadow-xl dark:border-white/10 dark:from-zinc-900 dark:via-zinc-950 dark:to-black dark:shadow-glass-dark dark:hover:border-white/15`}
-              >
-                <div className="relative">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/50 bg-white/50 text-bark shadow-sm backdrop-blur-sm transition group-hover:scale-105 dark:border-white/10 dark:bg-zinc-800/80 dark:text-foreground">
+        <section className="grid gap-4 md:grid-cols-3">
+          {painPoints.map((item, index) => (
+            <article
+              key={item.title}
+              style={{ animationDelay: `${index * 120}ms` }}
+              className="rounded-[1.75rem] border border-white/45 bg-white/35 p-6 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-clay">Why this matters</p>
+              <h2 className="mt-3 text-xl font-semibold text-bark dark:text-foreground">{item.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{item.body}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className="rounded-[2rem] border border-white/45 bg-white/35 p-6 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/40 dark:shadow-glass-dark sm:p-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">How Grove works</p>
+            <h2 className="mt-3 text-3xl font-semibold text-bark dark:text-foreground">Three surfaces, one loop</h2>
+            <p className="mt-3 text-base leading-7 text-stone-700 dark:text-muted-foreground">
+              Grove is not a generic assistant with a productivity skin. The product has a shape: Coach helps design the system, Today keeps it actionable, and Community keeps momentum social.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {productScenes.map((scene, index) => {
+              const Icon = scene.icon;
+              return (
+                <article
+                  key={scene.title}
+                  style={{ animationDelay: `${index * 140}ms` }}
+                  className="group relative overflow-hidden rounded-[1.75rem] border border-white/50 bg-gradient-to-br from-white/65 via-white/40 to-fern/35 p-6 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:from-zinc-900 dark:via-zinc-950 dark:to-black dark:shadow-glass-dark"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/50 bg-white/50 text-bark shadow-sm dark:border-white/10 dark:bg-zinc-800/80 dark:text-foreground">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <h2 className="mt-4 text-lg font-semibold text-bark dark:text-foreground">{card.title}</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-muted-foreground">{card.text}</p>
-                </div>
-              </article>
-            );
-          })}
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-moss">{scene.eyebrow}</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-bark dark:text-foreground">{scene.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{scene.body}</p>
+                  <p className="mt-4 text-sm leading-6 text-stone-600 dark:text-muted-foreground">{scene.detail}</p>
+                </article>
+              );
+            })}
+          </div>
         </section>
 
-        <footer className="border-t border-white/30 pt-10 text-center text-xs text-stone-500 dark:border-white/10 dark:text-muted-foreground">
-          <p>Grove — personal follow-through and community participation, together.</p>
+        <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">A better story than streaks</p>
+            <h2 className="mt-3 text-3xl font-semibold text-bark dark:text-foreground">What the first week should feel like</h2>
+            <p className="mt-4 max-w-lg text-base leading-7 text-stone-700 dark:text-muted-foreground">
+              The point is not to become flawless in a day. The point is to make re-entry easier, so progress survives imperfect energy, rough mornings, and interrupted weeks.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {firstWeek.map((item, index) => (
+              <article
+                key={item.day}
+                style={{ animationDelay: `${index * 120}ms` }}
+                className="rounded-[1.75rem] border border-white/45 bg-white/35 p-5 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark"
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded-full border border-moss/30 bg-moss/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-bark dark:text-foreground">
+                    {item.day}
+                  </span>
+                  <h3 className="text-lg font-semibold text-bark dark:text-foreground">{item.title}</h3>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/45 bg-gradient-to-r from-bark via-bark to-moss p-7 text-white shadow-panel dark:shadow-panel-dark sm:p-10">
+          <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Why community matters</p>
+              <h2 className="mt-3 text-3xl font-semibold leading-tight">Grove is not solo productivity with a community tab.</h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
+                Personal follow-through and community participation strengthen each other. When your own system feels alive, you show up for other people more easily. When other people are visible, it is easier to return to your own work.
+              </p>
+            </div>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+              <p className="text-sm font-semibold text-white">The promise of Grove</p>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-white/80">
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
+                  <span>You should understand the app before you finish the first screen.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
+                  <span>You should leave onboarding with real goals and tasks, not a blank dashboard.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
+                  <span>You should be able to come back after a rough day without feeling like you failed the app.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <footer className="rounded-[1.75rem] border border-white/40 bg-white/30 px-6 py-8 text-center shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">Start here</p>
+          <h2 className="mt-3 text-3xl font-semibold text-bark dark:text-foreground">If you want a clearer way to keep going, Grove is ready.</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-stone-700 dark:text-muted-foreground">
+            Sign up to shape your first goals with Coach, land on Today with a smaller plan, and build momentum with people instead of by yourself.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 rounded-xl bg-moss px-5 py-3 text-sm font-semibold text-white transition hover:bg-bark"
+            >
+              Start with Coach
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/50 bg-white/45 px-5 py-3 text-sm font-semibold text-bark transition hover:bg-white/65 dark:border-white/10 dark:bg-zinc-900/55 dark:text-foreground dark:hover:bg-zinc-800/75"
+            >
+              Return to Grove
+            </Link>
+          </div>
         </footer>
       </div>
     </div>
