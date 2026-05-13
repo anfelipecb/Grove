@@ -32,7 +32,7 @@ export function CommunityEntry() {
         setJoinError(data.error ?? "Could not join.");
         return;
       }
-      window.location.assign("/community");
+      window.location.assign(`${window.location.origin}/community`);
     } finally {
       setJoinPending(false);
     }
@@ -60,7 +60,7 @@ export function CommunityEntry() {
       setCreateName("");
       setCreateSlug("");
       setCreateDescription("");
-      window.location.assign("/community");
+      window.location.assign(`${window.location.origin}/community`);
     } finally {
       setCreatePending(false);
     }

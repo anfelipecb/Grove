@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import { getServerUserId } from "@/lib/clerk-auth";
-
-export const dynamic = "force-dynamic";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { CommunityHome } from "@/components/v2/community/community-home";
 import { CommunityEntry } from "@/components/v2/community/community-entry";
 import type { SharedGoal } from "@/components/v2/community/shared-goals-list";
 import type { CommunityMember } from "@/components/v2/community/member-activity";
 import type { UpcomingSession } from "@/components/v2/community/sessions-panel";
+
+export const dynamic = "force-dynamic";
 
 function getMondayISO(): string {
   const now = new Date();
@@ -20,6 +21,7 @@ function getMondayISO(): string {
 }
 
 export default async function CommunityPage() {
+  noStore();
   const userId = await getServerUserId();
   if (!userId) redirect("/sign-in");
 
