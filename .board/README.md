@@ -5,12 +5,12 @@
 - Tickets live in `.board/tickets/*.md`.
 - Each ticket is one markdown file with YAML frontmatter.
 - Status changes happen either through `pnpm board:dev` or by editing the files directly.
-- The two reusable worktrees are defined in `.board/config.json`.
+- Ticket worktrees are ephemeral and live under `.worktrees/`.
 
 Recommended flow:
 
 1. Create or refine a ticket until it is in `ready`.
-2. Start it on `agent-1` or `agent-2`.
-3. Move it to `doing` while the worktree is active.
-4. Move it to `in_review` when the PR is open.
-5. Move it to `done` after merge, then reset the worktree.
+2. Open a fresh terminal, read `AGENTS.md` plus the ticket, then run `pnpm board:ticket:start GRO-001`.
+3. Work only inside the created `.worktrees/<ticket-id>-<slug>` checkout while the ticket is `doing`.
+4. After the PR is open, run `pnpm board:ticket:review GRO-001 https://github.com/<org>/<repo>/pull/<n>`.
+5. After merge, update the main checkout to `master`, then run `pnpm board:ticket:close GRO-001` to mark it `done` and delete the worktree.

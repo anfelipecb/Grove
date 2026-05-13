@@ -3,12 +3,11 @@ import { getBoardState } from "./board-lib.mjs";
 try {
   const state = await getBoardState();
 
-  console.log("Agents");
-  for (const agent of state.agents) {
-    const ticket = agent.activeTicketId ? ` -> ${agent.activeTicketId}` : "";
-    const branch = agent.exists ? agent.branch || agent.parkingBranch : "not initialized";
-    const cleanFlag = agent.clean ? "clean" : "dirty";
-    console.log(`- ${agent.label}: ${branch} (${cleanFlag})${ticket}`);
+  console.log("Active Claims");
+  for (const claim of state.claims) {
+    const cleanFlag = claim.exists ? (claim.clean ? "clean" : "dirty") : "missing";
+    const owner = claim.owner ? ` @ ${claim.owner}` : "";
+    console.log(`- ${claim.id} [${claim.status}] ${claim.branch} (${cleanFlag})${owner}`);
   }
 
   console.log("");

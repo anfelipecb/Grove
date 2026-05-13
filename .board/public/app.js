@@ -1,21 +1,21 @@
 const summaryElement = document.querySelector("#summary");
 const boardElement = document.querySelector("#board");
-const agentsElement = document.querySelector("#agents");
+const claimsElement = document.querySelector("#claims");
 const messageElement = document.querySelector("#message");
 const lastSyncElement = document.querySelector("#last-sync");
 const refreshButton = document.querySelector("#refresh-board");
 
 let state = {
-  config: { statuses: [], worktrees: [] },
+  config: { statuses: [] },
   tickets: [],
-  agents: []
+  claims: []
 };
 
 let draggingTicketId = "";
 let messageTimeoutId = null;
 
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -29,7 +29,7 @@ function bodyPreview(body) {
     .replace(/^- \[[ xX]\]\s*/gm, "- ")
     .trim();
 
-  return cleaned.length > 120 ? `${cleaned.slice(0, 117)}...` : cleaned;
+  return cleaned.length > 150 ? `${cleaned.slice(0, 147)}...` : cleaned;
 }
 
 function priorityRank(priority) {
@@ -73,6 +73,10 @@ function ownerLabel(ticket) {
     return "unscoped";
   }
 
+  if (ticket.status === "doing" || ticket.status === "in_review") {
+    return "claimed";
+  }
+
   return "unassigned";
 }
 
@@ -84,24 +88,13 @@ function branchLabel(branch) {
   return branch.length > 34 ? `${branch.slice(0, 31)}...` : branch;
 }
 
-function renderSummary() {
-  const total = state.tickets.length;
+function worktreeLabel(worktreePath) {
+  if (!worktreePath) {
+    return "No worktree recorded";
+  }
 
-  summaryElement.innerHTML = state.config.statuses
-    .map((status) => {
-      const count = state.tickets.filter((ticket) => ticket.status === status.id).length;
-
-      return `
-        <article class="summary-card" data-status-id="${escapeHtml(status.id)}">
-          <div class="summary-copy">
-            <span class="summary-label">${escapeHtml(status.label)}</span>
-            <strong class="summary-value">${count}</strong>
-          </div>
-          <span class="summary-pill">${total === 0 ? "0%" : `${Math.round((count / total) * 100)}%`}</span>
-        </article>
-      `;
-    })
-    .join("");
+  const parts = worktreePath.split("/");
+  return parts.slice(-2).join("/");
 }
 
 function showMessage(text, tone = "info") {
@@ -137,40 +130,53 @@ async function request(url, options = {}) {
   return payload;
 }
 
-async function loadState() {
-  state = await request("/api/state");
-  lastSyncElement.textContent = `Synced ${new Date().toLocaleTimeString()}`;
-  render();
+function renderSummary() {
+  const total = state.tickets.length;
+
+  summaryElement.innerHTML = state.config.statuses
+    .map((status) => {
+      const count = state.tickets.filter((ticket) => ticket.status === status.id).length;
+
+      return `
+        <article class="summary-card" data-status-id="${escapeHtml(status.id)}">
+          <div class="summary-copy">
+            <span class="summary-label">${escapeHtml(status.label)}</span>
+            <strong class="summary-value">${count}</strong>
+          </div>
+          <span class="summary-pill">${total === 0 ? "0%" : `${Math.round((count / total) * 100)}%`}</span>
+        </article>
+      `;
+    })
+    .join("");
 }
 
-function renderAgents() {
-  agentsElement.innerHTML = state.agents
-    .map((agent) => {
-      const activeTicket = state.tickets.find((ticket) => ticket.id === agent.activeTicketId);
-      const ticketLine = agent.activeTicketId
-        ? `<p class="muted">${escapeHtml(agent.activeTicketId)} - ${escapeHtml(agent.activeTicketTitle)}</p>`
-        : `<p class="muted">${agent.exists ? "No active ticket" : "Worktree not initialized"}</p>`;
-      const branchLabel = agent.exists ? agent.branch || agent.parkingBranch : agent.parkingBranch;
-      const prLink = activeTicket?.pr_url
-        ? `<a class="meta-link" href="${escapeHtml(activeTicket.pr_url)}" target="_blank" rel="noreferrer">PR</a>`
+function renderClaims() {
+  if (state.claims.length === 0) {
+    claimsElement.innerHTML = `<p class="empty-state">No active claims.</p>`;
+    return;
+  }
+
+  claimsElement.innerHTML = state.claims
+    .map((claim) => {
+      const healthLabel = !claim.exists ? "missing" : claim.clean ? "clean" : "dirty";
+      const prLink = claim.pr_url
+        ? `<a class="meta-link" href="${escapeHtml(claim.pr_url)}" target="_blank" rel="noreferrer">PR</a>`
         : "";
 
       return `
-        <article class="agent-card">
-          <div class="agent-header">
+        <article class="claim-card">
+          <div class="claim-header">
             <div>
-              <h3>${escapeHtml(agent.label)}</h3>
-              <p class="path-label">${escapeHtml(agent.path)}</p>
+              <p class="ticket-id">${escapeHtml(claim.id)}</p>
+              <h3 class="ticket-title">${escapeHtml(claim.title)}</h3>
             </div>
-            <span class="status-pill ${agent.clean ? "clean" : "dirty"}">${agent.clean ? "clean" : "dirty"}</span>
+            <span class="status-pill ${healthLabel}">${escapeHtml(healthLabel)}</span>
           </div>
-          <div class="agent-status">
-            <span>Branch</span>
-            <strong>${escapeHtml(branchLabel)}</strong>
-          </div>
-          ${ticketLine}
+          <p class="claim-path">${escapeHtml(worktreeLabel(claim.path))}</p>
           <div class="ticket-meta">
-            <span class="meta-pill">${agent.exists ? "ready" : "missing"}</span>
+            <span class="meta-pill">${escapeHtml(claim.status)}</span>
+            <span class="meta-pill">${escapeHtml(claim.owner || "claimed")}</span>
+            ${claim.branch ? `<span class="meta-pill" title="${escapeHtml(claim.branch)}">${escapeHtml(branchLabel(claim.branch))}</span>` : ""}
             ${prLink}
           </div>
         </article>
@@ -190,8 +196,12 @@ function renderBoard() {
               const prLink = ticket.pr_url
                 ? `<a class="meta-link" href="${escapeHtml(ticket.pr_url)}" target="_blank" rel="noreferrer">PR</a>`
                 : "";
-              const branch = ticket.branch
+              const showExecutionMeta = ticket.status !== "done";
+              const branch = showExecutionMeta && ticket.branch
                 ? `<span class="meta-pill" title="${escapeHtml(ticket.branch)}">${escapeHtml(branchLabel(ticket.branch))}</span>`
+                : "";
+              const worktree = showExecutionMeta && ticket.worktree
+                ? `<span class="meta-pill" title="${escapeHtml(ticket.worktree)}">${escapeHtml(worktreeLabel(ticket.worktree))}</span>`
                 : "";
 
               return `
@@ -207,6 +217,7 @@ function renderBoard() {
                   <div class="ticket-meta">
                     <span class="meta-pill">${escapeHtml(ownerLabel(ticket))}</span>
                     ${branch}
+                    ${worktree}
                     ${prLink}
                   </div>
                 </article>
@@ -235,8 +246,14 @@ function renderBoard() {
 
 function render() {
   renderSummary();
-  renderAgents();
+  renderClaims();
   renderBoard();
+}
+
+async function loadState() {
+  state = await request("/api/state");
+  lastSyncElement.textContent = `Synced ${new Date().toLocaleTimeString()}`;
+  render();
 }
 
 refreshButton.addEventListener("click", async () => {
@@ -268,68 +285,85 @@ document.addEventListener("dragstart", (event) => {
 
 document.addEventListener("dragend", () => {
   draggingTicketId = "";
-  for (const column of document.querySelectorAll(".state-section")) {
-    column.classList.remove("drop-target");
-  }
+  document.querySelectorAll(".state-section.drop-target").forEach((section) => {
+    section.classList.remove("drop-target");
+  });
 });
 
 document.addEventListener("dragover", (event) => {
-  const column = event.target instanceof HTMLElement ? event.target.closest(".state-section") : null;
+  const target = event.target;
 
-  if (!(column instanceof HTMLElement)) {
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const section = target.closest(".state-section");
+
+  if (!section) {
     return;
   }
 
   event.preventDefault();
-  column.classList.add("drop-target");
+  section.classList.add("drop-target");
 });
 
 document.addEventListener("dragleave", (event) => {
-  const column = event.target instanceof HTMLElement ? event.target.closest(".state-section") : null;
+  const target = event.target;
 
-  if (column instanceof HTMLElement) {
-    column.classList.remove("drop-target");
+  if (!(target instanceof HTMLElement)) {
+    return;
   }
+
+  const section = target.closest(".state-section");
+
+  if (!section) {
+    return;
+  }
+
+  const nextTarget = event.relatedTarget;
+
+  if (nextTarget instanceof Node && section.contains(nextTarget)) {
+    return;
+  }
+
+  section.classList.remove("drop-target");
 });
 
 document.addEventListener("drop", async (event) => {
-  const column = event.target instanceof HTMLElement ? event.target.closest(".state-section") : null;
+  const target = event.target;
 
-  if (!(column instanceof HTMLElement)) {
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const section = target.closest(".state-section");
+
+  if (!(section instanceof HTMLElement)) {
     return;
   }
 
   event.preventDefault();
-  column.classList.remove("drop-target");
+  section.classList.remove("drop-target");
 
-  const status = column.dataset.statusId;
+  const statusId = section.dataset.statusId || "";
   const ticketId = draggingTicketId || event.dataTransfer?.getData("text/plain") || "";
 
-  if (!status || !ticketId) {
+  if (!statusId || !ticketId) {
     return;
   }
 
   try {
     await request(`/api/tickets/${encodeURIComponent(ticketId)}`, {
       method: "PATCH",
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status: statusId })
     });
-    showMessage(`${ticketId} moved to ${status}.`);
     await loadState();
+    showMessage(`${ticketId} moved to ${statusId}.`);
   } catch (error) {
     showMessage(error.message, "error");
   }
 });
 
-await loadState();
-window.setInterval(async () => {
-  if (draggingTicketId || document.hidden) {
-    return;
-  }
-
-  try {
-    await loadState();
-  } catch (_error) {
-    // Keep the board stable during transient refresh failures.
-  }
-}, 4000);
+loadState().catch((error) => {
+  showMessage(error.message, "error");
+});

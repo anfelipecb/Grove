@@ -3,13 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import {
   PUBLIC_DIR,
+  closeTicket,
   createTicket,
-  ensureAllWorktrees,
   ensureBoardStructure,
   getBoardState,
+  markTicketInReview,
   readConfig,
-  resetAgent,
-  startTicketOnAgent,
+  startTicket,
   updateTicket
 } from "./board-lib.mjs";
 
@@ -65,11 +65,6 @@ function ticketIdFromPath(pathname, suffix = "") {
   return "";
 }
 
-function agentIdFromResetPath(pathname) {
-  const match = pathname.match(/^\/api\/agents\/([^/]+)\/reset$/);
-  return match ? decodeURIComponent(match[1]) : "";
-}
-
 function createRequestHandler() {
   return async (request, response) => {
     const url = new URL(request.url || "/", "http://127.0.0.1");
@@ -106,23 +101,27 @@ function createRequestHandler() {
 
         if (ticketId) {
           const body = await readBody(request);
-          const result = await startTicketOnAgent(ticketId, body.agentId || "");
+          const result = await startTicket(ticketId, body.owner || "");
           sendJson(response, 200, result);
           return;
         }
       }
 
-      if (request.method === "POST" && url.pathname === "/api/agents/init") {
-        const worktrees = await ensureAllWorktrees();
-        sendJson(response, 200, { worktrees });
-        return;
+      if (request.method === "POST") {
+        const ticketId = ticketIdFromPath(url.pathname, "/review");
+
+        if (ticketId) {
+          const body = await readBody(request);
+          sendJson(response, 200, await markTicketInReview(ticketId, body.pr_url || "", body.owner || ""));
+          return;
+        }
       }
 
       if (request.method === "POST") {
-        const agentId = agentIdFromResetPath(url.pathname);
+        const ticketId = ticketIdFromPath(url.pathname, "/close");
 
-        if (agentId) {
-          sendJson(response, 200, await resetAgent(agentId));
+        if (ticketId) {
+          sendJson(response, 200, await closeTicket(ticketId));
           return;
         }
       }

@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Board</p>
           <h1>Ticket Overview</h1>
-          <p class="subcopy">Live state view for parallel work. Drag tickets between sections to update the queue.</p>
+          <p class="subcopy">Live state for scoped tickets. Claim, review, and close work from the terminal; drag cards here when you need to adjust stage metadata.</p>
         </div>
         <div class="topbar-meta">
           <p id="last-sync" class="muted"></p>
@@ -27,14 +27,14 @@
 
       <main id="board" class="state-stack"></main>
 
-      <section class="agents-section">
+      <section class="claims-section">
         <div class="section-heading">
           <div>
-            <h2>Agents</h2>
-            <p class="muted">Fixed worktrees, shown only as context for the current queue.</p>
+            <h2>Active Claims</h2>
+            <p class="muted">Tickets currently holding a branch or worktree.</p>
           </div>
         </div>
-        <div id="agents" class="agents-grid"></div>
+        <div id="claims" class="claims-grid"></div>
       </section>
     </div>
 

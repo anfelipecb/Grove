@@ -22,7 +22,11 @@ out/
 
 # Local-only planning, class, and research material
 docs/*.pdf
+docs/PROJECT_PROPOSAL*.md
 research/
+
+# Supabase CLI local cache (linked project metadata)
+supabase/.temp/
 
 # Playwright (web e2e)
 apps/web/playwright-report/

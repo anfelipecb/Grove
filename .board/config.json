@@ -2,6 +2,7 @@
   "name": "Grove Parallel Board",
   "baseBranch": "master",
   "port": 4317,
+  "worktreeRoot": ".worktrees",
   "statuses": [
     {
       "id": "backlog",
@@ -11,13 +12,12 @@
     {
       "id": "ready",
       "label": "Ready",
-      "description": "Scoped work that can be pulled into a worktree."
+      "description": "Scoped work that is safe to claim from a fresh terminal."
     },
     {
       "id": "doing",
       "label": "Doing",
-      "description": "Active implementation in one of the reusable worktrees.",
-      "wipLimit": 2
+      "description": "Active implementation in a ticket-scoped worktree."
     },
     {
       "id": "in_review",
@@ -33,20 +33,6 @@
       "id": "done",
       "label": "Done",
       "description": "Merged, closed, or intentionally archived."
-    }
-  ],
-  "worktrees": [
-    {
-      "id": "agent-1",
-      "label": "Agent 1",
-      "path": "../Grove-agent-1",
-      "parkingBranch": "board/agent-1"
-    },
-    {
-      "id": "agent-2",
-      "label": "Agent 2",
-      "path": "../Grove-agent-2",
-      "parkingBranch": "board/agent-2"
     }
   ]
 }

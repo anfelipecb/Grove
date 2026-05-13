@@ -89,7 +89,6 @@ XP should value effort, resistance, importance, urgency, and community contribut
 ## Parallel Board Workflow
 
 - `.board/tickets/*.md` is the shared ticket system for parallel agent work. Treat those markdown files as the source of truth.
-- **Typical loop (orchestrator vs agent):** The **orchestrator** scopes tickets (for example `backlog` → `ready`), **commits and pushes** so other machines and terminals see them. **Implementing agents** use a **new terminal session** on the **main checkout**: **sync `master` first** (`git pull` or equivalent) so ticket files and merged dependencies are current, then **claim** with `pnpm board:ticket:start`. They implement **only** in the generated **worktree**, open a **PR into `master`**, and run **`pnpm board:ticket:review`** with the PR URL. The **orchestrator** **reviews and merges** on GitHub, **pulls `master`** in the main checkout, then runs **`pnpm board:ticket:close`** so the ticket is `done`, the worktree is removed, and the local ticket branch is deleted.
 - **Orchestrator — sync after every ticket:** As soon as you create or materially update a ticket under `.board/tickets/`, **commit and push to the trunk branch** (`master` in this repo) **before** another terminal claims it. Uncommitted tickets are invisible to other checkouts and cause board drift across parallel terminals.
 - Ticket statuses are `backlog`, `ready`, `doing`, `in_review`, `blocked`, and `done`.
 - **Status lifecycle (expected flow):** `backlog` → `ready` (scoped, unblocked) → `doing` (claimed) → **`in_review` (PR open, awaiting merge)** → `done`. Skipping `in_review` on the board (e.g. jumping straight from `doing` to `done` after merge) hides work that is waiting on review and makes the board look empty during PRs. Treat `in_review` as mandatory once a PR exists.
@@ -108,8 +107,6 @@ XP should value effort, resistance, importance, urgency, and community contribut
 - Move a ticket to `done` only after merge to `master` (or explicit PR closure without merge). Optionally add merge commit hash or note in Notes if helpful; `pr_url` stays for history.
 - If a claimed ticket is returned to the queue, clear its owner, branch, and worktree fields before treating it as claimable again.
 - **Orchestrator close-out:** after the PR is merged and the main checkout is updated to `master`, run `pnpm board:ticket:close GRO-001`. This marks the ticket `done`, removes the linked worktree, and deletes the merged local branch.
-- **Squash merges on GitHub:** A squash-merged PR does not make the feature branch show up in `git branch --merged master`. `board:ticket:close` still works when the ticket has **`pr_url`** (from `board:ticket:review`) and the **`gh` CLI** can confirm the PR is **MERGED**—install `gh` and authenticate on machines that run close-out.
-- **Stacked PRs:** Open follow-on work as a PR **into `master`** once its dependency has landed (or retarget/rebase onto `master` after the base PR merges). PRs opened into another **ticket branch** drift from trunk after squash merges.
 - When opening a PR from a worktree, include the ticket ID in the branch name and PR title so board state, branch state, and review state stay aligned.
 
 ## Supabase + Clerk

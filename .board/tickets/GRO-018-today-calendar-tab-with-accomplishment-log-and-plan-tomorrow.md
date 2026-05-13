@@ -2,16 +2,16 @@
 id: "GRO-018"
 title: "Today — calendar tab with accomplishment log and plan-tomorrow"
 slug: "today-calendar-tab-with-accomplishment-log-and-plan-tomorrow"
-status: "backlog"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
-labels: ["v2", "today", "calendar"]
-depends_on: ["GRO-017"]
+pr_url: "https://github.com/anfelipecb/Grove/pull/16"
+labels: []
+depends_on: []
 created_at: "2026-05-13T15:43:41.545Z"
-updated_at: "2026-05-13T15:43:41.545Z"
+updated_at: "2026-05-13T16:19:25.807Z"
 ---
 
 ## Context

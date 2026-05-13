@@ -6,8 +6,38 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const SCRIPT_REPO_ROOT = path.resolve(__dirname, "..");
 
-export const REPO_ROOT = path.resolve(__dirname, "..");
+function resolveRepoRoot() {
+  const candidates = [process.cwd(), SCRIPT_REPO_ROOT];
+
+  for (const candidate of candidates) {
+    const result = spawnSync("git", ["rev-parse", "--git-common-dir"], {
+      cwd: candidate,
+      encoding: "utf8"
+    });
+
+    if (result.status !== 0) {
+      continue;
+    }
+
+    const commonDir = (result.stdout || "").trim();
+
+    if (!commonDir) {
+      continue;
+    }
+
+    const absoluteCommonDir = path.resolve(candidate, commonDir);
+
+    if (path.basename(absoluteCommonDir) === ".git") {
+      return path.dirname(absoluteCommonDir);
+    }
+  }
+
+  return SCRIPT_REPO_ROOT;
+}
+
+export const REPO_ROOT = resolveRepoRoot();
 export const BOARD_ROOT = path.join(REPO_ROOT, ".board");
 export const TICKETS_DIR = path.join(BOARD_ROOT, "tickets");
 export const PUBLIC_DIR = path.join(BOARD_ROOT, "public");
@@ -35,6 +65,13 @@ const DEFAULT_TEMPLATE = `## Context
 ## Acceptance Criteria
 
 - [ ]
+
+## Agent Workflow
+
+- Read \`AGENTS.md\` before claiming the ticket.
+- Claim from the repo root with \`pnpm board:ticket:start <ticket-id>\`.
+- Work inside the generated \`.worktrees/<ticket-id>-<slug>\` checkout.
+- After opening the PR, run \`pnpm board:ticket:review <ticket-id> <pr-url>\`.
 
 ## Notes
 `;
@@ -355,8 +392,8 @@ export function relativeToRepo(targetPath) {
   return path.relative(REPO_ROOT, targetPath) || ".";
 }
 
-export function resolveWorktreePath(worktreePath) {
-  return path.resolve(REPO_ROOT, worktreePath);
+export function resolveRepoPath(relativePath) {
+  return path.resolve(REPO_ROOT, relativePath);
 }
 
 function runGit(args, options = {}) {
@@ -433,10 +470,16 @@ function parseWorktreeList(rawOutput) {
   return entries;
 }
 
+function getAllWorktreeRegistrations() {
+  return parseWorktreeList(runGit(["worktree", "list", "--porcelain"]));
+}
+
 function getWorktreeRegistration(targetPath) {
-  const output = runGit(["worktree", "list", "--porcelain"]);
-  const registrations = parseWorktreeList(output);
-  return registrations.find((entry) => path.resolve(entry.path) === path.resolve(targetPath)) || null;
+  return (
+    getAllWorktreeRegistrations().find(
+      (entry) => path.resolve(entry.path) === path.resolve(targetPath)
+    ) || null
+  );
 }
 
 function getCurrentBranch(worktreePath) {
@@ -470,186 +513,244 @@ function currentBranchMergedInto(baseBranch, branchName) {
   return result.ok && result.stdout.split("\n").some((line) => line.replace(/^[* ]+/, "") === branchName);
 }
 
-export async function ensureAgentWorktree(agentId) {
-  const config = await readConfig();
-  const agent = config.worktrees.find((entry) => entry.id === agentId);
-
-  if (!agent) {
-    throw new Error(`Unknown agent ${agentId}.`);
+/** True when GitHub reports the PR merged (covers squash merges where the feature branch is not a git ancestor of base). */
+function githubPrMerged(prUrl) {
+  const trimmed = (prUrl || "").trim();
+  if (!trimmed || !trimmed.includes("github.com")) {
+    return false;
   }
 
-  ensureBaseBranch(config.baseBranch);
+  const result = spawnSync("gh", ["pr", "view", trimmed, "--json", "state"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8"
+  });
 
-  const targetPath = resolveWorktreePath(agent.path);
-  const registration = getWorktreeRegistration(targetPath);
-
-  if (registration) {
-    return {
-      agentId: agent.id,
-      label: agent.label,
-      path: targetPath,
-      branch: registration.branch || getCurrentBranch(targetPath)
-    };
+  if (result.status !== 0) {
+    return false;
   }
 
-  if (existsSync(targetPath) && !existsSync(path.join(targetPath, ".git"))) {
-    throw new Error(`Path ${targetPath} already exists and is not a git worktree.`);
+  try {
+    const parsed = JSON.parse(result.stdout || "{}");
+    return parsed.state === "MERGED";
+  } catch {
+    return false;
   }
-
-  if (localBranchExists(agent.parkingBranch)) {
-    runGit(["worktree", "add", targetPath, agent.parkingBranch]);
-  } else {
-    runGit(["worktree", "add", "-b", agent.parkingBranch, targetPath, config.baseBranch]);
-  }
-
-  return {
-    agentId: agent.id,
-    label: agent.label,
-    path: targetPath,
-    branch: getCurrentBranch(targetPath)
-  };
 }
 
-export async function ensureAllWorktrees() {
-  const config = await readConfig();
-  const results = [];
-
-  for (const agent of config.worktrees) {
-    results.push(await ensureAgentWorktree(agent.id));
-  }
-
-  return results;
+function defaultOwner() {
+  return process.env.BOARD_OWNER || "";
 }
 
-function branchClaimedByOtherWorktree(branchName, currentWorktreePath) {
-  const output = runGit(["worktree", "list", "--porcelain"]);
-  const registrations = parseWorktreeList(output);
+function ticketBranchName(ticket) {
+  return `ticket/${ticket.id.toLowerCase()}-${ticket.slug}`;
+}
 
-  return registrations.some((entry) => {
-    const samePath = path.resolve(entry.path) === path.resolve(currentWorktreePath);
+function ticketWorktreeSlug(ticket) {
+  return `${ticket.id.toLowerCase()}-${ticket.slug}`;
+}
+
+async function managedWorktreeRoot(config) {
+  const relativeRoot = config.worktreeRoot || ".worktrees";
+  const absoluteRoot = resolveRepoPath(relativeRoot);
+  await fs.mkdir(absoluteRoot, { recursive: true });
+  return { relativeRoot, absoluteRoot };
+}
+
+async function resolveTicketWorktreePath(ticket, config) {
+  if (ticket.worktree) {
+    return resolveRepoPath(ticket.worktree);
+  }
+
+  const { absoluteRoot } = await managedWorktreeRoot(config);
+  return path.join(absoluteRoot, ticketWorktreeSlug(ticket));
+}
+
+function ensureStatus(ticket, allowed, action) {
+  if (!allowed.includes(ticket.status)) {
+    throw new Error(`${ticket.id} must be ${allowed.join(" or ")} before ${action}. Current status: ${ticket.status}.`);
+  }
+}
+
+function branchClaimedByOtherWorktree(branchName, currentWorktreePath = "") {
+  return getAllWorktreeRegistrations().some((entry) => {
+    const samePath =
+      currentWorktreePath &&
+      path.resolve(entry.path) === path.resolve(currentWorktreePath);
     return !samePath && entry.branch === branchName;
   });
 }
 
-export async function startTicketOnAgent(ticketId, agentId) {
+export async function startTicket(ticketId, owner = "") {
   const config = await readConfig();
-  const agent = config.worktrees.find((entry) => entry.id === agentId);
-
-  if (!agent) {
-    throw new Error(`Unknown agent ${agentId}.`);
-  }
-
-  const targetPath = resolveWorktreePath(agent.path);
-  await ensureAgentWorktree(agentId);
-
-  if (!isWorktreeClean(targetPath)) {
-    throw new Error(`${agent.label} has uncommitted changes. Commit or reset that worktree first.`);
-  }
-
-  const currentBranch = getCurrentBranch(targetPath);
-
-  if (currentBranch !== agent.parkingBranch) {
-    throw new Error(
-      `${agent.label} is already on ${currentBranch}. Reset the agent before starting another ticket.`
-    );
-  }
-
   const ticket = await getTicket(ticketId);
-  const branchName = `ticket/${ticket.id.toLowerCase()}-${ticket.slug}`;
+  ensureStatus(ticket, ["ready"], "claiming");
+  ensureBaseBranch(config.baseBranch);
+
+  const branchName = ticketBranchName(ticket);
+  const targetPath = await resolveTicketWorktreePath(ticket, config);
+
+  if (ticket.branch || ticket.worktree) {
+    throw new Error(`${ticket.id} already has branch/worktree metadata. Clear it before reclaiming.`);
+  }
 
   if (branchClaimedByOtherWorktree(branchName, targetPath)) {
     throw new Error(`Branch ${branchName} is already checked out in another worktree.`);
   }
 
+  const registration = getWorktreeRegistration(targetPath);
+
+  if (registration) {
+    throw new Error(`Worktree ${relativeToRepo(targetPath)} already exists. Close or clean it before reclaiming.`);
+  }
+
+  if (existsSync(targetPath)) {
+    throw new Error(`Path ${relativeToRepo(targetPath)} already exists and is not a registered git worktree.`);
+  }
+
   if (localBranchExists(branchName)) {
-    runGit(["-C", targetPath, "checkout", branchName]);
+    runGit(["worktree", "add", targetPath, branchName]);
   } else {
-    runGit(["-C", targetPath, "checkout", "-b", branchName, config.baseBranch]);
+    runGit(["worktree", "add", "-b", branchName, targetPath, config.baseBranch]);
   }
 
   const updatedTicket = await updateTicket(ticketId, {
     status: "doing",
-    owner: agent.id,
+    owner: owner.trim() || defaultOwner() || ticket.owner || "",
     branch: branchName,
     worktree: relativeToRepo(targetPath)
   });
 
   return {
     ticket: updatedTicket,
-    worktreePath: targetPath,
-    branch: branchName
+    branch: branchName,
+    worktreePath: targetPath
   };
 }
 
-export async function resetAgent(agentId) {
+export async function markTicketInReview(ticketId, prUrl, owner = "") {
+  const ticket = await getTicket(ticketId);
+  ensureStatus(ticket, ["doing", "in_review"], "marking the PR as in review");
+
+  if (!ticket.branch || !ticket.worktree) {
+    throw new Error(`${ticket.id} is missing branch/worktree metadata. Claim it first.`);
+  }
+
+  const trimmedPrUrl = prUrl.trim();
+
+  if (!trimmedPrUrl) {
+    throw new Error("PR URL is required.");
+  }
+
+  const updatedTicket = await updateTicket(ticketId, {
+    status: "in_review",
+    pr_url: trimmedPrUrl,
+    owner: owner.trim() || ticket.owner || defaultOwner()
+  });
+
+  return { ticket: updatedTicket };
+}
+
+export async function closeTicket(ticketId) {
   const config = await readConfig();
-  const agent = config.worktrees.find((entry) => entry.id === agentId);
+  const ticket = await getTicket(ticketId);
 
-  if (!agent) {
-    throw new Error(`Unknown agent ${agentId}.`);
+  if (!ticket.branch) {
+    throw new Error(`${ticket.id} has no branch recorded. Nothing to close.`);
   }
 
-  const targetPath = resolveWorktreePath(agent.path);
-  await ensureAgentWorktree(agentId);
+  ensureBaseBranch(config.baseBranch);
 
-  if (!isWorktreeClean(targetPath)) {
-    throw new Error(`${agent.label} has uncommitted changes. Commit or clean the worktree first.`);
+  const mergedIntoBase = currentBranchMergedInto(config.baseBranch, ticket.branch);
+  const prSquashMerged = githubPrMerged(ticket.pr_url);
+
+  if (!mergedIntoBase && !prSquashMerged) {
+    throw new Error(
+      `${ticket.branch} is not merged into ${config.baseBranch} (and no merged GitHub PR on record). Sync the main checkout, merge the PR, and ensure the ticket has pr_url before closing.`
+    );
   }
 
-  const currentBranch = getCurrentBranch(targetPath);
+  let removedWorktreePath = "";
+  const targetPath = ticket.worktree ? resolveRepoPath(ticket.worktree) : null;
 
-  if (currentBranch !== agent.parkingBranch) {
-    runGit(["-C", targetPath, "checkout", agent.parkingBranch]);
+  if (targetPath) {
+    const registration = getWorktreeRegistration(targetPath);
 
-    if (currentBranchMergedInto(config.baseBranch, currentBranch)) {
-      runGit(["branch", "-d", currentBranch]);
+    if (registration) {
+      if (!isWorktreeClean(targetPath)) {
+        throw new Error(`${ticket.id} worktree has uncommitted changes. Commit, stash, or discard them before closing.`);
+      }
+
+      runGit(["worktree", "remove", targetPath]);
+      removedWorktreePath = targetPath;
     }
   }
 
+  let deletedBranch = "";
+
+  if (localBranchExists(ticket.branch)) {
+    const softDelete = tryGit(["branch", "-d", ticket.branch]);
+    if (!softDelete.ok) {
+      if (prSquashMerged) {
+        runGit(["branch", "-D", ticket.branch]);
+      } else {
+        throw new Error(
+          (softDelete.stderr || softDelete.stdout || "git branch -d failed").trim() ||
+            "Could not delete local branch."
+        );
+      }
+    }
+    deletedBranch = ticket.branch;
+  }
+
+  const updatedTicket = await updateTicket(ticketId, {
+    status: "done",
+    branch: "",
+    worktree: ""
+  });
+
   return {
-    agentId: agent.id,
-    path: targetPath,
-    branch: getCurrentBranch(targetPath)
+    ticket: updatedTicket,
+    removedWorktreePath,
+    deletedBranch
   };
 }
 
-export async function getAgentStatuses() {
-  const config = await readConfig();
+export async function getActiveClaims() {
   const tickets = await listTickets();
-  const statuses = [];
+  const claims = [];
 
-  for (const agent of config.worktrees) {
-    const targetPath = resolveWorktreePath(agent.path);
-    const registration = getWorktreeRegistration(targetPath);
+  for (const ticket of tickets) {
+    if (!["doing", "in_review"].includes(ticket.status)) {
+      continue;
+    }
+
+    const absolutePath = ticket.worktree ? resolveRepoPath(ticket.worktree) : "";
+    const registration = absolutePath ? getWorktreeRegistration(absolutePath) : null;
     const exists = Boolean(registration);
-    const branch = exists ? getCurrentBranch(targetPath) : "";
-    const clean = exists ? isWorktreeClean(targetPath) : true;
-    const activeTicket =
-      tickets.find((ticket) => ticket.owner === agent.id && ticket.branch === branch) || null;
 
-    statuses.push({
-      id: agent.id,
-      label: agent.label,
-      path: relativeToRepo(targetPath),
-      absolutePath: targetPath,
-      parkingBranch: agent.parkingBranch,
+    claims.push({
+      id: ticket.id,
+      title: ticket.title,
+      status: ticket.status,
+      owner: ticket.owner,
+      branch: ticket.branch,
+      pr_url: ticket.pr_url,
+      path: ticket.worktree,
+      absolutePath,
       exists,
-      branch,
-      clean,
-      activeTicketId: activeTicket?.id || "",
-      activeTicketTitle: activeTicket?.title || ""
+      clean: exists ? isWorktreeClean(absolutePath) : null
     });
   }
 
-  return statuses;
+  return claims;
 }
 
 export async function getBoardState() {
-  const [config, tickets, agents] = await Promise.all([
+  const [config, tickets, claims] = await Promise.all([
     readConfig(),
     listTickets(),
-    getAgentStatuses()
+    getActiveClaims()
   ]);
 
-  return { config, tickets, agents };
+  return { config, tickets, claims };
 }

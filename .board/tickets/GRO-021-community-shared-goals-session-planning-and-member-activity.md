@@ -11,7 +11,7 @@ pr_url: "https://github.com/anfelipecb/Grove/pull/19"
 labels: ["v2", "community"]
 depends_on: ["GRO-015", "GRO-016"]
 created_at: "2026-05-13T15:43:42.422Z"
-updated_at: "2026-05-13T18:30:00.000Z"
+updated_at: "2026-05-13T18:30:11.902Z"
 ---
 
 ## Context

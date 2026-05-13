@@ -2,16 +2,16 @@
 id: "GRO-017"
 title: "Today — daily card with task check-off and points"
 slug: "today-daily-card-with-task-check-off-and-points"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
-labels: ["v2", "today"]
-depends_on: ["GRO-015", "GRO-016"]
+pr_url: "https://github.com/anfelipecb/Grove/pull/15"
+labels: []
+depends_on: []
 created_at: "2026-05-13T15:43:41.250Z"
-updated_at: "2026-05-13T15:43:41.250Z"
+updated_at: "2026-05-13T16:19:13.307Z"
 ---
 
 ## Context

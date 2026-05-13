@@ -2,11 +2,11 @@
 id: "GRO-019"
 title: "Coach — adaptive onboarding wizard with AI goal design"
 slug: "coach-adaptive-onboarding-wizard-with-ai-goal-design"
-status: "in_review"
+status: "done"
 priority: "p1"
 owner: "codex"
-branch: "ticket/gro-019-coach-adaptive-onboarding-wizard-with-ai-goal-design"
-worktree: ".worktrees/gro-019-coach-adaptive-onboarding-wizard-with-ai-goal-design"
+branch: ""
+worktree: ""
 pr_url: "https://github.com/anfelipecb/Grove/pull/17"
 labels:
   - "v2"
@@ -16,7 +16,7 @@ depends_on:
   - "GRO-015"
   - "GRO-016"
 created_at: "2026-05-13T15:43:41.836Z"
-updated_at: "2026-05-13T16:14:29.045Z"
+updated_at: "2026-05-13T16:33:04.842Z"
 ---
 
 ## Context
