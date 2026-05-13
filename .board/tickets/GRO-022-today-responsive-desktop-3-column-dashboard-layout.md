@@ -2,16 +2,16 @@
 id: "GRO-022"
 title: "Today — responsive desktop 3-column dashboard layout"
 slug: "today-responsive-desktop-3-column-dashboard-layout"
-status: "backlog"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/21"
 labels: ["v2", "today", "desktop"]
 depends_on: ["GRO-017", "GRO-018"]
 created_at: "2026-05-13T15:43:42.710Z"
-updated_at: "2026-05-13T15:43:42.710Z"
+updated_at: "2026-05-13T18:30:00.000Z"
 ---
 
 ## Context
