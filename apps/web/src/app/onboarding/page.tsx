@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { OnboardingFlow } from "@/components/onboarding-flow";
+import { OnboardingWizard } from "@/components/v2/onboarding/onboarding-wizard";
 import { demoSessionActiveServer, getServerUserId } from "@/lib/clerk-auth";
 import { hasClerkPublishableKey } from "@/lib/clerk-publishable";
 import { createDemoAwareServerClient } from "@/lib/supabase-server";
@@ -42,8 +42,7 @@ export default async function OnboardingPage({
   }
 
   return (
-    <OnboardingFlow
-      demoMode={demo}
+    <OnboardingWizard
       assessmentMode={searchParams?.mode === "assess" || (onboardingStep ?? 0) >= 5}
     />
   );
