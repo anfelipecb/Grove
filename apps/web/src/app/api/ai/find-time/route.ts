@@ -124,12 +124,19 @@ OUTPUT FORMAT (strict JSON, no markdown):
   ]
 }
 
-Use "NEW_0", "NEW_1" etc as task_id for newTasks. Max 21 plan items total. newTasks may be empty array.`;
+Use "NEW_0", "NEW_1" etc as task_id for newTasks. Max 21 plan items total. newTasks may be empty array.
+
+IMPORTANT: Respond with ONLY valid JSON. No explanation, no markdown, no preamble. Start your response with { and end with }.`;
 }
 
 function parseJson<T>(raw: string): T | null {
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-  try { return JSON.parse(cleaned) as T; } catch { return null; }
+  // Strip markdown fences
+  let s = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  // Extract the outermost JSON object — find first { and last }
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start !== -1 && end > start) s = s.slice(start, end + 1);
+  try { return JSON.parse(s) as T; } catch { return null; }
 }
 
 const VALID_DOMAINS = new Set<string>(LIFE_DOMAINS.map((d) => d.id));
