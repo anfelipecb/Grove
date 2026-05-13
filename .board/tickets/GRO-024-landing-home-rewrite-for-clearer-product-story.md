@@ -2,11 +2,11 @@
 id: "GRO-024"
 title: "Landing home rewrite for clearer product story"
 slug: "landing-home-rewrite-for-clearer-product-story"
-status: "ready"
+status: "doing"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
+owner: "codex"
+branch: "ticket/gro-024-landing-home-rewrite-for-clearer-product-story"
+worktree: ".worktrees/gro-024-landing-home-rewrite-for-clearer-product-story"
 pr_url: ""
 labels:
   - "marketing"
@@ -15,7 +15,7 @@ labels:
   - "design"
 depends_on: []
 created_at: "2026-05-13T21:00:10.464Z"
-updated_at: "2026-05-13T21:00:10.464Z"
+updated_at: "2026-05-13T21:00:50.433Z"
 ---
 
 ## Context
