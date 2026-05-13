@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Plus } from "lucide-react";
 import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
+import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 
 type DailyCardProps = {
   initialTasks: TaskRowData[];
@@ -11,6 +13,7 @@ type DailyCardProps = {
 export function DailyCard({ initialTasks }: DailyCardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [error, setError] = useState<string | null>(null);
+  const [showAddSheet, setShowAddSheet] = useState(false);
 
   const required = tasks.filter((t) => t.is_required);
   const goal = tasks.filter((t) => !t.is_required);
@@ -44,9 +47,27 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
 
   return (
     <div className="px-4 py-2">
+      {showAddSheet && (
+        <AddTaskSheet
+          onClose={() => setShowAddSheet(false)}
+          onAdd={(task) => setTasks((prev) => [task, ...prev])}
+        />
+      )}
+
       {error && (
         <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
       )}
+
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
+        <button
+          onClick={() => setShowAddSheet(true)}
+          className="flex items-center gap-1 rounded-lg border border-moss/40 px-2.5 py-1 text-xs font-medium text-moss transition-colors hover:bg-moss/10"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add task
+        </button>
+      </div>
 
       {required.length > 0 && (
         <section className="mb-4">
@@ -68,16 +89,21 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
 
       {required.length === 0 && goal.length === 0 && (
         <div className="py-6 text-center">
-          <p className="text-sm font-medium text-foreground">No tasks set up yet</p>
+          <p className="text-sm font-medium text-foreground">No tasks yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            The Coach will help you pick goals and turn them into daily tasks.
+            Add a task above, or let Coach set up your goals.
           </p>
-          <a
-            href="/coach"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
-          >
-            Start with Coach →
-          </a>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <button
+              onClick={() => setShowAddSheet(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-moss px-4 py-2 text-sm font-semibold text-moss transition-colors hover:bg-moss/10"
+            >
+              <Plus className="h-4 w-4" /> Add your first task
+            </button>
+            <a href="/coach" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
+              Or start with Coach →
+            </a>
+          </div>
         </div>
       )}
 
