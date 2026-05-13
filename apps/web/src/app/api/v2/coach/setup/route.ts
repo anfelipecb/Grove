@@ -21,11 +21,16 @@ const goalSchema = z.object({
   tasks: z.array(taskSchema).min(1).max(8),
 });
 
-const bodySchema = z.object({
-  displayName: z.string().optional(),
-  editingGoalId: z.string().uuid().nullable().optional(),
-  goals: z.array(goalSchema).min(1).max(6),
-});
+const bodySchema = z
+  .object({
+    displayName: z.string().optional(),
+    editingGoalId: z.string().uuid().nullable().optional(),
+    goals: z.array(goalSchema).min(1).max(6),
+  })
+  .refine((data) => !data.editingGoalId || data.goals.length === 1, {
+    message: "editingGoalId only supports replacing one goal at a time.",
+    path: ["goals"],
+  });
 
 function suggestPointValue(frequency: z.infer<typeof frequencySchema>, isRequired: boolean): number {
   if (frequency === "weekly") {
@@ -74,7 +79,6 @@ export async function POST(request: Request) {
         clerk_user_id: userId,
         display_name: displayName,
         email,
-        onboarding_step: 5,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "clerk_user_id" },
