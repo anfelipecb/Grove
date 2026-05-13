@@ -21,7 +21,7 @@ export function V2Nav() {
   return (
     <>
       {/* Desktop: top nav */}
-      <header className="hidden lg:flex h-12 items-center gap-0 border-b border-border bg-card px-4">
+      <header className="hidden h-12 items-center gap-0 border-b border-border bg-card px-4 md:flex">
         <span className="mr-6 text-sm font-bold text-moss">Grove</span>
         {tabs.map(({ href, label, icon: Icon }) => (
           <Link
@@ -41,7 +41,7 @@ export function V2Nav() {
       </header>
 
       {/* Mobile: bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-border bg-card lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-border bg-card md:hidden">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
