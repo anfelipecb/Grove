@@ -3,16 +3,20 @@
 import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { DailyCard } from "@/components/v2/today/daily-card";
+import { CalendarTab } from "@/components/v2/today/calendar-tab";
 import type { TaskRowData } from "@/components/v2/today/task-row";
+
+type ActiveTask = { id: string; title: string; domain: string };
 
 type TodayTabsProps = {
   tasks: TaskRowData[];
+  activeTasks: ActiveTask[];
 };
 
 const TABS = ["Daily Card", "Calendar"] as const;
 type Tab = (typeof TABS)[number];
 
-export function TodayTabs({ tasks }: TodayTabsProps) {
+export function TodayTabs({ tasks, activeTasks }: TodayTabsProps) {
   const [active, setActive] = useState<Tab>("Daily Card");
 
   return (
@@ -35,11 +39,7 @@ export function TodayTabs({ tasks }: TodayTabsProps) {
       </div>
 
       {active === "Daily Card" && <DailyCard initialTasks={tasks} />}
-      {active === "Calendar" && (
-        <div className="flex min-h-[40vh] items-center justify-center p-8 text-center">
-          <p className="text-sm text-muted-foreground">Calendar view coming in GRO-018.</p>
-        </div>
-      )}
+      {active === "Calendar" && <CalendarTab activeTasks={activeTasks} />}
     </div>
   );
 }
