@@ -19,15 +19,18 @@ import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 
 type DailyCardProps = {
   initialTasks: TaskRowData[];
+  profileId: string;
 };
 
-export function DailyCard({ initialTasks }: DailyCardProps) {
+export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [error, setError] = useState<string | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -80,10 +83,24 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
     <div className="px-4 py-2">
       {showAddSheet && (
         <AddTaskSheet
-          onClose={() => setShowAddSheet(false)}
+          key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
+          initialTitle={addPrefill?.title}
+          initialDomain={addPrefill?.domain}
+          onClose={() => {
+            setShowAddSheet(false);
+            setAddPrefill(null);
+          }}
           onAdd={(task) => setTasks((prev) => [task, ...prev])}
         />
       )}
+
+      <CommunityPulseCard
+        profileId={profileId}
+        onAddSuggested={(title, domain) => {
+          setAddPrefill({ title, domain });
+          setShowAddSheet(true);
+        }}
+      />
 
       {error && (
         <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
@@ -92,7 +109,10 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
         <button
-          onClick={() => setShowAddSheet(true)}
+          onClick={() => {
+            setAddPrefill(null);
+            setShowAddSheet(true);
+          }}
           className="flex items-center gap-1 rounded-lg border border-moss/40 px-2.5 py-1 text-xs font-medium text-moss transition-colors hover:bg-moss/10"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -130,7 +150,10 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
           </p>
           <div className="mt-4 flex flex-col items-center gap-2">
             <button
-              onClick={() => setShowAddSheet(true)}
+              onClick={() => {
+                setAddPrefill(null);
+                setShowAddSheet(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-moss px-4 py-2 text-sm font-semibold text-moss transition-colors hover:bg-moss/10"
             >
               <Plus className="h-4 w-4" /> Add your first task

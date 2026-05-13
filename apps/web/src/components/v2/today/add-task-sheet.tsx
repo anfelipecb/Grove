@@ -31,6 +31,8 @@ const TIMES = [
 type AddTaskSheetProps = {
   onClose: () => void;
   onAdd: (task: TaskRowData) => void;
+  initialTitle?: string;
+  initialDomain?: string;
 };
 
 function ChipButton({
@@ -51,9 +53,14 @@ function ChipButton({
   );
 }
 
-export function AddTaskSheet({ onClose, onAdd }: AddTaskSheetProps) {
-  const [title, setTitle] = useState("");
-  const [domain, setDomain] = useState("");
+export function AddTaskSheet({
+  onClose,
+  onAdd,
+  initialTitle = "",
+  initialDomain = "",
+}: AddTaskSheetProps) {
+  const [title, setTitle] = useState(initialTitle);
+  const [domain, setDomain] = useState(initialDomain);
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "once">("daily");
   const [preferredTime, setPreferredTime] = useState<"morning" | "afternoon" | "evening" | "flexible">("flexible");
   const [error, setError] = useState<string | null>(null);

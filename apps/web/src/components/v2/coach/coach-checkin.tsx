@@ -6,6 +6,7 @@ import { CoachWizard } from "@/components/v2/coach/coach-wizard";
 import { DomainLevels } from "@/components/v2/coach/domain-levels";
 import { RewardsShop } from "@/components/v2/coach/rewards-shop";
 import type { ExistingCoachGoal } from "@/components/v2/coach/types";
+import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 
 type Props = {
   activeGoals: ExistingCoachGoal[];
@@ -92,6 +93,8 @@ export function CoachCheckin({ activeGoals, demoMode, displayName, profileId, sp
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{greeting}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{insight}</p>
       </section>
+
+      <CommunityPulseCard profileId={profileId} />
 
       <section className="space-y-8 rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
         <DomainLevels />

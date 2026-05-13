@@ -11,12 +11,13 @@ type ActiveTask = { id: string; title: string; domain: string };
 type TodayTabsProps = {
   tasks: TaskRowData[];
   activeTasks: ActiveTask[];
+  profileId: string;
 };
 
 const TABS = ["Daily Card", "Calendar"] as const;
 type Tab = (typeof TABS)[number];
 
-export function TodayTabs({ tasks, activeTasks }: TodayTabsProps) {
+export function TodayTabs({ tasks, activeTasks, profileId }: TodayTabsProps) {
   const [active, setActive] = useState<Tab>("Daily Card");
 
   return (
@@ -38,7 +39,7 @@ export function TodayTabs({ tasks, activeTasks }: TodayTabsProps) {
         ))}
       </div>
 
-      {active === "Daily Card" && <DailyCard initialTasks={tasks} />}
+      {active === "Daily Card" && <DailyCard initialTasks={tasks} profileId={profileId} />}
       {active === "Calendar" && <CalendarTab activeTasks={activeTasks} />}
     </div>
   );

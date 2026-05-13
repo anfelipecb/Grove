@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { SharedGoalsList, type SharedGoal } from "@/components/v2/community/shared-goals-list";
 import { MemberActivity, type CommunityMember } from "@/components/v2/community/member-activity";
@@ -38,6 +38,10 @@ export function CommunityHome({
 }: Props) {
   const [sessions, setSessions] = useState(upcomingSessions);
   const [alignmentOpen, setAlignmentOpen] = useState(showAlignmentPrompt);
+
+  useEffect(() => {
+    setAlignmentOpen(showAlignmentPrompt);
+  }, [showAlignmentPrompt]);
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-4">

@@ -73,6 +73,8 @@ export default async function TodayPage() {
       .from("memberships")
       .select("community_id, communities(name)")
       .eq("profile_id", profile.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle(),
   ]);
 
@@ -148,7 +150,7 @@ export default async function TodayPage() {
           totalPoints={profile.spendable_points}
           streak={streak}
         />
-        <TodayTabs tasks={taskRows} activeTasks={activeTasks} />
+        <TodayTabs tasks={taskRows} activeTasks={activeTasks} profileId={profile.id} />
       </div>
 
       {/* Desktop: full-width 3-column layout */}
