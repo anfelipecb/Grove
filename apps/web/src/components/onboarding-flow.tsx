@@ -452,7 +452,7 @@ export function OnboardingFlowInner({ assessmentMode, demoMode }: { assessmentMo
         return;
       }
       redirecting = true;
-      window.location.assign("/dashboard");
+      window.location.assign("/today");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
     } finally {

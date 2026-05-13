@@ -25,6 +25,10 @@ const requiresOnboardingComplete = createRouteMatcher([
   "/calendar(.*)",
   "/communities(.*)",
   "/mycelium(.*)",
+  "/today(.*)",
+  "/coach(.*)",
+  "/community(.*)",
+  "/profile(.*)",
 ]);
 
 const protectedMiddleware = clerkMiddleware(async (auth, req) => {

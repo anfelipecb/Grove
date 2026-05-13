@@ -67,9 +67,18 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
       )}
 
       {required.length === 0 && goal.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          No tasks yet — head to Coach to set up your goals.
-        </p>
+        <div className="py-6 text-center">
+          <p className="text-sm font-medium text-foreground">No tasks set up yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The Coach will help you pick goals and turn them into daily tasks.
+          </p>
+          <a
+            href="/coach"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
+          >
+            Start with Coach →
+          </a>
+        </div>
       )}
 
       <LogSessionForm onLog={handleLog} />

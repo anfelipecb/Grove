@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, Users, Sparkles } from "lucide-react";
+import { CalendarCheck, Users, Sparkles, UserCircle } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 const tabs = [
   { href: "/today", label: "Today", icon: CalendarCheck },
   { href: "/coach", label: "Coach", icon: Sparkles },
   { href: "/community", label: "Community", icon: Users },
+  { href: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 function isActive(pathname: string, href: string) {

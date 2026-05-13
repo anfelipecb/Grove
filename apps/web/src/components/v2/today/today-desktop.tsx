@@ -126,9 +126,18 @@ export function TodayDesktop({
           )}
 
           {required.length === 0 && goal.length === 0 && (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No tasks yet — head to Coach to set up your goals.
-            </p>
+            <div className="py-4 text-center">
+              <p className="text-sm font-medium text-foreground">No tasks set up yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The Coach will help you pick goals and turn them into daily tasks.
+              </p>
+              <a
+                href="/coach"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
+              >
+                Start with Coach →
+              </a>
+            </div>
           )}
         </div>
 
