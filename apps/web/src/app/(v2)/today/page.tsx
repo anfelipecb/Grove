@@ -3,6 +3,7 @@ import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { PointsHeader } from "@/components/v2/shared/points-header";
 import { TodayTabs } from "@/components/v2/today/today-tabs";
+import { TodayDesktop } from "@/components/v2/today/today-desktop";
 import type { TaskRowData } from "@/components/v2/today/task-row";
 
 export default async function TodayPage() {
@@ -28,7 +29,21 @@ export default async function TodayPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: tasks }, { data: completions }, { data: recentCompletions }] = await Promise.all([
+  // Compute Monday of current week
+  const nowDate = new Date();
+  const dayOfWeek = nowDate.getDay(); // 0=Sun, 1=Mon...
+  const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+  const monday = new Date(nowDate);
+  monday.setDate(nowDate.getDate() + diffToMonday);
+  const mondayStr = monday.toISOString().slice(0, 10);
+
+  const [
+    { data: tasks },
+    { data: completions },
+    { data: recentCompletions },
+    { data: domainCompletions },
+    { data: membership },
+  ] = await Promise.all([
     supabase
       .from("tasks")
       .select("id, title, domain, is_required, is_community_task, point_value, community_point_value")
@@ -37,7 +52,7 @@ export default async function TodayPage() {
       .in("frequency", ["daily", "weekly"]),
     supabase
       .from("task_completions")
-      .select("task_id")
+      .select("task_id, points_earned")
       .eq("profile_id", profile.id)
       .eq("completed_date", today),
     // Last 30 days of completions to compute streak
@@ -47,6 +62,18 @@ export default async function TodayPage() {
       .eq("profile_id", profile.id)
       .gte("completed_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
       .order("completed_date", { ascending: false }),
+    // Domain points: task completions this week grouped by domain
+    supabase
+      .from("task_completions")
+      .select("tasks(domain), points_earned")
+      .eq("profile_id", profile.id)
+      .gte("completed_date", mondayStr),
+    // Community membership
+    supabase
+      .from("memberships")
+      .select("community_id, communities(name)")
+      .eq("profile_id", profile.id)
+      .maybeSingle(),
   ]);
 
   const completedToday = new Set((completions ?? []).map((c) => c.task_id));
@@ -64,16 +91,86 @@ export default async function TodayPage() {
 
   const streak = computeStreak(recentCompletions ?? [], today);
 
+  const doneTodayCount = completedToday.size;
+  const pointsToday = (completions ?? []).reduce((sum, c) => sum + (c.points_earned ?? 0), 0);
+
   const activeTasks = (tasks ?? []).map((t) => ({ id: t.id, title: t.title, domain: t.domain }));
 
+  // Compute domain points
+  const domainPoints: Record<string, number> = {};
+  for (const entry of domainCompletions ?? []) {
+    const t = entry.tasks;
+    const taskDomain = (Array.isArray(t) ? t[0]?.domain : (t as { domain: string } | null)?.domain) ?? "unknown";
+    domainPoints[taskDomain] = (domainPoints[taskDomain] ?? 0) + (entry.points_earned ?? 0);
+  }
+
+  // Community pulse
+  const communityId = (membership?.community_id as string | null) ?? null;
+  const rawCommunities = membership?.communities as { name: string } | { name: string }[] | undefined | null;
+  const communityName = (Array.isArray(rawCommunities) ? rawCommunities[0]?.name : rawCommunities?.name) ?? null;
+
+  const [nextSessionResult, memberCountResult] = await Promise.all([
+    communityId
+      ? supabase
+          .from("sessions")
+          .select("title, starts_at")
+          .eq("community_id", communityId)
+          .gte("starts_at", new Date().toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    communityId
+      ? supabase
+          .from("memberships")
+          .select("id", { count: "exact", head: true })
+          .eq("community_id", communityId)
+      : Promise.resolve({ count: 0 }),
+  ]);
+
+  const nextSessionTitle = (nextSessionResult.data as { title: string } | null)?.title ?? null;
+  const memberCount = (memberCountResult as { count: number | null }).count ?? 0;
+
+  const communityPulse = {
+    communityName,
+    memberCount,
+    nextSessionTitle,
+  };
+
+  const unlockedSurpriseIds: string[] = [];
+
   return (
-    <div className="mx-auto max-w-lg">
-      <PointsHeader
-        displayName={profile.display_name ?? "there"}
-        totalPoints={profile.spendable_points}
-        streak={streak}
-      />
-      <TodayTabs tasks={taskRows} activeTasks={activeTasks} />
+    <div>
+      {/* Mobile / tablet: max-w-lg centered, tabs UI */}
+      <div className="mx-auto max-w-lg lg:hidden">
+        <PointsHeader
+          displayName={profile.display_name ?? "there"}
+          totalPoints={profile.spendable_points}
+          streak={streak}
+        />
+        <TodayTabs tasks={taskRows} activeTasks={activeTasks} />
+      </div>
+
+      {/* Desktop: full-width 3-column layout */}
+      <div className="hidden px-6 py-4 lg:block">
+        <div className="mb-6">
+          <PointsHeader
+            displayName={profile.display_name ?? "there"}
+            totalPoints={profile.spendable_points}
+            streak={streak}
+          />
+        </div>
+        <TodayDesktop
+          tasks={taskRows}
+          activeTasks={activeTasks}
+          domainPoints={domainPoints}
+          doneTodayCount={doneTodayCount}
+          pointsToday={pointsToday}
+          streak={streak}
+          communityPulse={communityPulse}
+          unlockedSurpriseIds={unlockedSurpriseIds}
+        />
+      </div>
     </div>
   );
 }
