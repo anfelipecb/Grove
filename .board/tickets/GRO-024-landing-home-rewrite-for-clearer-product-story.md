@@ -2,11 +2,11 @@
 id: "GRO-024"
 title: "Landing home rewrite for clearer product story"
 slug: "landing-home-rewrite-for-clearer-product-story"
-status: "in_review"
+status: "done"
 priority: "p1"
 owner: "codex"
-branch: "ticket/gro-024-landing-home-rewrite-for-clearer-product-story"
-worktree: ".worktrees/gro-024-landing-home-rewrite-for-clearer-product-story"
+branch: ""
+worktree: ""
 pr_url: "https://github.com/anfelipecb/Grove/pull/22"
 labels:
   - "marketing"
@@ -15,7 +15,7 @@ labels:
   - "design"
 depends_on: []
 created_at: "2026-05-13T21:00:10.464Z"
-updated_at: "2026-05-13T21:12:05.974Z"
+updated_at: "2026-05-13T21:53:41.153Z"
 ---
 
 ## Context

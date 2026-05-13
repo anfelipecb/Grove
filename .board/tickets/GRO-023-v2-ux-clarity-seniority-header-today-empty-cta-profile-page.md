@@ -2,7 +2,7 @@
 id: "GRO-023"
 title: "v2 UX clarity: seniority header, today empty CTA, profile page"
 slug: "v2-ux-clarity-seniority-header-today-empty-cta-profile-page"
-status: "backlog"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""

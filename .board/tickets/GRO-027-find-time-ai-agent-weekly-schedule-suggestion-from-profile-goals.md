@@ -2,7 +2,7 @@
 id: "GRO-027"
 title: "Find Time AI agent — weekly schedule suggestion from profile + goals"
 slug: "find-time-ai-agent-weekly-schedule-suggestion-from-profile-goals"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""

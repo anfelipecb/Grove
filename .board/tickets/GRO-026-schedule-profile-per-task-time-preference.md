@@ -2,7 +2,7 @@
 id: "GRO-026"
 title: "Schedule profile + per-task time preference"
 slug: "schedule-profile-per-task-time-preference"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""

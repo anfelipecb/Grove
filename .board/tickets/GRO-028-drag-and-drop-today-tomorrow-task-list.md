@@ -2,7 +2,7 @@
 id: "GRO-028"
 title: "Drag-and-drop Today/Tomorrow task list"
 slug: "drag-and-drop-today-tomorrow-task-list"
-status: "ready"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""

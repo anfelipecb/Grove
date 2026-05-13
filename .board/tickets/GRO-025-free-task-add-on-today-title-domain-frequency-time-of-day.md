@@ -2,7 +2,7 @@
 id: "GRO-025"
 title: "Free task add on Today — title, domain, frequency, time-of-day"
 slug: "free-task-add-on-today-title-domain-frequency-time-of-day"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
