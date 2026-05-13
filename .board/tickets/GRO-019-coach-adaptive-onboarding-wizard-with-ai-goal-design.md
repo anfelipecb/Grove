@@ -2,7 +2,7 @@
 id: "GRO-019"
 title: "Coach — adaptive onboarding wizard with AI goal design"
 slug: "coach-adaptive-onboarding-wizard-with-ai-goal-design"
-status: "backlog"
+status: "ready"
 priority: "p1"
 owner: ""
 branch: ""
