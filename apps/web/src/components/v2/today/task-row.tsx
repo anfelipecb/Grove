@@ -13,6 +13,13 @@ export type TaskRowData = {
   point_value: number;
   community_point_value: number;
   completed: boolean;
+  preferred_time?: string;
+};
+
+const PREFERRED_TIME_LABELS: Record<string, string> = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
 };
 
 type TaskRowProps = {
@@ -60,6 +67,11 @@ export function TaskRow({ task, onComplete }: TaskRowProps) {
         <p className={twMerge("text-sm text-foreground truncate", task.completed && "line-through")}>{task.title}</p>
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
           <DomainTag domain={task.domain} />
+          {task.preferred_time && task.preferred_time !== "flexible" && (
+            <span className="text-[11px] text-muted-foreground">
+              {PREFERRED_TIME_LABELS[task.preferred_time] ?? task.preferred_time}
+            </span>
+          )}
           {task.is_community_task && (
             <span className="text-xs text-violet-500">also earns community pts</span>
           )}

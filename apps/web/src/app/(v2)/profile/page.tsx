@@ -3,6 +3,8 @@ import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { getSeniorityProgress } from "@grove/core";
 import { ProfileForm } from "@/components/v2/profile/profile-form";
+import { ScheduleForm } from "@/components/v2/profile/schedule-form";
+import type { ScheduleProfile } from "@/components/v2/profile/schedule-form";
 
 export default async function ProfilePage() {
   const userId = await getServerUserId();
@@ -11,7 +13,7 @@ export default async function ProfilePage() {
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase!
     .from("profiles")
-    .select("display_name, spendable_points")
+    .select("display_name, spendable_points, schedule_profile")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -24,6 +26,8 @@ export default async function ProfilePage() {
       <h1 className="text-lg font-bold text-foreground">Profile</h1>
 
       <ProfileForm initialName={profile.display_name ?? ""} />
+
+      <ScheduleForm initialSchedule={(profile.schedule_profile as ScheduleProfile) ?? {}} />
 
       <div className="rounded-xl border border-border bg-card p-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
