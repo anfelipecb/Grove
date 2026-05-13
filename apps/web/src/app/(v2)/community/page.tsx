@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { CommunityHome } from "@/components/v2/community/community-home";
+import { CommunityEntry } from "@/components/v2/community/community-entry";
 import type { SharedGoal } from "@/components/v2/community/shared-goals-list";
 import type { CommunityMember } from "@/components/v2/community/member-activity";
 import type { UpcomingSession } from "@/components/v2/community/sessions-panel";
@@ -31,7 +32,7 @@ export default async function CommunityPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, community_points")
+    .select("id, community_points, private_focus_notes")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -46,15 +47,7 @@ export default async function CommunityPage() {
     .maybeSingle();
 
   if (!membership) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-8 text-center">
-        <span className="text-4xl">🌿</span>
-        <h1 className="text-xl font-bold text-foreground">Join a community</h1>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          You are not part of any community yet. Community joining will be available soon.
-        </p>
-      </div>
-    );
+    return <CommunityEntry />;
   }
 
   const communityId = membership.community_id;
@@ -167,6 +160,11 @@ export default async function CommunityPage() {
     rsvp: (rsvpMap.get(s.id) as "yes" | "no" | "maybe" | undefined) ?? null,
   }));
 
+  const notes = profile.private_focus_notes as Record<string, unknown> | null | undefined;
+  const alignmentStatus = notes?.community_alignment_status;
+  const showAlignmentPrompt =
+    alignmentStatus !== "skipped" && alignmentStatus !== "completed";
+
   return (
     <CommunityHome
       community={{ id: community?.id ?? communityId, name: community?.name ?? "Community", memberCount }}
@@ -176,6 +174,8 @@ export default async function CommunityPage() {
       isOrganizer={isOrganizer}
       currentProfileId={profile.id}
       communityPoints={profile.community_points ?? 0}
+      communityId={communityId}
+      showAlignmentPrompt={showAlignmentPrompt}
     />
   );
 }

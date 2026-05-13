@@ -1,7 +1,7 @@
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-type ScheduleBody = { task_id?: string; date?: string };
+type ScheduleBody = { task_id?: string; date?: string; sort_order?: number };
 
 export async function POST(req: Request) {
   const userId = await getServerUserId();
@@ -13,6 +13,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as ScheduleBody;
   const taskId = typeof body.task_id === "string" ? body.task_id.trim() : "";
   const date = typeof body.date === "string" ? body.date.trim() : "";
+  const sortOrder = typeof body.sort_order === "number" ? Math.floor(body.sort_order) : undefined;
 
   if (!taskId) return Response.json({ error: "task_id is required." }, { status: 400 });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -34,9 +35,12 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (!task) return Response.json({ error: "Task not found." }, { status: 404 });
 
+  const insertPayload: Record<string, unknown> = { task_id: taskId, profile_id: profile.id, scheduled_date: date };
+  if (sortOrder !== undefined) insertPayload.sort_order = sortOrder;
+
   const { error } = await supabase
     .from("scheduled_tasks")
-    .insert({ task_id: taskId, profile_id: profile.id, scheduled_date: date });
+    .insert(insertPayload);
 
   if (error) {
     if (error.code === "23505") {

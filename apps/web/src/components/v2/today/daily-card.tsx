@@ -2,7 +2,21 @@
 
 import { useState, useCallback } from "react";
 import { Plus } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
+import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 
@@ -15,8 +29,25 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
   const [error, setError] = useState<string | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
   const required = tasks.filter((t) => t.is_required);
   const goal = tasks.filter((t) => !t.is_required);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setTasks((prev) => {
+      const goalTasks = prev.filter((t) => !t.is_required);
+      const requiredTasks = prev.filter((t) => t.is_required);
+      const oldIndex = goalTasks.findIndex((t) => t.id === active.id);
+      const newIndex = goalTasks.findIndex((t) => t.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const reordered = arrayMove(goalTasks, oldIndex, newIndex);
+      return [...requiredTasks, ...reordered];
+    });
+  }, []);
 
   const handleComplete = useCallback(async (id: string) => {
     // Optimistic update
@@ -81,9 +112,13 @@ export function DailyCard({ initialTasks }: DailyCardProps) {
       {goal.length > 0 && (
         <section className="mb-2">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your goals</p>
-          {goal.map((t) => (
-            <TaskRow key={t.id} task={t} onComplete={handleComplete} />
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={goal.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              {goal.map((t) => (
+                <DraggableTaskRow key={t.id} task={t} onComplete={handleComplete} />
+              ))}
+            </SortableContext>
+          </DndContext>
         </section>
       )}
 

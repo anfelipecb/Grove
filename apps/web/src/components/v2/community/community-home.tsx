@@ -5,6 +5,7 @@ import { Users } from "lucide-react";
 import { SharedGoalsList, type SharedGoal } from "@/components/v2/community/shared-goals-list";
 import { MemberActivity, type CommunityMember } from "@/components/v2/community/member-activity";
 import { SessionsPanel, type UpcomingSession } from "@/components/v2/community/sessions-panel";
+import { AlignmentModal } from "@/components/v2/community/alignment-modal";
 
 type CommunityData = {
   id: string;
@@ -20,6 +21,8 @@ type Props = {
   isOrganizer: boolean;
   currentProfileId: string;
   communityPoints: number;
+  communityId: string;
+  showAlignmentPrompt: boolean;
 };
 
 export function CommunityHome({
@@ -30,11 +33,20 @@ export function CommunityHome({
   isOrganizer,
   currentProfileId,
   communityPoints,
+  communityId,
+  showAlignmentPrompt,
 }: Props) {
   const [sessions, setSessions] = useState(upcomingSessions);
+  const [alignmentOpen, setAlignmentOpen] = useState(showAlignmentPrompt);
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
+      <AlignmentModal
+        communityId={communityId}
+        goals={goals}
+        open={alignmentOpen}
+        onDismissLocal={() => setAlignmentOpen(false)}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">{community.name}</h1>

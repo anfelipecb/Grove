@@ -33,7 +33,7 @@ export default function SignUpPage() {
       <SignUp
         routing="path"
         path="/sign-up"
-        forceRedirectUrl="/dashboard"
+        forceRedirectUrl="/today"
         appearance={{
           elements: {
             rootBox: "mx-auto",
