@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { groqText } from "@/lib/groq";
+import { fetchCalendarEvents, busyBlocksFromEvents, getValidToken } from "@/lib/google-calendar";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 
 type ScheduleProfile = {
@@ -57,6 +58,7 @@ function buildSystemPrompt(
   weekDates: string[],
   today: string,
   regenerate: boolean,
+  calendarBusy: { start: string; end: string; title: string }[] = [],
 ): string {
   const bedtime = scheduleProfile.bedtime ?? "22:00";
   const wakeTime = scheduleProfile.wakeTime ?? "06:30";
@@ -78,6 +80,10 @@ function buildSystemPrompt(
     ? `Work/school hours: ${workStart}–${workEnd}. Non-work_build tasks should not be scheduled during work hours unless the task preferred_time overlaps.`
     : "No fixed work schedule — any time slot is available.";
 
+  const calendarNote = calendarBusy.length > 0
+    ? `REAL CALENDAR EVENTS (avoid scheduling tasks that overlap):\n${calendarBusy.map((b) => `- ${b.start} → ${b.end}: ${b.title}`).join("\n")}`
+    : "REAL CALENDAR EVENTS: None available (no Google Calendar connected).";
+
   return `You are a scheduling assistant for Grove, an ADHD-aware personal growth app.
 
 Your job: create a realistic 7-day schedule for the user based on their active tasks and available time.
@@ -86,6 +92,8 @@ USER SCHEDULE:
 - Sleep: ${bedtime}–${wakeTime} (no tasks during sleep)
 - ${workNote}
 - Free time preference: ${freeTime}
+
+${calendarNote}
 
 ACTIVE TASKS:
 ${taskList || "No tasks yet."}
@@ -138,7 +146,7 @@ export async function POST(req: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, schedule_profile")
+    .select("id, schedule_profile, google_calendar_token")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -176,7 +184,26 @@ export async function POST(req: Request) {
   }));
 
   const scheduleProfile = (profile.schedule_profile ?? {}) as ScheduleProfile;
-  const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate);
+
+  // Fetch real calendar busy blocks if Google Calendar is connected
+  let calendarBusy: { start: string; end: string; title: string }[] = [];
+  if (profile.google_calendar_token) {
+    try {
+      type TokenShape = { access_token: string; refresh_token?: string; expires_at: number; scope: string };
+      const token = profile.google_calendar_token as TokenShape;
+      const validToken = await getValidToken(token);
+      const events = await fetchCalendarEvents(
+        validToken,
+        new Date(today + "T00:00:00").toISOString(),
+        new Date(weekDates[6] + "T23:59:59").toISOString(),
+      );
+      calendarBusy = busyBlocksFromEvents(events);
+    } catch {
+      // Non-fatal — fall back to schedule profile only
+    }
+  }
+
+  const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, calendarBusy);
 
   const raw = await groqText([{ role: "user", content: prompt }], { temperature: 0.4 });
 
