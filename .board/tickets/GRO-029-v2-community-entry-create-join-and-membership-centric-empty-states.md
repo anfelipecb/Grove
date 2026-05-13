@@ -2,19 +2,19 @@
 id: "GRO-029"
 title: "v2 Community entry — create, join, and membership-centric empty states"
 slug: "v2-community-entry-create-join-and-membership-centric-empty-states"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/commit/7fbdbea5"
 labels:
   - "v2"
   - "community"
   - "parallel-safe"
 depends_on: []
 created_at: "2026-05-13T21:44:04.356Z"
-updated_at: "2026-05-13T22:10:00.000Z"
+updated_at: "2026-05-13T23:45:00.000Z"
 ---
 
 ## Context
@@ -38,12 +38,12 @@ Email invites, moderation, public discovery directory, switching between multipl
 
 ## Acceptance Criteria
 
-- [ ] When the user has **no** `memberships` row, `/community` shows **Join** (slug input + submit) and **Create community** (minimal form consistent with v1 validation rules).
-- [ ] Successful **join** adds membership and reloads into the existing [`CommunityHome`](apps/web/src/components/v2/community/community-home.tsx) experience with correct role-aware UI (organizer vs member).
-- [ ] Successful **create** uses [`POST /api/communities`](apps/web/src/app/api/communities/route.ts); user lands as **owner** with the same home experience.
-- [ ] Duplicate slug on create returns a clear inline error (409 mapping); unknown slug on join returns a friendly error.
-- [ ] No regression to Clerk auth or v2 shell routing.
-- [ ] `pnpm typecheck` passes.
+- [x] When the user has **no** `memberships` row, `/community` shows **Join** (slug input + submit) and **Create community** (minimal form consistent with v1 validation rules).
+- [x] Successful **join** adds membership and reloads into the existing [`CommunityHome`](apps/web/src/components/v2/community/community-home.tsx) experience with correct role-aware UI (organizer vs member).
+- [x] Successful **create** uses [`POST /api/communities`](apps/web/src/app/api/communities/route.ts); user lands as **owner** with the same home experience.
+- [x] Duplicate slug on create returns a clear inline error (409 mapping); unknown slug on join returns a friendly error.
+- [x] No regression to Clerk auth or v2 shell routing.
+- [x] `pnpm typecheck` passes.
 
 ## File Map
 
@@ -62,3 +62,5 @@ Email invites, moderation, public discovery directory, switching between multipl
 ## Notes
 
 **Parallel-safe:** Touch `(v2)/community`, new `components/v2/community/*`, and `api/v2/community/join` first; avoid unrelated Coach/Today files unless coordinating.
+
+**Merged:** Landed on `master` (implementation bundled in [`7fbdbea5`](https://github.com/anfelipecb/Grove/commit/7fbdbea5)). Review: `pnpm typecheck` and `pnpm test` passing at integration time.

@@ -2,12 +2,12 @@
 id: "GRO-031"
 title: "Shared API — Coach context for workload balance and social nudges (v2)"
 slug: "shared-api-coach-context-for-workload-balance-and-social-nudges-v2"
-status: "ready"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/commit/ea557b55"
 labels:
   - "v2"
   - "community"
@@ -17,7 +17,7 @@ depends_on:
   - "GRO-016"
   - "GRO-021"
 created_at: "2026-05-13T21:44:04.943Z"
-updated_at: "2026-05-13T22:10:00.000Z"
+updated_at: "2026-05-13T23:45:00.000Z"
 ---
 
 ## Context
@@ -44,12 +44,12 @@ Push notifications; modifying Groq models globally; peer messaging.
 
 ## Acceptance Criteria
 
-- [ ] `POST` endpoint returns **200** with JSON matching a documented Zod schema when Clerk user + Supabase are configured.
-- [ ] Payload includes at least **one** balance-oriented insight derived from comparing task load vs community signals (deterministic fallback acceptable when Groq absent—similar to coach-suggestions demo path).
-- [ ] Payload includes at least **one** social/time-with-others nudge when an upcoming session exists within a configurable horizon (e.g. 7 days), informed by RSVP/attendance when available.
-- [ ] Crisis-style content in optional user-supplied strings triggers safe short-circuit (`containsCrisisSignal` / patterns aligned with existing AI routes).
-- [ ] Unauthorized requests return **401**; demo mode mirrors patterns used by other v2 coach APIs if applicable.
-- [ ] `pnpm typecheck` passes.
+- [x] `POST` endpoint returns **200** with JSON matching a documented Zod schema when Clerk user + Supabase are configured.
+- [x] Payload includes at least **one** balance-oriented insight derived from comparing task load vs community signals (deterministic fallback acceptable when Groq absent—similar to coach-suggestions demo path).
+- [x] Payload includes at least **one** social/time-with-others nudge when an upcoming session exists within a configurable horizon (e.g. 7 days), informed by RSVP/attendance when available.
+- [x] Crisis-style content in optional user-supplied strings triggers safe short-circuit (`containsCrisisSignal` / patterns aligned with existing AI routes).
+- [x] Unauthorized requests return **401**; demo mode mirrors patterns used by other v2 coach APIs if applicable.
+- [x] `pnpm typecheck` passes.
 
 ## File Map
 
@@ -67,3 +67,5 @@ Push notifications; modifying Groq models globally; peer messaging.
 ## Notes
 
 **Depends_on [GRO-025](GRO-025-free-task-add-on-today-title-domain-frequency-time-of-day.md)** so suggested micro-tasks can optionally deep-link into existing task creation UX later ([GRO-032](GRO-032-surface-wiring-today-community-pulse-and-coach-check-in-consumes-balance-api.md)).
+
+**Merged:** [`ea557b55`](https://github.com/anfelipecb/Grove/commit/ea557b55). Demo cookie parity for this route was not required for acceptance; Clerk-authenticated POST only.

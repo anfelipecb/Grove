@@ -2,12 +2,12 @@
 id: "GRO-030"
 title: "Post-membership alignment — personal goals ↔ community shared goals"
 slug: "post-membership-alignment-personal-goals-community-shared-goals"
-status: "ready"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/commit/7fbdbea5"
 labels:
   - "v2"
   - "community"
@@ -15,7 +15,7 @@ labels:
 depends_on:
   - "GRO-029"
 created_at: "2026-05-13T21:44:04.651Z"
-updated_at: "2026-05-13T22:10:00.000Z"
+updated_at: "2026-05-13T23:45:00.000Z"
 ---
 
 ## Context
@@ -39,12 +39,12 @@ Full redesign of Coach wizard; AI-generated alignment copy; notifications.
 
 ## Acceptance Criteria
 
-- [ ] After membership exists and alignment has **not** been completed/skipped persistently, user sees a **short modal** (≤ ~3 steps) listing shared goals for their community with multi-select.
-- [ ] User can **Skip / Remind me later** without blocking `/community` home.
-- [ ] On confirm, selected goals produce **active** personal `tasks` tied to those shared goals with `is_community_task = true` and correct `community_id`.
-- [ ] If there are **zero** shared goals, modal explains that organizers can add shared goals and offers skip—no dead end.
-- [ ] Completing or skipping does not show again until reset (document reset mechanism—profile JSON flag vs dedicated column—minimal migration acceptable if justified).
-- [ ] `pnpm typecheck` passes.
+- [x] After membership exists and alignment has **not** been completed/skipped persistently, user sees a **short modal** (≤ ~3 steps) listing shared goals for their community with multi-select.
+- [x] User can **Skip / Remind me later** without blocking `/community` home.
+- [x] On confirm, selected goals produce **active** personal `tasks` tied to those shared goals with `is_community_task = true` and correct `community_id`.
+- [x] If there are **zero** shared goals, modal explains that organizers can add shared goals and offers skip—no dead end.
+- [x] Completing or skipping does not show again until reset (document reset mechanism—profile JSON flag vs dedicated column—minimal migration acceptable if justified).
+- [x] `pnpm typecheck` passes.
 
 ## File Map
 
@@ -63,3 +63,5 @@ Full redesign of Coach wizard; AI-generated alignment copy; notifications.
 ## Notes
 
 Depends on **GRO-029** landing users into `/community` with a membership. Coordinate copy with ADHD-first tone used elsewhere in v2.
+
+**Merged:** Same integration commit as entry flow: [`7fbdbea5`](https://github.com/anfelipecb/Grove/commit/7fbdbea5). **Supabase:** policy enabling members to read public shared goals is tracked remotely as migration `goals_select_public_shared` (version `20260513214801` on project **grove** / `rgiysvoemvznmfvvohzy`), matching repo file [`supabase/migrations/0013_goals_select_public_shared.sql`](supabase/migrations/0013_goals_select_public_shared.sql).

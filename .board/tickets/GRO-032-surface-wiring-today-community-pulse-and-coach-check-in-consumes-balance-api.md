@@ -2,12 +2,12 @@
 id: "GRO-032"
 title: "Surface wiring — Today community pulse and Coach check-in (consumes balance API)"
 slug: "surface-wiring-today-community-pulse-and-coach-check-in-consumes-balance-api"
-status: "ready"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/commit/ea557b55"
 labels:
   - "v2"
   - "today"
@@ -16,7 +16,7 @@ labels:
 depends_on:
   - "GRO-031"
 created_at: "2026-05-13T21:44:05.479Z"
-updated_at: "2026-05-13T22:10:00.000Z"
+updated_at: "2026-05-13T23:45:00.000Z"
 ---
 
 ## Context
@@ -41,11 +41,11 @@ Real-time polling/WebSockets; toast spam; rewriting full Coach wizard.
 
 ## Acceptance Criteria
 
-- [ ] Today fetches balance payload **once per relevant mount** (or cached SWR-style within session) with loading + non-blocking error state (small muted message—does not break Today).
-- [ ] Coach shows the related card with consistent numeric/date formatting for upcoming sessions.
-- [ ] When user has **no** community membership, both surfaces hide or show a **single** gentle prompt linking to `/community` (align copy with [GRO-029](GRO-029-v2-community-entry-create-join-and-membership-centric-empty-states.md)).
-- [ ] Pre-fill flow for suggested micro-task does **not** bypass validation on [`POST /api/v2/tasks`](apps/web/src/app/api/v2/tasks/route.ts).
-- [ ] `pnpm typecheck` passes.
+- [x] Today fetches balance payload **once per relevant mount** (or cached SWR-style within session) with loading + non-blocking error state (small muted message—does not break Today).
+- [x] Coach shows the related card with consistent numeric/date formatting for upcoming sessions.
+- [x] When user has **no** community membership, both surfaces hide or show a **single** gentle prompt linking to `/community` (align copy with [GRO-029](GRO-029-v2-community-entry-create-join-and-membership-centric-empty-states.md)).
+- [x] Pre-fill flow for suggested micro-task does **not** bypass validation on [`POST /api/v2/tasks`](apps/web/src/app/api/v2/tasks/route.ts).
+- [x] `pnpm typecheck` passes.
 
 ## File Map
 
@@ -65,3 +65,5 @@ Real-time polling/WebSockets; toast spam; rewriting full Coach wizard.
 ## Notes
 
 Coordinate layout overlap with any active Today desktop ticket—comment in PR if rebasing on newer layout commits.
+
+**Merged:** [`ea557b55`](https://github.com/anfelipecb/Grove/commit/ea557b55). Coach + Today (`today-desktop`, `daily-card` via `TodayTabs`) consume [`CommunityPulseCard`](apps/web/src/components/v2/community/community-pulse-card.tsx); session hints render as plain strings from the balance payload (no separate date formatter component).
