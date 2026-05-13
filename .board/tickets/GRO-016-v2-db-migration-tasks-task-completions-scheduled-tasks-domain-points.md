@@ -2,16 +2,19 @@
 id: "GRO-016"
 title: "v2 DB migration — tasks, task-completions, scheduled-tasks, domain-points"
 slug: "v2-db-migration-tasks-task-completions-scheduled-tasks-domain-points"
-status: "ready"
+status: "in_review"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "database", "foundation"]
+owner: "codex"
+branch: "ticket/gro-016-v2-db-migration-tasks-task-completions-scheduled-tasks-domain-points"
+worktree: ".worktrees/gro-016-v2-db-migration-tasks-task-completions-scheduled-tasks-domain-points"
+pr_url: "https://github.com/anfelipecb/Grove/pull/14"
+labels:
+  - "v2"
+  - "database"
+  - "foundation"
 depends_on: []
 created_at: "2026-05-13T15:43:40.952Z"
-updated_at: "2026-05-13T15:43:40.952Z"
+updated_at: "2026-05-13T15:56:41.463Z"
 ---
 
 ## Context
