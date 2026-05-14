@@ -8,6 +8,8 @@ import { demoCoachSuggestions } from "@/lib/demo-data";
 import { getServerUserId, demoSessionActiveServer } from "@/lib/clerk-auth";
 import { groqText } from "@/lib/groq";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
+import { fetchCalendarEvents, getValidToken, busyBlocksFromEvents } from "@/lib/google-calendar";
+import { computeFreeWindows, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
 import { containsCrisisSignal, LIFE_DOMAINS, type AiMessage } from "@grove/core";
 import { z } from "zod";
 
@@ -84,6 +86,49 @@ export async function POST(request: Request) {
     return Response.json({ suggestions: fallback });
   }
 
+  // Compute free windows so the coach knows real availability
+  let availabilityContext = "";
+  try {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("schedule_profile, google_calendar_token")
+      .eq("id", profileId)
+      .maybeSingle();
+
+    if (profileData) {
+      const today = new Date().toISOString().slice(0, 10);
+      const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today + "T00:00:00");
+        d.setDate(d.getDate() + i);
+        return d.toISOString().slice(0, 10);
+      });
+
+      let calEvents: CalendarEventInput[] = [];
+      if (profileData.google_calendar_token) {
+        type T = { access_token: string; refresh_token?: string; expires_at: number; scope: string };
+        const token = profileData.google_calendar_token as T;
+        const events = await fetchCalendarEvents(
+          await getValidToken(token),
+          new Date(today + "T00:00:00").toISOString(),
+          new Date(weekDates[6] + "T23:59:59").toISOString(),
+        );
+        calEvents = busyBlocksFromEvents(events);
+      }
+
+      const windows = computeFreeWindows(
+        weekDates,
+        (profileData.schedule_profile ?? {}) as ScheduleProfileInput,
+        calEvents,
+      );
+      const totalFreeHours = Math.round(windows.reduce((s, w) => s + w.minutes, 0) / 60);
+      const todayFree = windows.filter((w) => w.date === today);
+      const todayFreeMin = todayFree.reduce((s, w) => s + w.minutes, 0);
+      const todayWindows = todayFree.map((w) => `${w.start}–${w.end}`).join(", ") || "none";
+
+      availabilityContext = `\nUSER AVAILABILITY: ${totalFreeHours}h free this week. Today: ${todayFreeMin}min free (${todayWindows}). Suggest tasks that fit within available time — prefer short focused tasks when today is tight.`;
+    }
+  } catch { /* non-fatal — availability context is optional */ }
+
   const contextJson = JSON.stringify({
     displayName: ctx.displayName,
     activeGoals: ctx.activeGoals,
@@ -103,7 +148,8 @@ export async function POST(request: Request) {
       `domain must be one of: ${domainsHint}.`,
       "1 to 3 suggestions; titles are actionable; rationale is one short line (why it helps).",
       "No diagnosis, no clinical claims, no markdown.",
-    ].join("\n"),
+      availabilityContext,
+    ].filter(Boolean).join("\n"),
   };
   const userMsg: AiMessage = {
     role: "user",
