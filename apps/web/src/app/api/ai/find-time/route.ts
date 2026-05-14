@@ -266,13 +266,14 @@ export async function POST(req: Request) {
     if (inserted) newTaskIdMap[`NEW_${i}`] = inserted.id;
   }
 
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const plan: PlanItem[] = (parsed.plan ?? [])
     .slice(0, 21)
     .map((item) => ({
       ...item,
       task_id: newTaskIdMap[item.task_id] ?? item.task_id,
     }))
-    .filter((item) => weekDates.includes(item.date));
+    .filter((item) => weekDates.includes(item.date) && uuidRegex.test(item.task_id));
 
   return NextResponse.json({ plan, newTasks: parsed.newTasks ?? [] });
 }
