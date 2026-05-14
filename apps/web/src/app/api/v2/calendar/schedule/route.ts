@@ -46,12 +46,9 @@ export async function POST(req: Request) {
 
   const { error } = await supabase
     .from("scheduled_tasks")
-    .insert(insertPayload);
+    .upsert(insertPayload, { onConflict: "task_id,profile_id,scheduled_date", ignoreDuplicates: false });
 
   if (error) {
-    if (error.code === "23505") {
-      return Response.json({ error: "Already scheduled for this date." }, { status: 409 });
-    }
     return Response.json({ error: error.message }, { status: 500 });
   }
 
