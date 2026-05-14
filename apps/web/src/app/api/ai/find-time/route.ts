@@ -216,15 +216,20 @@ export async function POST(req: Request) {
     }
   }
 
-  const freeWindows: FreeWindow[] = computeFreeWindows(
-    weekDates,
-    scheduleProfile as ScheduleProfileInput,
-    calendarBusy.map((b): CalendarEventInput => ({ start: b.start, end: b.end, title: b.title })),
-  );
-  const windowsSummary = freeWindows
-    .slice(0, 20)
-    .map((w) => `${w.date} ${w.start}–${w.end} (${w.minutes}min free)`)
-    .join("\n");
+  let windowsSummary = "";
+  try {
+    const freeWindows: FreeWindow[] = computeFreeWindows(
+      weekDates,
+      scheduleProfile as ScheduleProfileInput,
+      calendarBusy.map((b): CalendarEventInput => ({ start: b.start, end: b.end, title: b.title })),
+    );
+    windowsSummary = freeWindows
+      .slice(0, 20)
+      .map((w) => `${w.date} ${w.start}–${w.end} (${w.minutes}min free)`)
+      .join("\n");
+  } catch {
+    // Non-fatal — AI will use schedule profile defaults
+  }
 
   const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, windowsSummary);
 
@@ -236,7 +241,8 @@ export async function POST(req: Request) {
 
   const parsed = parseJson<{ plan?: PlanItem[]; newTasks?: NewTask[] }>(raw);
   if (!parsed?.plan) {
-    return NextResponse.json({ error: "Could not parse AI response.", raw }, { status: 500 });
+    // Return first 400 chars of raw response for debugging
+    return NextResponse.json({ error: "Could not parse AI response.", debug: raw?.slice(0, 400) }, { status: 500 });
   }
 
   // Resolve NEW_* ids: insert newTasks first, replace ids in plan
