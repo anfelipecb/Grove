@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { groqText } from "@/lib/groq";
 import { fetchCalendarEvents, busyBlocksFromEvents, getValidToken } from "@/lib/google-calendar";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
+import { computeFreeWindows, type FreeWindow, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
 
 type ScheduleProfile = {
   bedtime?: string;
@@ -26,7 +27,8 @@ type PlanItem = {
   task_id: string;
   task_title: string;
   date: string;
-  time_of_day: "morning" | "afternoon" | "evening";
+  start_time: string;       // "HH:MM"
+  duration_minutes: number;
 };
 
 type NewTask = {
@@ -58,7 +60,7 @@ function buildSystemPrompt(
   weekDates: string[],
   today: string,
   regenerate: boolean,
-  calendarBusy: { start: string; end: string; title: string }[] = [],
+  windowsSummary: string,
 ): string {
   const bedtime = scheduleProfile.bedtime ?? "22:00";
   const wakeTime = scheduleProfile.wakeTime ?? "06:30";
@@ -80,10 +82,6 @@ function buildSystemPrompt(
     ? `Work/school hours: ${workStart}–${workEnd}. Non-work_build tasks should not be scheduled during work hours unless the task preferred_time overlaps.`
     : "No fixed work schedule — any time slot is available.";
 
-  const calendarNote = calendarBusy.length > 0
-    ? `REAL CALENDAR EVENTS (avoid scheduling tasks that overlap):\n${calendarBusy.map((b) => `- ${b.start} → ${b.end}: ${b.title}`).join("\n")}`
-    : "REAL CALENDAR EVENTS: None available (no Google Calendar connected).";
-
   return `You are a scheduling assistant for Grove, an ADHD-aware personal growth app.
 
 Your job: create a realistic 7-day schedule for the user based on their active tasks and available time.
@@ -93,7 +91,8 @@ USER SCHEDULE:
 - ${workNote}
 - Free time preference: ${freeTime}
 
-${calendarNote}
+FREE WINDOWS THIS WEEK (subtract sleep, work, calendar events — place tasks ONLY in these):
+${windowsSummary || "No free windows available — use schedule_profile to estimate."}
 
 ACTIVE TASKS:
 ${taskList || "No tasks yet."}
@@ -117,16 +116,23 @@ RULES:
 OUTPUT FORMAT (strict JSON, no markdown):
 {
   "plan": [
-    { "task_id": "uuid-or-NEW_0", "task_title": "string", "date": "YYYY-MM-DD", "time_of_day": "morning|afternoon|evening" }
+    { "task_id": "uuid-or-NEW_0", "task_title": "string", "date": "YYYY-MM-DD", "start_time": "HH:MM", "duration_minutes": 30 }
   ],
   "newTasks": [
     { "title": "string", "domain": "rest_play", "frequency": "daily", "preferred_time": "evening" }
   ]
 }
 
+Rules:
+1. Place tasks ONLY inside FREE WINDOWS. Never outside them.
+2. duration_minutes: 30 for daily tasks, 60 for weekly tasks.
+3. Respect preferred_time: morning = before 12:00, afternoon = 12:00–17:00, evening = after 17:00.
+4. Max 3 tasks per day, no overlapping tasks.
+5. start_time must be "HH:MM" format.
+
 Use "NEW_0", "NEW_1" etc as task_id for newTasks. Max 21 plan items total. newTasks may be empty array.
 
-IMPORTANT: Respond with ONLY valid JSON. No explanation, no markdown, no preamble. Start your response with { and end with }.`;
+IMPORTANT: Output ONLY valid JSON. Start with { and end with }.`;
 }
 
 function parseJson<T>(raw: string): T | null {
@@ -210,7 +216,17 @@ export async function POST(req: Request) {
     }
   }
 
-  const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, calendarBusy);
+  const freeWindows: FreeWindow[] = computeFreeWindows(
+    weekDates,
+    scheduleProfile as ScheduleProfileInput,
+    calendarBusy.map((b): CalendarEventInput => ({ start: b.start, end: b.end, title: b.title })),
+  );
+  const windowsSummary = freeWindows
+    .slice(0, 20)
+    .map((w) => `${w.date} ${w.start}–${w.end} (${w.minutes}min free)`)
+    .join("\n");
+
+  const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, windowsSummary);
 
   const raw = await groqText([{ role: "user", content: prompt }], { temperature: 0.4 });
 

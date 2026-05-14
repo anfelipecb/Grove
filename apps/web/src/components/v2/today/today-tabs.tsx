@@ -12,12 +12,13 @@ type TodayTabsProps = {
   tasks: TaskRowData[];
   activeTasks: ActiveTask[];
   profileId: string;
+  googleCalendarConnected: boolean;
 };
 
 const TABS = ["Daily Card", "Calendar"] as const;
 type Tab = (typeof TABS)[number];
 
-export function TodayTabs({ tasks, activeTasks, profileId }: TodayTabsProps) {
+export function TodayTabs({ tasks, activeTasks, profileId, googleCalendarConnected }: TodayTabsProps) {
   const [active, setActive] = useState<Tab>("Daily Card");
 
   return (
@@ -40,7 +41,7 @@ export function TodayTabs({ tasks, activeTasks, profileId }: TodayTabsProps) {
       </div>
 
       {active === "Daily Card" && <DailyCard initialTasks={tasks} profileId={profileId} />}
-      {active === "Calendar" && <CalendarTab activeTasks={activeTasks} />}
+      {active === "Calendar" && <CalendarTab activeTasks={activeTasks} googleCalendarConnected={googleCalendarConnected} />}
     </div>
   );
 }

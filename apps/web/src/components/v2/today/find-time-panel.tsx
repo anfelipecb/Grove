@@ -7,13 +7,8 @@ type PlanItem = {
   task_id: string;
   task_title: string;
   date: string;
-  time_of_day: "morning" | "afternoon" | "evening";
-};
-
-const TIME_LABELS: Record<string, string> = {
-  morning: "🌅 Morning",
-  afternoon: "☀️ Afternoon",
-  evening: "🌙 Evening",
+  start_time: string;
+  duration_minutes: number;
 };
 
 function groupByDate(plan: PlanItem[]): { date: string; items: PlanItem[] }[] {
@@ -72,7 +67,12 @@ export function FindTimePanel() {
         fetch("/api/v2/calendar/schedule", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ task_id: item.task_id, date: item.date }),
+          body: JSON.stringify({
+              task_id: item.task_id,
+              date: item.date,
+              start_time: item.start_time,
+              duration_minutes: item.duration_minutes,
+            }),
         }),
       ),
     );
@@ -191,7 +191,7 @@ export function FindTimePanel() {
                   </span>
                   <span className="flex-1 truncate">{item.task_title}</span>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {TIME_LABELS[item.time_of_day] ?? item.time_of_day}
+                    {item.start_time} · {item.duration_minutes}min
                   </span>
                 </button>
               );
