@@ -2,7 +2,7 @@
 id: "GRO-033"
 title: "Clock-time data model — start_time + duration_minutes on scheduled_tasks"
 slug: "clock-time-data-model-start-time-duration-minutes-on-scheduled-tasks"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""

@@ -2,7 +2,7 @@
 id: "GRO-036"
 title: "Coach free-window awareness — available hours fed to AI before suggestions"
 slug: "coach-free-window-awareness-available-hours-fed-to-ai-before-suggestions"
-status: "ready"
+status: "done"
 priority: "p2"
 owner: ""
 branch: ""

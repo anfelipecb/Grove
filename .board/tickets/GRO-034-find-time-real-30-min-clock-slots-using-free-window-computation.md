@@ -2,7 +2,7 @@
 id: "GRO-034"
 title: "Find Time → real 30-min clock slots using free-window computation"
 slug: "find-time-real-30-min-clock-slots-using-free-window-computation"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""

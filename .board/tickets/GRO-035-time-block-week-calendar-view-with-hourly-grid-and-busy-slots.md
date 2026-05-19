@@ -2,7 +2,7 @@
 id: "GRO-035"
 title: "Time-block week calendar view with hourly grid and busy slots"
 slug: "time-block-week-calendar-view-with-hourly-grid-and-busy-slots"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
