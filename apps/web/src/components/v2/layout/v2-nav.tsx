@@ -17,9 +17,26 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+// Extracted so useClerk() only runs when this component mounts (i.e. when
+// ClerkProvider is present). V2Nav only renders this when
+// NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is set, so keyless CI/local builds are safe.
+function ClerkSignOutButton() {
+  const { signOut } = useClerk();
+  return (
+    <button
+      onClick={() => void signOut({ redirectUrl: "/" })}
+      className="ml-auto flex items-center gap-1.5 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      aria-label="Sign out"
+    >
+      <LogOut className="h-3.5 w-3.5" />
+      Sign out
+    </button>
+  );
+}
+
 export function V2Nav() {
   const pathname = usePathname();
-  const { signOut } = useClerk();
+  const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   return (
     <>
@@ -41,14 +58,7 @@ export function V2Nav() {
             {label}
           </Link>
         ))}
-        <button
-          onClick={() => void signOut({ redirectUrl: "/" })}
-          className="ml-auto flex items-center gap-1.5 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Sign out"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Sign out
-        </button>
+        {clerkConfigured && <ClerkSignOutButton />}
       </header>
 
       {/* Mobile: bottom tab bar */}
