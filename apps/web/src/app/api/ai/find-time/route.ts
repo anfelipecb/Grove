@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { groqText } from "@/lib/groq";
+import { routedCompletion } from "@/lib/llm-router";
 import { fetchCalendarEvents, busyBlocksFromEvents, getValidToken } from "@/lib/google-calendar";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { computeFreeWindows, type FreeWindow, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
@@ -233,7 +233,7 @@ export async function POST(req: Request) {
 
   const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, windowsSummary);
 
-  const raw = await groqText([{ role: "user", content: prompt }], { temperature: 0.4 });
+  const raw = await routedCompletion([{ role: "user", content: prompt }], "balanced", { temperature: 0.4 });
 
   if (!raw) {
     return NextResponse.json({ error: "AI unavailable — check GROQ_API_KEY." }, { status: 503 });
