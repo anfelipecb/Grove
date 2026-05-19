@@ -2,16 +2,16 @@
 id: "GRO-038"
 title: "Onboarding v2 — multi-intention intake with contextual domain explanation"
 slug: "onboarding-v2-multi-intention-intake-with-contextual-domain-explanation"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "ai"]
+owner: "worker-038"
+branch: "ticket/gro-038-onboarding-v2-multi-intention-intake-with-contextual-domain-explanation"
+worktree: ".worktrees/gro-038-onboarding-v2-multi-intention-intake-with-contextual-domain-explanation"
+pr_url: "https://github.com/anfelipecb/Grove/pull/23"
+labels: []
 depends_on: []
 created_at: "2026-05-19T23:01:15.534Z"
-updated_at: "2026-05-19T23:01:15.534Z"
+updated_at: "2026-05-19T23:23:48.773Z"
 ---
 
 ## Context

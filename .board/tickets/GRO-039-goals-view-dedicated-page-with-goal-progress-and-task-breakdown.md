@@ -2,16 +2,16 @@
 id: "GRO-039"
 title: "Goals view — dedicated page with goal progress and task breakdown"
 slug: "goals-view-dedicated-page-with-goal-progress-and-task-breakdown"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "goals", "ui"]
+owner: "worker-039"
+branch: "ticket/gro-039-goals-view-dedicated-page-with-goal-progress-and-task-breakdown"
+worktree: ".worktrees/gro-039-goals-view-dedicated-page-with-goal-progress-and-task-breakdown"
+pr_url: "https://github.com/anfelipecb/Grove/pull/24"
+labels: []
 depends_on: []
 created_at: "2026-05-19T23:01:15.826Z"
-updated_at: "2026-05-19T23:01:15.826Z"
+updated_at: "2026-05-19T23:24:11.400Z"
 ---
 
 ## Context

@@ -2,16 +2,16 @@
 id: "GRO-037"
 title: "LLM model router — 3-tier Groq model selection"
 slug: "llm-model-router-3-tier-groq-model-selection"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "ai", "infra"]
+owner: "codex"
+branch: "ticket/gro-037-llm-model-router-3-tier-groq-model-selection"
+worktree: ".worktrees/gro-037-llm-model-router-3-tier-groq-model-selection"
+pr_url: "https://github.com/anfelipecb/Grove/pull/25"
+labels: []
 depends_on: []
 created_at: "2026-05-19T23:01:15.226Z"
-updated_at: "2026-05-19T23:01:15.226Z"
+updated_at: "2026-05-19T23:25:12.581Z"
 ---
 
 ## Context
