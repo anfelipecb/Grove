@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, Users, Sparkles, UserCircle, LogOut } from "lucide-react";
+import { CalendarCheck, Goal, Users, Sparkles, UserCircle, LogOut } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { twMerge } from "tailwind-merge";
 
 const tabs = [
   { href: "/today", label: "Today", icon: CalendarCheck },
+  { href: "/goals", label: "Goals", icon: Goal },
   { href: "/coach", label: "Coach", icon: Sparkles },
   { href: "/community", label: "Community", icon: Users },
   { href: "/profile", label: "Profile", icon: UserCircle },
@@ -70,7 +71,7 @@ export function V2Nav() {
               key={href}
               href={href}
               className={twMerge(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors",
+                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
                 active ? "text-moss" : "text-muted-foreground",
               )}
             >
