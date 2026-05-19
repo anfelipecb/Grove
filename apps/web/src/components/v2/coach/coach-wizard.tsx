@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { WizardStepConfirm } from "@/components/v2/coach/wizard-step-confirm";
-import { WizardStepDomain } from "@/components/v2/coach/wizard-step-domain";
-import { WizardStepGoals } from "@/components/v2/coach/wizard-step-goals";
+import { WizardStepIntentions } from "@/components/v2/coach/wizard-step-intentions";
+import { WizardStepIntake } from "@/components/v2/coach/wizard-step-intake";
 import { WizardStepTasks } from "@/components/v2/coach/wizard-step-tasks";
-import type { CoachGoalDraft, CoachGoalSuggestion, CoachSuggestedTask } from "@/components/v2/coach/types";
+import type { CoachGoalDraft, CoachSuggestedTask } from "@/components/v2/coach/types";
 
-type SuggestGoalsPayload = {
-  suggestions?: CoachGoalSuggestion[];
+type ParsedIntention = {
+  domain: LifeDomainId;
+  rationale: string;
+  sampleGoal: string;
+};
+
+type ParseIntentionsPayload = {
+  intentions?: ParsedIntention[];
   safety?: boolean;
   message?: string;
   error?: string;
@@ -63,18 +69,28 @@ function buildDefaultTasks(goalTitle: string, domainId: LifeDomainId): CoachSugg
   ];
 }
 
-function buildGoalDraft(goal: CoachGoalSuggestion, key: string, custom = false): CoachGoalDraft {
+function buildGoalDraftFromIntention(intention: ParsedIntention, key: string): CoachGoalDraft {
   return {
     key,
-    title: goal.title,
-    domain: goal.domain,
-    rationale: goal.rationale,
-    custom,
-    tasks: goal.tasks.map((task, index) => ({
+    title: intention.sampleGoal,
+    domain: intention.domain,
+    rationale: intention.rationale,
+    custom: false,
+    tasks: buildDefaultTasks(intention.sampleGoal, intention.domain).map((task, index) => ({
       ...task,
       id: `${key}-${index}`,
       enabled: true,
     })),
+  };
+}
+
+function buildEditSeedIntention(domainId: LifeDomainId, goalTitle: string): ParsedIntention {
+  const label = domainLabel(domainId);
+
+  return {
+    domain: domainId,
+    rationale: `Your current goal "${goalTitle.trim()}" already maps to ${label}.`,
+    sampleGoal: goalTitle.trim() || `Refine your ${label.toLowerCase()} goal`,
   };
 }
 
@@ -86,129 +102,136 @@ export function CoachWizard({
   initialStep = 0,
   initialUserInput = "",
   onCancel,
-  profileId,
 }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(initialStep);
   const [promptText, setPromptText] = useState(initialUserInput);
-  const [selectedDomain, setSelectedDomain] = useState<LifeDomainId | null>(initialDomainId);
-  const [suggestions, setSuggestions] = useState<CoachGoalSuggestion[]>([]);
+  const [intentions, setIntentions] = useState<ParsedIntention[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  const [customTitle, setCustomTitle] = useState("");
   const [goalDrafts, setGoalDrafts] = useState<CoachGoalDraft[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [loadingIntentions, setLoadingIntentions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [safetyMessage, setSafetyMessage] = useState<string | null>(null);
 
+  const maxSelections = editingGoalId ? 1 : 3;
+
   useEffect(() => {
-    if (initialStep < 1 || !selectedDomain || !promptText.trim()) {
+    if (initialStep < 1 || !editingGoalId || !initialDomainId || !promptText.trim()) {
       return;
     }
 
-    void loadSuggestions(selectedDomain, promptText);
-    // Intentional one-shot initialization for edit mode.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setIntentions([buildEditSeedIntention(initialDomainId, promptText)]);
+    setSelectedKeys(["intention-0"]);
+  }, [editingGoalId, initialDomainId, initialStep, promptText]);
 
-  async function loadSuggestions(domainId: LifeDomainId, prompt: string) {
-    setLoadingSuggestions(true);
+  async function loadIntentions(prompt: string) {
+    setLoadingIntentions(true);
     setError(null);
     setSafetyMessage(null);
 
     try {
-      const response = await fetch("/api/v2/coach/suggest-goals", {
+      const response = await fetch("/api/v2/coach/parse-intentions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ demoMode, domain: domainId, prompt }),
+        body: JSON.stringify({ demoMode, prompt }),
       });
 
-      const payload = (await response.json()) as SuggestGoalsPayload;
+      const payload = (await response.json()) as ParseIntentionsPayload;
 
       if (payload.safety) {
         setSafetyMessage(payload.message ?? "Grove cannot safely continue this as a coaching request.");
-        setSuggestions([]);
+        setIntentions([]);
+        setSelectedKeys([]);
         return false;
       }
 
       if (!response.ok) {
-        setError(payload.error ?? "Could not load goal suggestions.");
+        setError(payload.error ?? "Could not map your intentions into starter goals.");
         return false;
       }
 
-      const nextSuggestions = payload.suggestions ?? [];
-      setSuggestions(nextSuggestions);
+      const nextIntentions = payload.intentions ?? [];
+      if (nextIntentions.length === 0) {
+        setError("Coach could not map that into starter goals yet.");
+        return false;
+      }
+
+      setIntentions(nextIntentions);
       setSelectedKeys([]);
       return true;
     } catch {
-      setError("Could not load goal suggestions.");
+      setError("Could not map your intentions into starter goals.");
       return false;
     } finally {
-      setLoadingSuggestions(false);
+      setLoadingIntentions(false);
     }
   }
 
-  async function continueFromDomain() {
-    if (!promptText.trim()) {
-      setError("Describe the area you want to improve first.");
+  function handlePromptChange(value: string) {
+    setPromptText(value.slice(0, 400));
+    setError(null);
+    setSafetyMessage(null);
+  }
+
+  async function continueFromIntake() {
+    const nextPrompt = promptText.trim();
+    if (!nextPrompt) {
+      setError("Write the 2 or 3 things you want to improve first.");
       return;
     }
 
-    if (!selectedDomain) {
-      setError("Pick one life domain so Coach can tailor the goal suggestions.");
-      return;
-    }
-
-    const ok = await loadSuggestions(selectedDomain, promptText.trim());
+    const ok = await loadIntentions(nextPrompt);
     if (ok) {
       setStep(1);
     }
   }
 
   function toggleSelectedKey(key: string) {
-    setSelectedKeys((current) => (current.includes(key) ? current.filter((entry) => entry !== key) : [...current, key]));
-  }
+    let exceededLimit = false;
 
-  function continueFromGoals() {
-    if (!selectedDomain) {
-      setError("Choose a domain before continuing.");
-      setStep(0);
+    setSelectedKeys((current) => {
+      if (editingGoalId) {
+        return current.includes(key) ? [] : [key];
+      }
+
+      if (current.includes(key)) {
+        return current.filter((entry) => entry !== key);
+      }
+
+      if (current.length >= maxSelections) {
+        exceededLimit = true;
+        return current;
+      }
+
+      return [...current, key];
+    });
+
+    if (exceededLimit) {
+      setError(`Pick up to ${maxSelections} starter goals.`);
       return;
     }
-
-    const selectedSuggestions = suggestions.flatMap((suggestion, index) =>
-      selectedKeys.includes(`suggestion-${index}`) ? [buildGoalDraft(suggestion, `suggestion-${index}`)] : [],
-    );
-
-    const includeCustom = selectedKeys.includes("custom");
-    if (selectedSuggestions.length === 0 && !includeCustom) {
-      setError("Select at least one suggested goal or choose Custom.");
-      return;
-    }
-
-    if (includeCustom && !customTitle.trim()) {
-      setError("Write your custom goal title before continuing.");
-      return;
-    }
-
-    const customDraft =
-      includeCustom && customTitle.trim()
-        ? [
-            buildGoalDraft(
-              {
-                title: customTitle.trim(),
-                domain: selectedDomain,
-                rationale: `Custom goal for ${domainLabel(selectedDomain)} based on your own wording.`,
-                tasks: buildDefaultTasks(customTitle.trim(), selectedDomain),
-              },
-              "custom",
-              true,
-            ),
-          ]
-        : [];
 
     setError(null);
-    setGoalDrafts([...selectedSuggestions, ...customDraft]);
+  }
+
+  function continueFromIntentions() {
+    const selectedIntentions = intentions.flatMap((intention, index) =>
+      selectedKeys.includes(`intention-${index}`) ? [buildGoalDraftFromIntention(intention, `intention-${index}`)] : [],
+    );
+
+    if (selectedIntentions.length === 0) {
+      setError(editingGoalId ? "Pick the goal that should replace this one." : "Select at least one starter goal.");
+      return;
+    }
+
+    if (editingGoalId && selectedIntentions.length !== 1) {
+      setError("Editing one goal only supports one replacement goal.");
+      return;
+    }
+
+    setError(null);
+    setGoalDrafts(selectedIntentions);
     setStep(2);
   }
 
@@ -309,35 +332,32 @@ export function CoachWizard({
       </div>
 
       {step === 0 ? (
-        <WizardStepDomain
+        <WizardStepIntake
           error={error}
-          loading={loadingSuggestions}
-          onContinue={continueFromDomain}
-          onPromptChange={setPromptText}
-          onSelectDomain={setSelectedDomain}
+          loading={loadingIntentions}
+          onContinue={continueFromIntake}
+          onPromptChange={handlePromptChange}
           promptText={promptText}
           safetyMessage={safetyMessage}
-          selectedDomain={selectedDomain}
         />
       ) : null}
 
-      {step === 1 && selectedDomain ? (
-        <WizardStepGoals
-          customTitle={customTitle}
-          domainId={selectedDomain}
+      {step === 1 ? (
+        <WizardStepIntentions
+          editingMode={Boolean(editingGoalId)}
           error={error}
-          loading={loadingSuggestions}
+          intentions={intentions}
+          loading={loadingIntentions}
+          maxSelections={maxSelections}
           onBack={() => {
             setError(null);
             setStep(0);
           }}
-          onContinue={continueFromGoals}
-          onCustomTitleChange={setCustomTitle}
-          onRefresh={() => void loadSuggestions(selectedDomain, promptText)}
+          onContinue={continueFromIntentions}
+          onRefresh={() => void loadIntentions(promptText.trim())}
           onToggleKey={toggleSelectedKey}
           promptText={promptText}
           selectedKeys={selectedKeys}
-          suggestions={suggestions}
         />
       ) : null}
 
