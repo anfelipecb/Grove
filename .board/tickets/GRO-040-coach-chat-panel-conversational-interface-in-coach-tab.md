@@ -2,16 +2,16 @@
 id: "GRO-040"
 title: "Coach chat panel — conversational interface in Coach tab"
 slug: "coach-chat-panel-conversational-interface-in-coach-tab"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "coach", "ui"]
+owner: "codex"
+branch: "ticket/gro-040-coach-chat-panel-conversational-interface-in-coach-tab"
+worktree: ".worktrees/gro-040-coach-chat-panel-conversational-interface-in-coach-tab"
+pr_url: "https://github.com/anfelipecb/Grove/pull/26"
+labels: []
 depends_on: []
 created_at: "2026-05-19T23:01:16.125Z"
-updated_at: "2026-05-19T23:01:16.125Z"
+updated_at: "2026-05-19T23:46:35.500Z"
 ---
 
 ## Context
