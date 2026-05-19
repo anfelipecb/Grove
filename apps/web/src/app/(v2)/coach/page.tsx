@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
-import { CoachCheckin } from "@/components/v2/coach/coach-checkin";
-import { CoachWizard } from "@/components/v2/coach/coach-wizard";
+import { CoachExperience } from "@/components/v2/coach/coach-experience";
 import { createDemoAwareServerClient } from "@/lib/supabase-server";
 import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
 
@@ -11,6 +10,17 @@ type ActiveGoalRow = {
   id: string;
   title: string;
   domain: LifeDomainId;
+};
+
+type TodayTaskRow = {
+  id: string;
+  title: string;
+  domain: string;
+};
+
+type RecentXpRow = {
+  created_at: string;
+  reason: string;
 };
 
 const knownDomains = new Set(LIFE_DOMAINS.map((domain) => domain.id));
@@ -66,24 +76,49 @@ export default async function CoachPage() {
   const displayName = (profile?.display_name as string | undefined) ?? "Member";
   const spendablePoints = (profile?.spendable_points as number | undefined) ?? 0;
 
-  let taskCount = 0;
   let activeGoals: ActiveGoalRow[] = [];
+  let todayTasks: TodayTaskRow[] = [];
+  let recentXp: RecentXpRow[] = [];
 
   if (profileId) {
-    const [{ count, error: taskError }, { data: goals, error: goalsError }] = await Promise.all([
-      supabase.from("tasks").select("id", { count: "exact", head: true }).eq("profile_id", profileId),
+    const [
+      { data: tasks, error: taskError },
+      { data: goals, error: goalsError },
+      { data: xpRows, error: xpError },
+    ] = await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, title, domain")
+        .eq("profile_id", profileId)
+        .eq("status", "active")
+        .in("frequency", ["daily", "weekly"])
+        .order("created_at", { ascending: false }),
       supabase
         .from("goals")
         .select("id, title, domain")
         .eq("profile_id", profileId)
         .eq("status", "active")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("xp_events")
+        .select("created_at, reason")
+        .eq("profile_id", profileId)
+        .order("created_at", { ascending: false })
+        .limit(8),
     ]);
 
     if (taskError) {
       return (
         <main className="p-8 text-foreground">
           <p>Could not load Coach tasks: {taskError.message}</p>
+        </main>
+      );
+    }
+
+    if (xpError) {
+      return (
+        <main className="p-8 text-foreground">
+          <p>Could not load Coach progress: {xpError.message}</p>
         </main>
       );
     }
@@ -96,27 +131,49 @@ export default async function CoachPage() {
       );
     }
 
-    taskCount = count ?? 0;
     activeGoals = (goals ?? []).map((goal) => ({
       id: goal.id as string,
       title: goal.title as string,
       domain: coerceDomain(goal.domain as string | null | undefined),
     }));
+    todayTasks = (tasks ?? []).map((task) => ({
+      id: task.id as string,
+      title: task.title as string,
+      domain: task.domain as string,
+    }));
+    recentXp = (xpRows ?? []).map((row) => ({
+      created_at: row.created_at as string,
+      reason: row.reason as string,
+    }));
   }
+
+  const chatContext = {
+    today: new Date().toISOString().slice(0, 10),
+    topGoalTitle: activeGoals[0]?.title ?? null,
+    activeGoals: activeGoals.map((goal) => ({
+      title: goal.title,
+      domain: goal.domain,
+    })),
+    todayTasks: todayTasks.map((task) => ({
+      title: task.title,
+      domain: task.domain,
+    })),
+    recentXp,
+  };
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      {taskCount > 0 && profileId ? (
-        <CoachCheckin
+      {profileId ? (
+        <CoachExperience
           activeGoals={activeGoals}
+          chatContext={chatContext}
           demoMode={demo}
           displayName={displayName}
+          hasTasks={todayTasks.length > 0}
           profileId={profileId}
           spendablePoints={spendablePoints}
         />
-      ) : (
-        <CoachWizard demoMode={demo} initialDisplayName={displayName} profileId={profileId} />
-      )}
+      ) : null}
     </main>
   );
 }

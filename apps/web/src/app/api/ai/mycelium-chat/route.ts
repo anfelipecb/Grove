@@ -6,8 +6,21 @@ import {
   type AiMessage,
 } from "@grove/core";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
+import { z } from "zod";
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
+const chatContextSchema = z.object({
+  today: z.string(),
+  topGoalTitle: z.string().nullable().optional(),
+  activeGoals: z.array(z.object({ title: z.string(), domain: z.string() })).default([]),
+  todayTasks: z.array(z.object({ title: z.string(), domain: z.string() })).default([]),
+  recentXp: z.array(z.object({ created_at: z.string(), reason: z.string() })).default([]),
+});
+
+const bodySchema = z.object({
+  messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).default([]),
+  communityId: z.string().optional(),
+  context: chatContextSchema.optional(),
+});
 
 export async function POST(request: Request) {
   const userId = await getServerUserId();
@@ -15,7 +28,13 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as { messages: ChatMessage[]; communityId?: string };
+  let body: z.infer<typeof bodySchema>;
+  try {
+    body = bodySchema.parse(await request.json());
+  } catch {
+    return Response.json({ error: "Invalid body" }, { status: 400 });
+  }
+
   const history = body.messages ?? [];
   const lastUser = [...history].reverse().find((m) => m.role === "user");
   if (!lastUser?.content?.trim()) {
@@ -67,7 +86,18 @@ export async function POST(request: Request) {
     `Member name: ${profile?.display_name ?? "Member"}`,
     `Active goals: ${JSON.stringify(goals ?? [])}`,
     `Community commitments snapshot: ${JSON.stringify(commitments)}`,
-  ].join("\n");
+    body.context
+      ? `Realtime coach context: ${JSON.stringify({
+          today: body.context.today,
+          topGoalTitle: body.context.topGoalTitle,
+          activeGoals: body.context.activeGoals,
+          todayTasks: body.context.todayTasks,
+          recentXp: body.context.recentXp,
+        })}`
+      : null,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join("\n");
 
   if (!process.env.GROQ_API_KEY) {
     return Response.json({
