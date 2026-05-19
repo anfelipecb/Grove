@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { CoachExperience } from "@/components/v2/coach/coach-experience";
+import { CoachWizard } from "@/components/v2/coach/coach-wizard";
 import { createDemoAwareServerClient } from "@/lib/supabase-server";
 import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
 
@@ -173,7 +174,9 @@ export default async function CoachPage() {
           profileId={profileId}
           spendablePoints={spendablePoints}
         />
-      ) : null}
+      ) : (
+        <CoachWizard demoMode={demo} initialDisplayName={displayName} profileId={null} />
+      )}
     </main>
   );
 }
