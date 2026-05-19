@@ -1,5 +1,5 @@
 import { getServerUserId } from "@/lib/clerk-auth";
-import { groqText } from "@/lib/groq";
+import { routedCompletion } from "@/lib/llm-router";
 import {
   containsCrisisSignal,
   CRISIS_SUPPORT_MESSAGE,
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   ];
 
   try {
-    const reply = await groqText(aiMessages);
+    const reply = await routedCompletion(aiMessages, "deep");
     if (!reply) {
       return Response.json({
         reply:

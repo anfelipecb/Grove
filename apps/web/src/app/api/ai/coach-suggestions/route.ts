@@ -6,7 +6,7 @@ import {
 } from "@/lib/coach-dashboard-context";
 import { demoCoachSuggestions } from "@/lib/demo-data";
 import { getServerUserId, demoSessionActiveServer } from "@/lib/clerk-auth";
-import { groqText } from "@/lib/groq";
+import { routedCompletion } from "@/lib/llm-router";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 import { fetchCalendarEvents, getValidToken, busyBlocksFromEvents } from "@/lib/google-calendar";
 import { computeFreeWindows, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
   };
 
   try {
-    const raw = await groqText([system, userMsg], { temperature: 0.38 });
+    const raw = await routedCompletion([system, userMsg], "balanced", { temperature: 0.38 });
     if (!raw) {
       return Response.json({ suggestions: fallback });
     }

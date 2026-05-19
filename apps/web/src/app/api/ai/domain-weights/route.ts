@@ -2,10 +2,10 @@ import {
   containsCrisisSignal,
   CRISIS_SUPPORT_MESSAGE,
   LIFE_DOMAINS,
-  requestJsonCompletion,
-  resolveGroqOnboardingModel,
+  type AiMessage,
   type LifeDomainId,
 } from "@grove/core";
+import { routedCompletion } from "@/lib/llm-router";
 import { z } from "zod";
 
 type DomainWeightsRequest = {
@@ -15,6 +15,12 @@ type DomainWeightsRequest = {
 };
 
 const weightsResponseSchema = z.record(z.coerce.number());
+
+function parseJsonObject(raw: string): unknown {
+  const trimmed = raw.trim();
+  const unfenced = trimmed.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  return JSON.parse(unfenced);
+}
 
 function equalWeights(): Record<LifeDomainId, number> {
   const n = LIFE_DOMAINS.length;
@@ -57,26 +63,26 @@ export async function POST(request: Request) {
 
   const domainKeys = LIFE_DOMAINS.map((d) => d.id).join(", ");
   try {
-    const completion = await requestJsonCompletion<unknown>({
-      apiKey: process.env.GROQ_API_KEY,
-      model: resolveGroqOnboardingModel(),
-      messages: [
-        {
-          role: "system",
-          content: `You are Mycelium. Return JSON only: an object with keys exactly: ${domainKeys}. Each value is an integer 1-100 representing how much of the member's next-month attention should go to that life domain (relative weights; they will be normalized). Do not diagnose.`,
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            goals: payload.goals,
-            friction: payload.friction,
-            supportStyle: payload.supportStyle,
-          }),
-        },
-      ],
-    });
+    const messages: AiMessage[] = [
+      {
+        role: "system",
+        content: `You are Mycelium. Return JSON only: an object with keys exactly: ${domainKeys}. Each value is an integer 1-100 representing how much of the member's next-month attention should go to that life domain (relative weights; they will be normalized). Do not diagnose.`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify({
+          goals: payload.goals,
+          friction: payload.friction,
+          supportStyle: payload.supportStyle,
+        }),
+      },
+    ];
+    const completion = await routedCompletion(messages, "fast", { temperature: 0.2 });
+    if (!completion) {
+      return Response.json({ weights: equalWeights(), source: "fallback" });
+    }
 
-    const parsed = weightsResponseSchema.safeParse(completion);
+    const parsed = weightsResponseSchema.safeParse(parseJsonObject(completion));
     if (!parsed.success) {
       return Response.json({ weights: equalWeights(), source: "fallback" });
     }

@@ -6,7 +6,7 @@ import {
 } from "@/lib/coach-dashboard-context";
 import { demoCoachGreeting } from "@/lib/demo-data";
 import { getServerUserId, demoSessionActiveServer } from "@/lib/clerk-auth";
-import { groqText } from "@/lib/groq";
+import { compressPromptBodyForTier, routedCompletion } from "@/lib/llm-router";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 import {
   containsCrisisSignal,
@@ -76,14 +76,20 @@ export async function POST(request: Request) {
     return Response.json(fallback);
   }
 
-  const contextJson = JSON.stringify({
-    displayName: ctx.displayName,
-    activeGoals: ctx.activeGoals,
-    lastCompletedGoalTitle: ctx.lastCompletedGoalTitle,
-    commitments: ctx.commitments,
-    consistencySummary: ctx.consistencySummary,
-    recentXp: ctx.xpEvents.slice(0, 8).map((e) => ({ at: e.created_at, reason: e.reason })),
-  });
+  const contextJson = JSON.stringify(
+    compressPromptBodyForTier(
+      {
+        displayName: ctx.displayName,
+        focusNotesRaw: ctx.focusNotesRaw,
+        activeGoals: ctx.activeGoals,
+        lastCompletedGoalTitle: ctx.lastCompletedGoalTitle,
+        commitments: ctx.commitments,
+        consistencySummary: ctx.consistencySummary,
+        xpEvents: ctx.xpEvents.slice(0, 8).map((e) => ({ at: e.created_at, reason: e.reason })),
+      },
+      "fast",
+    ),
+  );
 
   const system: AiMessage = {
     role: "system",
@@ -101,7 +107,7 @@ export async function POST(request: Request) {
   };
 
   try {
-    const raw = await groqText([system, userMsg], { temperature: 0.38 });
+    const raw = await routedCompletion([system, userMsg], "fast", { temperature: 0.38 });
     if (!raw) {
       return Response.json(fallback);
     }
