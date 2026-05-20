@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { CommunityGate } from "@/components/v2/community/community-gate";
 import { CommunityHome } from "@/components/v2/community/community-home";
 import { CommunityEntry } from "@/components/v2/community/community-entry";
+import { hasCommunityAccess } from "@grove/core";
 import type { SharedGoal } from "@/components/v2/community/shared-goals-list";
 import type { CommunityMember } from "@/components/v2/community/member-activity";
 import type { UpcomingSession } from "@/components/v2/community/sessions-panel";
@@ -36,11 +38,16 @@ export default async function CommunityPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, community_points, private_focus_notes")
+    .select("id, community_points, private_focus_notes, total_xp")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
   if (!profile) redirect("/sign-in");
+
+  const totalXp = (profile.total_xp as number | undefined) ?? 0;
+  if (!hasCommunityAccess(totalXp)) {
+    return <CommunityGate totalXp={totalXp} />;
+  }
 
   const { data: membership } = await supabase
     .from("memberships")

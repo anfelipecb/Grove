@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, Goal, Users, Sparkles, UserCircle, LogOut } from "lucide-react";
+import { CalendarCheck, Goal, Users, Sparkles, UserCircle, LogOut, Lock } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { twMerge } from "tailwind-merge";
 
@@ -35,7 +35,11 @@ function ClerkSignOutButton() {
   );
 }
 
-export function V2Nav() {
+type V2NavProps = {
+  communityLocked?: boolean;
+};
+
+export function V2Nav({ communityLocked = false }: V2NavProps) {
   const pathname = usePathname();
   const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -44,21 +48,28 @@ export function V2Nav() {
       {/* Desktop: top nav */}
       <header className="hidden h-12 items-center gap-0 border-b border-border bg-card px-4 md:flex">
         <span className="mr-6 text-sm font-bold text-moss">Grove</span>
-        {tabs.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={twMerge(
-              "flex h-full items-center gap-1.5 border-b-2 px-4 text-sm font-medium transition-colors",
-              isActive(pathname, href)
-                ? "border-moss text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {label}
-          </Link>
-        ))}
+        {tabs.map(({ href, label, icon: Icon }) => {
+          const locked = href === "/community" && communityLocked;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={twMerge(
+                "relative flex h-full items-center gap-1.5 border-b-2 px-4 text-sm font-medium transition-colors",
+                isActive(pathname, href)
+                  ? "border-moss text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+                locked && "opacity-80",
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {label}
+              {locked ? (
+                <Lock className="h-3 w-3 text-muted-foreground" aria-label="Locked until Sprout" />
+              ) : null}
+            </Link>
+          );
+        })}
         {clerkConfigured && <ClerkSignOutButton />}
       </header>
 
@@ -66,19 +77,29 @@ export function V2Nav() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-border bg-card md:hidden">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
+          const locked = href === "/community" && communityLocked;
           return (
             <Link
               key={href}
               href={href}
               className={twMerge(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+                "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
                 active ? "text-moss" : "text-muted-foreground",
+                locked && "opacity-80",
               )}
             >
-              <Icon
-                className={twMerge("h-5 w-5 shrink-0", active ? "text-moss" : "text-muted-foreground")}
-                aria-hidden="true"
-              />
+              <span className="relative">
+                <Icon
+                  className={twMerge("h-5 w-5 shrink-0", active ? "text-moss" : "text-muted-foreground")}
+                  aria-hidden="true"
+                />
+                {locked ? (
+                  <Lock
+                    className="absolute -right-1 -top-1 h-2.5 w-2.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
               {label}
             </Link>
           );
