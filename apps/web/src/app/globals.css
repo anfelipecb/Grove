@@ -15,21 +15,24 @@
   --accent-foreground: 0 0% 9%;
   /* Subtle top stripe: slate (personal) vs cool teal (community) */
   --layer-accent: 215 20% 46%;
+  --moss: 138 24% 39%;
+  --moss-fg: 0 0% 100%;
 }
 
 .dark {
   color-scheme: dark;
-  --background: 0 0% 0%;
+  --background: 140 10% 4%;
   --foreground: 0 0% 96%;
-  /* Slightly lift muted fills, borders, and secondary text so hierarchy reads on true black. */
   --muted: 0 0% 13%;
   --muted-foreground: 0 0% 71%;
-  --border: 0 0% 26%;
-  --card: 0 0% 6%;
+  --border: 140 5% 16%;
+  --card: 140 8% 7%;
   --card-foreground: 0 0% 96%;
   --accent: 0 0% 17%;
   --accent-foreground: 0 0% 96%;
   --layer-accent: 215 18% 52%;
+  --moss: 138 30% 53%;
+  --moss-fg: 140 15% 10%;
 }
 
 html[data-app-layer="community"] {
