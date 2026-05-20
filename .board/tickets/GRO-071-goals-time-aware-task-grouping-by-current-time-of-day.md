@@ -2,16 +2,16 @@
 id: "GRO-071"
 title: "Goals — time-aware task grouping by current time of day"
 slug: "goals-time-aware-task-grouping-by-current-time-of-day"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "goals", "ux", "time"]
+owner: "cursor"
+branch: "ticket/gro-071-goals-time-aware-task-grouping-by-current-time-of-day"
+worktree: ".worktrees/gro-071-goals-time-aware-task-grouping-by-current-time-of-day"
+pr_url: "https://github.com/anfelipecb/Grove/pull/57"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:57.003Z"
 ---
 
 ## Context

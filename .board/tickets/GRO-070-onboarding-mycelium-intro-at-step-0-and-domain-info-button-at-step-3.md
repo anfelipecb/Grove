@@ -2,16 +2,16 @@
 id: "GRO-070"
 title: "Onboarding — Mycelium intro at step 0 and domain info button at step 3"
 slug: "onboarding-mycelium-intro-at-step-0-and-domain-info-button-at-step-3"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "ux"]
+owner: "cursor"
+branch: "ticket/gro-070-onboarding-mycelium-intro-at-step-0-and-domain-info-button-at-step-3"
+worktree: ".worktrees/gro-070-onboarding-mycelium-intro-at-step-0-and-domain-info-button-at-step-3"
+pr_url: "https://github.com/anfelipecb/Grove/pull/55"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:56.695Z"
 ---
 
 ## Context

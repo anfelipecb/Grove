@@ -2,16 +2,16 @@
 id: "GRO-067"
 title: "Fix Find Time network error in production"
 slug: "fix-find-time-network-error-in-production"
-status: "ready"
+status: "done"
 priority: "p0"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "ai", "bug", "prod"]
+owner: "cursor"
+branch: "ticket/gro-067-fix-find-time-network-error-in-production"
+worktree: ".worktrees/gro-067-fix-find-time-network-error-in-production"
+pr_url: "https://github.com/anfelipecb/Grove/pull/53"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:55.736Z"
 ---
 
 ## Context

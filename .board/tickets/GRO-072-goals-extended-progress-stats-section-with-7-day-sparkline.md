@@ -2,16 +2,16 @@
 id: "GRO-072"
 title: "Goals — extended progress stats section with 7-day sparkline"
 slug: "goals-extended-progress-stats-section-with-7-day-sparkline"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "goals", "stats", "ux"]
+owner: "cursor"
+branch: "ticket/gro-072-goals-extended-progress-stats-section-with-7-day-sparkline"
+worktree: ".worktrees/gro-072-goals-extended-progress-stats-section-with-7-day-sparkline"
+pr_url: "https://github.com/anfelipecb/Grove/pull/58"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:57.308Z"
 ---
 
 ## Context

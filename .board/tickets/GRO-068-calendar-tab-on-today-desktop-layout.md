@@ -2,16 +2,16 @@
 id: "GRO-068"
 title: "Calendar tab on Today desktop layout"
 slug: "calendar-tab-on-today-desktop-layout"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "calendar", "ux"]
+owner: "cursor"
+branch: "ticket/gro-068-calendar-tab-on-today-desktop-layout"
+worktree: ".worktrees/gro-068-calendar-tab-on-today-desktop-layout"
+pr_url: "https://github.com/anfelipecb/Grove/pull/54"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:56.045Z"
 ---
 
 ## Context

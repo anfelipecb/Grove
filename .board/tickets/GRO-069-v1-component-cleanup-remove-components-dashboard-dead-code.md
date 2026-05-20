@@ -2,16 +2,16 @@
 id: "GRO-069"
 title: "V1 component cleanup — remove components/dashboard dead code"
 slug: "v1-component-cleanup-remove-components-dashboard-dead-code"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["cleanup", "v2", "refactor"]
+owner: "cursor"
+branch: "ticket/gro-069-v1-component-cleanup-remove-components-dashboard-dead-code"
+worktree: ".worktrees/gro-069-v1-component-cleanup-remove-components-dashboard-dead-code"
+pr_url: "https://github.com/anfelipecb/Grove/pull/56"
+labels: []
 depends_on: []
 created_at: "2026-05-20T17:00:00.000Z"
-updated_at: "2026-05-20T17:00:00.000Z"
+updated_at: "2026-05-20T18:31:56.351Z"
 ---
 
 ## Context
