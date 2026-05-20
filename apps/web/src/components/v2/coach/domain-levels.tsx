@@ -14,7 +14,11 @@ type DomainRow = {
   pointsPerLevel: number;
 };
 
-export function DomainLevels() {
+type Props = {
+  compact?: boolean;
+};
+
+export function DomainLevels({ compact = false }: Props) {
   const [rows, setRows] = useState<DomainRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,14 +50,18 @@ export function DomainLevels() {
     <div className="space-y-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Profile</p>
-        <h2 className="mt-2 text-2xl font-semibold text-foreground">Domain levels</h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Levels follow{" "}
-          <span className="font-medium text-foreground">
-            floor(points ÷ {POINTS_PER_DOMAIN_LEVEL})
-          </span>{" "}
-          from task completions in each domain.
-        </p>
+        <h2 className={compact ? "mt-1 text-lg font-semibold text-foreground" : "mt-2 text-2xl font-semibold text-foreground"}>
+          Domain levels
+        </h2>
+        {!compact ? (
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+            Levels follow{" "}
+            <span className="font-medium text-foreground">
+              floor(points ÷ {POINTS_PER_DOMAIN_LEVEL})
+            </span>{" "}
+            from task completions in each domain.
+          </p>
+        ) : null}
       </div>
 
       {error ? (
@@ -65,11 +73,15 @@ export function DomainLevels() {
       {!rows ? (
         <p className="text-sm text-muted-foreground">Loading domain progress…</p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className={compact ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
           {rows.map((row) => (
             <li
               key={row.id}
-              className="flex flex-col gap-3 rounded-3xl border border-border bg-background/80 p-4"
+              className={
+                compact
+                  ? "flex flex-col gap-1.5 rounded-2xl border border-border bg-background/80 p-2.5"
+                  : "flex flex-col gap-3 rounded-3xl border border-border bg-background/80 p-4"
+              }
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">

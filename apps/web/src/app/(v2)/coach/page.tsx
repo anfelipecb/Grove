@@ -154,12 +154,8 @@ export default async function CoachPage({
     }));
   }
 
-  const plannedCount =
+  const debriefPlannedCount =
     params.debrief === "1" ? Math.max(0, Number.parseInt(params.planned ?? "0", 10) || 0) : 0;
-  const initialAssistantMessage =
-    params.debrief === "1"
-      ? `Welcome back. Yesterday you had ${plannedCount} task${plannedCount === 1 ? "" : "s"} planned — how did it go?`
-      : undefined;
 
   const chatContext = {
     today: new Date().toISOString().slice(0, 10),
@@ -187,7 +183,7 @@ export default async function CoachPage({
           onboardingComplete={onboardingComplete}
           profileId={profileId}
           spendablePoints={spendablePoints}
-          initialAssistantMessage={initialAssistantMessage}
+          debriefPlannedCount={debriefPlannedCount}
         />
       ) : (
         <CoachWizard demoMode={demo} initialDisplayName={displayName} profileId={null} />

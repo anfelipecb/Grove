@@ -1,5 +1,6 @@
 "use client";
 
+import { GoogleCalendarConnect } from "@/components/v2/profile/google-calendar-connect";
 import type { CoachGoalDraft } from "@/components/v2/coach/types";
 
 type Props = {
@@ -83,6 +84,10 @@ export function WizardStepConfirm({ error, goals, submitting, onBack, onConfirm 
             )}
           </div>
         </section>
+      </div>
+
+      <div className="mt-5">
+        <GoogleCalendarConnect connected={false} />
       </div>
 
       <div className="mt-6 flex justify-between gap-3">

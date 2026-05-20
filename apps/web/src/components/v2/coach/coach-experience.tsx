@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { CoachCheckin } from "@/components/v2/coach/coach-checkin";
+import { CoachSidebar } from "@/components/v2/coach/coach-sidebar";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
 import { CoachChatPanel, type CoachChatContext } from "@/components/v2/coach/coach-chat-panel";
 import type { ExistingCoachGoal } from "@/components/v2/coach/types";
@@ -16,10 +16,10 @@ type CoachExperienceProps = {
   spendablePoints: number;
   hasTasks: boolean;
   onboardingComplete: boolean;
-  initialAssistantMessage?: string;
+  debriefPlannedCount?: number;
 };
 
-const MOBILE_TABS = ["Coach", "Chat"] as const;
+const MOBILE_TABS = ["Chat", "Profile"] as const;
 type MobileTab = (typeof MOBILE_TABS)[number];
 
 export function CoachExperience({
@@ -31,12 +31,12 @@ export function CoachExperience({
   spendablePoints,
   hasTasks,
   onboardingComplete,
-  initialAssistantMessage,
+  debriefPlannedCount = 0,
 }: CoachExperienceProps) {
-  const [mobileTab, setMobileTab] = useState<MobileTab>("Coach");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("Chat");
 
-  const coachPane = onboardingComplete ? (
-    <CoachCheckin
+  const sidebarPane = onboardingComplete ? (
+    <CoachSidebar
       activeGoals={activeGoals}
       demoMode={demoMode}
       displayName={displayName}
@@ -47,18 +47,23 @@ export function CoachExperience({
     <CoachWizard demoMode={demoMode} initialDisplayName={displayName} profileId={profileId} />
   );
 
+  const chatPanel = (
+    <CoachChatPanel
+      compactSend
+      demoMode={demoMode}
+      displayName={displayName}
+      profileId={profileId}
+      context={chatContext}
+      debriefPlannedCount={debriefPlannedCount}
+      hasTasks={hasTasks}
+    />
+  );
+
   return (
     <div className="space-y-6">
       <div className="hidden gap-6 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-        <div>{coachPane}</div>
-        <CoachChatPanel
-          compactSend
-          demoMode={demoMode}
-          displayName={displayName}
-          profileId={profileId}
-          context={chatContext}
-          initialAssistantMessage={initialAssistantMessage}
-        />
+        {chatPanel}
+        <div>{sidebarPane}</div>
       </div>
 
       <div className="md:hidden">
@@ -78,19 +83,8 @@ export function CoachExperience({
           ))}
         </div>
 
-        <div className={mobileTab === "Coach" ? "block" : "hidden"}>
-          {coachPane}
-        </div>
-        <div className={mobileTab === "Chat" ? "block" : "hidden"}>
-          <CoachChatPanel
-            compactSend
-            demoMode={demoMode}
-            displayName={displayName}
-            profileId={profileId}
-            context={chatContext}
-            initialAssistantMessage={initialAssistantMessage}
-          />
-        </div>
+        <div className={mobileTab === "Chat" ? "block" : "hidden"}>{chatPanel}</div>
+        <div className={mobileTab === "Profile" ? "block" : "hidden"}>{sidebarPane}</div>
       </div>
     </div>
   );

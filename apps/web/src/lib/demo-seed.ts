@@ -1,8 +1,4 @@
-import {
-  DEMO_CLERK_USER_ID,
-  type DemoScenario,
-  isLocalDemoEligible,
-} from "@/lib/demo-mode";
+import { DEMO_CLERK_USER_ID, type DemoScenario } from "@/lib/demo-mode";
 import { demoGoalInsertsForProfile, demoProfile, demoProfileRowFields } from "@/lib/demo-data";
 import { createServiceSupabaseClient } from "@/lib/supabase-server";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -11,8 +7,24 @@ export type DemoSeedResult =
   | { ok: true; profileId: string }
   | { ok: false; error: string };
 
+function demoSeedBlocker(): string | null {
+  if (process.env.NODE_ENV !== "development") {
+    return "Demo seed only runs with NODE_ENV=development (use pnpm dev, not production build).";
+  }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE?.trim() !== "true") {
+    return "Set NEXT_PUBLIC_DEMO_MODE=true in .env.local and restart the dev server.";
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
+    return "Set NEXT_PUBLIC_SUPABASE_URL in .env.local.";
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return "Add SUPABASE_SERVICE_ROLE_KEY to .env.local (Supabase dashboard → Project Settings → API → service_role). Demo seed needs it to write the demo profile.";
+  }
+  return null;
+}
+
 function assertEligible(): SupabaseClient | null {
-  if (!isLocalDemoEligible()) return null;
+  if (demoSeedBlocker()) return null;
   return createServiceSupabaseClient();
 }
 
@@ -20,9 +32,14 @@ function assertEligible(): SupabaseClient | null {
  * Idempotent seed for the fixed demo Clerk user. Requires service role + Supabase URL.
  */
 export async function seedDemoScenario(scenario: DemoScenario): Promise<DemoSeedResult> {
+  const blocker = demoSeedBlocker();
+  if (blocker) {
+    return { ok: false, error: blocker };
+  }
+
   const supabase = assertEligible();
   if (!supabase) {
-    return { ok: false, error: "Demo seed is only available in local development with demo mode enabled." };
+    return { ok: false, error: "Could not create Supabase service client. Check SUPABASE_SERVICE_ROLE_KEY." };
   }
 
   const base = demoProfileRowFields(DEMO_CLERK_USER_ID);

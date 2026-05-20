@@ -26,12 +26,14 @@ export async function GET(request: NextRequest) {
   const scenario = parseDemoScenario(request.nextUrl.searchParams.get("scenario"));
   const seeded = await seedDemoScenario(scenario);
   if (!seeded.ok) {
-    return NextResponse.json({ error: seeded.error }, { status: 500 });
+    const home = new URL("/", request.url);
+    home.searchParams.set("demo_error", seeded.error);
+    return NextResponse.redirect(home);
   }
 
   const target =
     scenario === "dashboard"
-      ? new URL("/dashboard", request.url)
+      ? new URL("/today", request.url)
       : new URL("/onboarding", request.url);
 
   const res = NextResponse.redirect(target);

@@ -10,7 +10,8 @@ import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DayLog } from "@/components/v2/today/day-log";
 import { PlanTomorrow } from "@/components/v2/today/plan-tomorrow";
 import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
-import { DomainProgressBars } from "@/components/v2/today/domain-progress-bars";
+import { EndOfDayCard } from "@/components/v2/today/end-of-day-card";
+import Link from "next/link";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
 import { FocusSessionOverlay } from "@/components/v2/today/focus-session-overlay";
@@ -103,6 +104,25 @@ export function TodayDesktop({
     if (!res.ok) {
       setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: false } : t)));
     }
+  };
+
+  const scheduleForDate = async (taskId: string, date: string) => {
+    await fetch("/api/v2/calendar/schedule", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ task_id: taskId, date }),
+    });
+  };
+
+  const handleMoveToTomorrow = async (taskId: string) => {
+    await scheduleForDate(taskId, tomorrow);
+  };
+
+  const incompleteCount = localTasks.filter((t) => !t.completed).length;
+
+  const handleMoveAllIncompleteToTomorrow = async () => {
+    const incomplete = localTasks.filter((t) => !t.completed);
+    await Promise.all(incomplete.map((t) => scheduleForDate(t.id, tomorrow)));
   };
 
   // Build a minimal snapshot to get next locked surprises
@@ -207,7 +227,12 @@ export function TodayDesktop({
 
         <div className={`${surfacePrimary} p-4`}>
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Daily tasks reset each day. Plan tomorrow in the log column.
+              </p>
+            </div>
             {hasTasks ? (
               <button
                 type="button"
@@ -234,6 +259,7 @@ export function TodayDesktop({
                   onComplete={handleComplete}
                   onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
                   scheduledTime={startedTasks[t.id] ?? null}
+                  onMoveToTomorrow={t.completed ? undefined : handleMoveToTomorrow}
                 />
               ))}
             </section>
@@ -251,6 +277,7 @@ export function TodayDesktop({
                   onComplete={handleComplete}
                   onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
                   scheduledTime={startedTasks[t.id] ?? null}
+                  onMoveToTomorrow={t.completed ? undefined : handleMoveToTomorrow}
                 />
               ))}
             </section>
@@ -272,7 +299,20 @@ export function TodayDesktop({
           )}
         </div>
 
-        <DomainProgressBars domainPoints={domainPoints} />
+        <p className="text-center text-xs text-muted-foreground">
+          <Link href="/coach" className="underline underline-offset-2 hover:text-foreground">
+            Domain levels →
+          </Link>
+        </p>
+
+        <EndOfDayCard
+          doneTodayCount={doneTodayCount}
+          incompleteCount={incompleteCount}
+          today={today}
+          onMoveIncompleteToTomorrow={
+            incompleteCount > 0 ? handleMoveAllIncompleteToTomorrow : undefined
+          }
+        />
       </div>
 
       {/* CENTER COLUMN */}

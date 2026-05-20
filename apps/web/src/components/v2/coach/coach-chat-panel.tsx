@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MessageSquareText, Send } from "lucide-react";
+import Link from "next/link";
 import { twMerge } from "tailwind-merge";
 import { JournalPromptCard } from "@/components/v2/coach/journal-prompt-card";
+import { DopamineMenuPanel } from "@/components/v2/shared/dopamine-menu-panel";
+import type { CoachQuickAction } from "@/lib/coach-quick-actions";
+import type { CoachBriefingSnapshot } from "@/lib/coach-dashboard-context";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -18,13 +22,20 @@ export type CoachChatContext = {
   recentXp: Array<{ created_at: string; reason: string }>;
 };
 
+type BriefingPayload = {
+  greeting?: string;
+  insight?: string;
+  snapshot?: CoachBriefingSnapshot;
+  quickActions?: CoachQuickAction[];
+};
+
 type CoachChatPanelProps = {
   demoMode: boolean;
   displayName: string;
   profileId: string;
   context: CoachChatContext;
-  initialAssistantMessage?: string;
-  /** Icon-only send button (no "Send" label). */
+  debriefPlannedCount?: number;
+  hasTasks?: boolean;
   compactSend?: boolean;
 };
 
@@ -33,7 +44,6 @@ function buildOpeningLine(context: CoachChatContext, displayName: string): strin
   if (goalTitle) {
     return `Let's keep ${goalTitle} in view today, ${displayName}. What is the smallest next step?`;
   }
-
   return `Let's find one small move for today, ${displayName}. What's most important right now?`;
 }
 
@@ -41,7 +51,6 @@ function normalizeMessages(raw: unknown): ChatMessage[] | null {
   if (!Array.isArray(raw)) {
     return null;
   }
-
   const next: ChatMessage[] = [];
   for (const item of raw) {
     if (
@@ -58,7 +67,6 @@ function normalizeMessages(raw: unknown): ChatMessage[] | null {
       });
     }
   }
-
   return next.length > 0 ? next : null;
 }
 
@@ -67,7 +75,8 @@ export function CoachChatPanel({
   displayName,
   profileId,
   context,
-  initialAssistantMessage,
+  debriefPlannedCount = 0,
+  hasTasks = false,
   compactSend = false,
 }: CoachChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -75,19 +84,66 @@ export function CoachChatPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [greeting, setGreeting] = useState<string | null>(null);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [quickActions, setQuickActions] = useState<CoachQuickAction[]>([]);
+  const [showDopamine, setShowDopamine] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement | null>(null);
-  const storageKey = initialAssistantMessage
-    ? `grove-coach-chat:${profileId}:debrief`
-    : `grove-coach-chat:${profileId}`;
-  const openingLine = initialAssistantMessage?.trim() || buildOpeningLine(context, displayName);
+  const storageKey = `grove-coach-chat:${profileId}`;
+  const openingLine = buildOpeningLine(context, displayName);
+  const mainDone = context.todayTasks.length > 0;
+
+  const ensureSession = useCallback(
+    async (sessionType: CoachQuickAction["sessionType"]) => {
+      if (demoMode || sessionId) {
+        return sessionId;
+      }
+      try {
+        const res = await fetch("/api/v2/coach/sessions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ session_type: sessionType }),
+        });
+        if (!res.ok) return null;
+        const data = (await res.json()) as { sessionId?: string };
+        if (data.sessionId) {
+          setSessionId(data.sessionId);
+          return data.sessionId;
+        }
+      } catch {
+        // best effort
+      }
+      return null;
+    },
+    [demoMode, sessionId],
+  );
 
   useEffect(() => {
-    if (initialAssistantMessage?.trim()) {
-      setMessages([{ role: "assistant", content: initialAssistantMessage.trim() }]);
-      setReady(true);
-      return;
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/ai/coach-briefing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profileId, demoMode, debriefPlannedCount }),
+        });
+        if (!res.ok) return;
+        const payload = (await res.json()) as BriefingPayload;
+        if (cancelled) return;
+        if (payload.greeting?.trim()) setGreeting(payload.greeting.trim());
+        if (payload.insight?.trim()) setInsight(payload.insight.trim());
+        if (payload.quickActions?.length) setQuickActions(payload.quickActions);
+      } catch {
+        // fallback below
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, demoMode, debriefPlannedCount]);
 
+  useEffect(() => {
     let nextMessages: ChatMessage[] | null = null;
     try {
       const stored = window.sessionStorage.getItem(storageKey);
@@ -96,40 +152,60 @@ export function CoachChatPanel({
       nextMessages = null;
     }
 
+    const opener = greeting ?? openingLine;
     setMessages(
       nextMessages ?? [
         {
           role: "assistant",
-          content: openingLine,
+          content: opener,
         },
       ],
     );
     setReady(true);
-  }, [storageKey, openingLine, initialAssistantMessage]);
+  }, [storageKey, openingLine, greeting]);
 
   useEffect(() => {
-    if (!ready) {
-      return;
-    }
-
+    if (!ready) return;
     try {
       window.sessionStorage.setItem(storageKey, JSON.stringify(messages.slice(-30)));
     } catch {
-      // Session storage is best-effort only.
+      // best effort
     }
   }, [messages, ready, storageKey]);
 
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
+  }, [messages, loading, showDopamine]);
 
-  async function send() {
-    const text = input.trim();
-    if (!text || loading) {
-      return;
+  async function patchSession(msgs: ChatMessage[]) {
+    if (!sessionId || demoMode) return;
+    const summary =
+      msgs.length >= 2
+        ? msgs
+            .slice(-4)
+            .map((m) => `${m.role}: ${m.content.slice(0, 200)}`)
+            .join(" | ")
+        : null;
+    await fetch(`/api/v2/coach/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        transcript: msgs.slice(-30),
+        summary,
+      }),
+    });
+  }
+
+  async function sendMessage(text: string, sessionType: CoachQuickAction["sessionType"] = "free_chat") {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+
+    if (trimmed.toLowerCase().includes("dopamine") || sessionType === "check_in") {
+      // only show menu for explicit dopamine chip flow handled separately
     }
 
-    const nextMessages = [...messages, { role: "user" as const, content: text }];
+    await ensureSession(sessionType);
+    const nextMessages = [...messages, { role: "user" as const, content: trimmed }];
     setMessages(nextMessages);
     setInput("");
     setError(null);
@@ -142,6 +218,7 @@ export function CoachChatPanel({
         body: JSON.stringify({
           messages: nextMessages,
           context,
+          sessionId: sessionId ?? undefined,
         }),
       });
 
@@ -162,13 +239,15 @@ export function CoachChatPanel({
         return;
       }
 
-      setMessages((current) => [
-        ...current,
+      const withReply = [
+        ...nextMessages,
         {
-          role: "assistant",
+          role: "assistant" as const,
           content: payload.reply?.trim() || "I couldn't produce a reply just now.",
         },
-      ]);
+      ];
+      setMessages(withReply);
+      void patchSession(withReply);
     } catch {
       setError("Could not send your message right now.");
     } finally {
@@ -176,23 +255,56 @@ export function CoachChatPanel({
     }
   }
 
+  async function handleQuickAction(action: CoachQuickAction) {
+    if (action.id === "dopamine_break") {
+      setShowDopamine(true);
+      await ensureSession(action.sessionType);
+      return;
+    }
+    await sendMessage(action.promptSeed, action.sessionType);
+  }
+
+  async function send() {
+    await sendMessage(input);
+  }
+
   return (
     <section className="flex h-full min-h-[520px] flex-col rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <MessageSquareText className="h-4 w-4 text-moss" aria-hidden="true" />
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Mycelium chat</p>
+      <div className="mb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <MessageSquareText className="h-4 w-4 shrink-0 text-moss" aria-hidden="true" />
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Mycelium</p>
+            </div>
+            <h1 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+              {greeting ?? `Hi ${displayName}.`}
+            </h1>
+            {insight ? (
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{insight}</p>
+            ) : null}
           </div>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">Talk through what actually matters today.</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Conversation stays in this browser session. Demo mode still uses the same coaching flow.
-          </p>
+          {demoMode ? (
+            <span className="shrink-0 rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Demo
+            </span>
+          ) : null}
         </div>
-        {demoMode ? (
-          <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Demo
-          </span>
+
+        {quickActions.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {quickActions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                disabled={loading}
+                onClick={() => void handleQuickAction(action)}
+                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-moss/40 hover:bg-moss/5 disabled:opacity-50"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
         ) : null}
       </div>
 
@@ -200,6 +312,19 @@ export function CoachChatPanel({
         <p className="mb-3 rounded-2xl border border-border bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
           {error}
         </p>
+      ) : null}
+
+      {showDopamine ? (
+        <div className="mb-3">
+          <DopamineMenuPanel mainDone={mainDone} />
+          <button
+            type="button"
+            onClick={() => setShowDopamine(false)}
+            className="mt-2 text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Hide menu
+          </button>
+        </div>
       ) : null}
 
       <JournalPromptCard
@@ -262,6 +387,15 @@ export function CoachChatPanel({
           {compactSend ? null : "Send"}
         </button>
       </div>
+
+      {!hasTasks ? (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          <Link href="/today" className="underline underline-offset-2 hover:text-foreground">
+            Open Today
+          </Link>{" "}
+          to see your tasks.
+        </p>
+      ) : null}
     </section>
   );
 }

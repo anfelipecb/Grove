@@ -27,9 +27,11 @@ type TaskRowProps = {
   onComplete: (id: string) => Promise<void>;
   onStart?: (taskId: string) => void;
   scheduledTime?: string | null;
+  onMoveToTomorrow?: (taskId: string) => Promise<void>;
 };
 
-export function TaskRow({ task, onComplete, onStart, scheduledTime }: TaskRowProps) {
+export function TaskRow({ task, onComplete, onStart, scheduledTime, onMoveToTomorrow }: TaskRowProps) {
+  const [moving, setMoving] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleCheck() {
@@ -77,6 +79,19 @@ export function TaskRow({ task, onComplete, onStart, scheduledTime }: TaskRowPro
               className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
             >
               {scheduledTime ? "Reschedule" : "Start →"}
+            </button>
+          ) : null}
+          {!task.completed && onMoveToTomorrow ? (
+            <button
+              type="button"
+              disabled={moving}
+              onClick={() => {
+                setMoving(true);
+                void onMoveToTomorrow(task.id).finally(() => setMoving(false));
+              }}
+              className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+            >
+              {moving ? "…" : "Tomorrow"}
             </button>
           ) : null}
         </div>

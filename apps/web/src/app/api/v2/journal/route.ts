@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
+import { upsertCoachMemoryChunk } from "@/lib/coach-memory";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 function isValidDateKey(value: string): boolean {
@@ -83,5 +84,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error?.message ?? "Failed to save entry." }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, entry });
+  const journalXp = 8;
+  const { data: profileXp } = await supabase
+    .from("profiles")
+    .select("total_xp, spendable_points")
+    .eq("id", profile.id)
+    .maybeSingle();
+
+  const totalXp = (profileXp?.total_xp as number | undefined) ?? 0;
+  const spendable = (profileXp?.spendable_points as number | undefined) ?? 0;
+
+  await supabase.from("xp_events").insert({
+    profile_id: profile.id,
+    reason: "journal reflection",
+    xp: journalXp,
+    spendable_points: journalXp,
+    metadata: { entry_date: entryDate, kind: "journal" },
+  });
+
+  await supabase
+    .from("profiles")
+    .update({
+      total_xp: totalXp + journalXp,
+      spendable_points: spendable + journalXp,
+    })
+    .eq("id", profile.id);
+
+  void upsertCoachMemoryChunk(supabase, {
+    profileId: profile.id as string,
+    sourceType: "journal",
+    sourceId: entry.id as string,
+    content,
+    metadata: { entry_date: entryDate, mood },
+  });
+
+  return NextResponse.json({ ok: true, entry, xp_awarded: journalXp });
 }

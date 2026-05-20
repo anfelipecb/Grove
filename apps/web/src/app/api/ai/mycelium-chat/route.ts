@@ -5,6 +5,7 @@ import {
   CRISIS_SUPPORT_MESSAGE,
   type AiMessage,
 } from "@grove/core";
+import { retrieveCoachMemory } from "@/lib/coach-memory";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 import { z } from "zod";
 
@@ -20,6 +21,7 @@ const bodySchema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).default([]),
   communityId: z.string().optional(),
   context: chatContextSchema.optional(),
+  sessionId: z.string().uuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -70,14 +72,35 @@ export async function POST(request: Request) {
       : [];
 
   let recentReflections: { entry_date: string; content: string }[] = [];
+  let sessionSummaries: { session_type: string; summary: string; started_at: string }[] = [];
+  let memorySnippets: { content: string; source_type: string }[] = [];
+
   if (profileId != null) {
-    const { data: journalRows } = await supabase
-      .from("journal_entries")
-      .select("entry_date, content")
-      .eq("profile_id", profileId)
-      .order("entry_date", { ascending: false })
-      .limit(3);
+    const [{ data: journalRows }, { data: sessionRows }] = await Promise.all([
+      supabase
+        .from("journal_entries")
+        .select("entry_date, content")
+        .eq("profile_id", profileId)
+        .order("entry_date", { ascending: false })
+        .limit(3),
+      supabase
+        .from("coach_sessions")
+        .select("session_type, summary, started_at")
+        .eq("profile_id", profileId)
+        .not("summary", "is", null)
+        .order("started_at", { ascending: false })
+        .limit(5),
+    ]);
     recentReflections = (journalRows ?? []) as { entry_date: string; content: string }[];
+    sessionSummaries = ((sessionRows ?? []) as { session_type: string; summary: string; started_at: string }[])
+      .filter((s) => s.summary?.trim())
+      .map((s) => ({
+        session_type: s.session_type,
+        summary: s.summary.trim(),
+        started_at: s.started_at,
+      }));
+
+    memorySnippets = await retrieveCoachMemory(supabase, profileId, lastUser.content, 5);
   }
 
   let commitments: { title: string; status: string }[] = [];
@@ -100,6 +123,13 @@ export async function POST(request: Request) {
     recentReflections.length > 0
       ? `User's recent reflections: ${JSON.stringify(recentReflections)}`
       : null,
+    sessionSummaries.length > 0
+      ? `Recent coach session summaries: ${JSON.stringify(sessionSummaries)}`
+      : null,
+    memorySnippets.length > 0
+      ? `Relevant past context: ${JSON.stringify(memorySnippets)}`
+      : null,
+    body.sessionId ? `Active coach session id: ${body.sessionId}` : null,
     body.context
       ? `Realtime coach context: ${JSON.stringify({
           today: body.context.today,
