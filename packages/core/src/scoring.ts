@@ -4,12 +4,26 @@ export type EffortBand = "tiny" | "small" | "medium" | "large" | "deep";
 export type ResistanceBand = "low" | "medium" | "high" | "avoidant";
 export type ValueBand = "nice" | "important" | "critical";
 
+export type TaskDifficulty = "low" | "medium" | "high";
+
+export const PLANNING_BONUS_XP = 15;
+export const HYPERFIXATION_BONUS_XP = 10;
+
+/** Maps stored task difficulty to effort bands for XP suggestion. */
+export const DIFFICULTY_TO_EFFORT: Record<TaskDifficulty, EffortBand> = {
+  low: "small",
+  medium: "medium",
+  high: "large",
+};
+
 export type XpInput = {
   effort: EffortBand;
   resistance: ResistanceBand;
   value: ValueBand;
   urgent?: boolean;
   communityContribution?: boolean;
+  planning?: boolean;
+  isHyperfixationGoal?: boolean;
 };
 
 export type XpSuggestion = {
@@ -91,12 +105,16 @@ export function formatGlobalLevelLabel(totalXp: number): string {
 export function suggestXp(input: XpInput): XpSuggestion {
   const urgencyBonus = input.urgent ? 12 : 0;
   const communityBonus = input.communityContribution ? 20 : 0;
+  const planningBonus = input.planning ? PLANNING_BONUS_XP : 0;
+  const hyperfixationBonus = input.isHyperfixationGoal ? HYPERFIXATION_BONUS_XP : 0;
   const raw =
     effortBase[input.effort] *
       resistanceMultiplier[input.resistance] *
       valueMultiplier[input.value] +
     urgencyBonus +
-    communityBonus;
+    communityBonus +
+    planningBonus +
+    hyperfixationBonus;
   const xp = Math.round(raw / 5) * 5;
   const spendablePoints = Math.max(5, Math.round(xp * 0.25));
 
@@ -109,6 +127,8 @@ export function suggestXp(input: XpInput): XpSuggestion {
       `${input.value} value`,
       input.urgent ? "time-sensitive" : null,
       input.communityContribution ? "supports the community" : null,
+      input.planning ? "planning step" : null,
+      input.isHyperfixationGoal ? "current focus goal" : null,
     ]
       .filter(Boolean)
       .join(", "),

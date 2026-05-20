@@ -7,12 +7,15 @@ const VALID_DOMAINS = new Set<string>(LIFE_DOMAINS.map((d) => d.id));
 const VALID_FREQUENCIES = new Set(["daily", "weekly", "once"]);
 const VALID_PREFERRED_TIMES = new Set(["morning", "afternoon", "evening", "flexible"]);
 
+const VALID_DIFFICULTIES = new Set(["low", "medium", "high"]);
+
 type CreateTaskBody = {
   title?: string;
   domain?: string;
   frequency?: string;
   preferred_time?: string;
   point_value?: number;
+  difficulty?: string;
 };
 
 export async function POST(req: Request) {
@@ -33,6 +36,12 @@ export async function POST(req: Request) {
   if (!VALID_FREQUENCIES.has(frequency)) return NextResponse.json({ error: "Invalid frequency." }, { status: 400 });
   if (!VALID_PREFERRED_TIMES.has(preferred_time)) return NextResponse.json({ error: "Invalid preferred_time." }, { status: 400 });
 
+  const difficulty =
+    typeof body.difficulty === "string" && VALID_DIFFICULTIES.has(body.difficulty) ? body.difficulty : null;
+  if (body.difficulty != null && body.difficulty !== "" && !difficulty) {
+    return NextResponse.json({ error: "Invalid difficulty." }, { status: 400 });
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("id")
@@ -43,17 +52,20 @@ export async function POST(req: Request) {
 
   const pointValue = frequency === "daily" ? 10 : frequency === "weekly" ? 18 : 14;
 
+  const insertRow: Record<string, unknown> = {
+    profile_id: profile.id,
+    title,
+    domain,
+    frequency,
+    preferred_time,
+    status: "active",
+    point_value: body.point_value ?? pointValue,
+  };
+  if (difficulty) insertRow.difficulty = difficulty;
+
   const { data: task, error } = await supabase
     .from("tasks")
-    .insert({
-      profile_id: profile.id,
-      title,
-      domain,
-      frequency,
-      preferred_time,
-      status: "active",
-      point_value: body.point_value ?? pointValue,
-    })
+    .insert(insertRow)
     .select("id, title, domain, is_required, is_community_task, point_value, community_point_value, preferred_time")
     .single();
 
