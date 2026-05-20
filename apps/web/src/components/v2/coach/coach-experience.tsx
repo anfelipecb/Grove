@@ -15,6 +15,7 @@ type CoachExperienceProps = {
   profileId: string;
   spendablePoints: number;
   hasTasks: boolean;
+  onboardingComplete: boolean;
   initialAssistantMessage?: string;
 };
 
@@ -29,11 +30,12 @@ export function CoachExperience({
   profileId,
   spendablePoints,
   hasTasks,
+  onboardingComplete,
   initialAssistantMessage,
 }: CoachExperienceProps) {
   const [mobileTab, setMobileTab] = useState<MobileTab>("Coach");
 
-  const coachPane = hasTasks ? (
+  const coachPane = onboardingComplete ? (
     <CoachCheckin
       activeGoals={activeGoals}
       demoMode={demoMode}
