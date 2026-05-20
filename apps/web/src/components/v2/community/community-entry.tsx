@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Loader2, Users } from "lucide-react";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-moss/40";
 
+const ALREADY_MEMBER_MSG = "You are already a member of this community.";
+
 export function CommunityEntry() {
   const [joinSlug, setJoinSlug] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinPending, setJoinPending] = useState(false);
+  const [alreadyMember, setAlreadyMember] = useState(false);
 
   const [createName, setCreateName] = useState("");
   const [createSlug, setCreateSlug] = useState("");
@@ -20,6 +24,7 @@ export function CommunityEntry() {
   async function submitJoin(e: React.FormEvent) {
     e.preventDefault();
     setJoinError(null);
+    setAlreadyMember(false);
     setJoinPending(true);
     try {
       const res = await fetch("/api/v2/community/join", {
@@ -29,7 +34,12 @@ export function CommunityEntry() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setJoinError(data.error ?? "Could not join.");
+        if (res.status === 409 || data.error === ALREADY_MEMBER_MSG) {
+          setAlreadyMember(true);
+          setJoinError(null);
+        } else {
+          setJoinError(data.error ?? "Could not join.");
+        }
         return;
       }
       window.location.assign(`${window.location.origin}/community`);
@@ -83,33 +93,48 @@ export function CommunityEntry() {
           <Users className="h-4 w-4 text-moss" />
           <h2 className="text-sm font-semibold text-foreground">Join with a slug</h2>
         </div>
-        <form className="space-y-3 p-4" onSubmit={submitJoin}>
-          <p className="text-xs text-muted-foreground">
-            Ask your organizer for the URL slug (letters, numbers, hyphens)—like{" "}
-            <span className="font-mono text-foreground">grove-welcome</span>.
-          </p>
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Community slug</span>
-            <input
-              type="text"
-              value={joinSlug}
-              onChange={(e) => setJoinSlug(e.target.value)}
-              className={`${inputClass} font-mono lowercase`}
-              placeholder="your-team-circle"
-              disabled={joinPending}
-              autoComplete="off"
-            />
-          </label>
-          {joinError ? <p className="text-xs text-red-600 dark:text-red-400">{joinError}</p> : null}
-          <button
-            type="submit"
-            disabled={joinPending || joinSlug.trim() === ""}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-moss px-4 py-2.5 text-sm font-medium text-white hover:bg-moss/90 disabled:opacity-50 transition-colors"
-          >
-            {joinPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Join community
-          </button>
-        </form>
+        {alreadyMember ? (
+          <div className="space-y-3 p-4">
+            <p className="text-sm text-muted-foreground">You&apos;re already a member of this community.</p>
+            <Link
+              href="/community"
+              className="inline-flex text-sm font-medium text-moss hover:text-moss/80"
+            >
+              Go to community →
+            </Link>
+          </div>
+        ) : (
+          <form className="space-y-3 p-4" onSubmit={submitJoin}>
+            <p className="text-xs text-muted-foreground">
+              Ask your organizer for the URL slug (letters, numbers, hyphens)—like{" "}
+              <span className="font-mono text-foreground">grove-welcome</span>.
+            </p>
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-muted-foreground">Community slug</span>
+              <input
+                type="text"
+                value={joinSlug}
+                onChange={(e) => {
+                  setJoinSlug(e.target.value);
+                  setAlreadyMember(false);
+                }}
+                className={`${inputClass} font-mono lowercase`}
+                placeholder="your-team-circle"
+                disabled={joinPending}
+                autoComplete="off"
+              />
+            </label>
+            {joinError ? <p className="text-xs text-red-600 dark:text-red-400">{joinError}</p> : null}
+            <button
+              type="submit"
+              disabled={joinPending || joinSlug.trim() === ""}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-moss px-4 py-2.5 text-sm font-medium text-moss-fg hover:bg-moss/90 disabled:opacity-50 transition-colors"
+            >
+              {joinPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Join community
+            </button>
+          </form>
+        )}
       </section>
 
       <section className="rounded-xl border border-border/80 bg-card shadow-sm overflow-hidden">
