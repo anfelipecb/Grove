@@ -24,6 +24,9 @@ out/
 docs/*.pdf
 docs/PROJECT_PROPOSAL*.md
 research/
+# Allow product research markdown under docs/ (not downloaded PDFs or class docs)
+!docs/research/
+!docs/research/*.md
 
 # Supabase CLI local cache (linked project metadata)
 supabase/.temp/
