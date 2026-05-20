@@ -39,7 +39,7 @@ export function useFocusSession() {
   const [completedTasks, setCompletedTasks] = useState(0);
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [breakAppetiser, setBreakAppetiser] = useState("");
-  const [phaseBeforeEnd, setPhaseBeforeEnd] = useState<"running" | "paused">("running");
+  const phaseBeforeEndingRef = useRef<"running" | "paused" | "break">("running");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -62,7 +62,6 @@ export function useFocusSession() {
     setCompletedTasks(0);
     setSessionStartedAt(null);
     setBreakAppetiser("");
-    setPhaseBeforeEnd("running");
   }, [clearTimer]);
 
   const startTimer = useCallback(
@@ -109,7 +108,7 @@ export function useFocusSession() {
     [startTimer],
   );
 
-  // When countdown hits zero, advance the state machine.
+  // When countdown hits zero, advance the state machine (not while paused/ending).
   useEffect(() => {
     if (secondsRemaining !== 0) return;
 
@@ -160,6 +159,13 @@ export function useFocusSession() {
     [startRunningTimer],
   );
 
+  const startWithTasks = useCallback(
+    (tasks: FocusTask[], minutes: SprintPreset = 15) => {
+      confirmTaskSelect(tasks, minutes);
+    },
+    [confirmTaskSelect],
+  );
+
   const markTaskDone = useCallback(() => {
     if (phaseRef.current !== "running") return;
     setCompletedTasks((n) => n + 1);
@@ -176,14 +182,17 @@ export function useFocusSession() {
 
   const resumeSession = useCallback(() => {
     if (phaseRef.current !== "paused") return;
+    const remaining = secondsRemaining;
     setPhase("running");
-    startTimer(secondsRemaining > 0 ? secondsRemaining : sprintMinutes * 60);
-  }, [startTimer, secondsRemaining, sprintMinutes]);
+    if (remaining > 0) {
+      startTimer(remaining);
+    }
+  }, [clearTimer, secondsRemaining, startTimer]);
 
   const requestEnd = useCallback(() => {
     const current = phaseRef.current;
-    if (current !== "running" && current !== "paused") return;
-    setPhaseBeforeEnd(current);
+    if (current !== "running" && current !== "paused" && current !== "break") return;
+    phaseBeforeEndingRef.current = current;
     clearTimer();
     setPhase("ending");
   }, [clearTimer]);
@@ -196,17 +205,16 @@ export function useFocusSession() {
 
   const cancelEnd = useCallback(() => {
     if (phaseRef.current !== "ending") return;
-    const returnTo = phaseBeforeEnd;
-    setPhase(returnTo);
-    if (returnTo === "running" && secondsRemaining > 0) {
+    const returnPhase = phaseBeforeEndingRef.current;
+    setPhase(returnPhase);
+    if (secondsRemaining > 0) {
       startTimer(secondsRemaining);
     }
-  }, [phaseBeforeEnd, secondsRemaining, startTimer]);
+  }, [clearTimer, secondsRemaining, startTimer]);
 
   const endSession = useCallback(() => {
-    clearTimer();
-    setPhase("done");
-  }, [clearTimer]);
+    requestEnd();
+  }, [requestEnd]);
 
   const skipBreak = useCallback(() => {
     clearTimer();
@@ -240,6 +248,7 @@ export function useFocusSession() {
     summary,
     openTaskSelect,
     confirmTaskSelect,
+    startWithTasks,
     markTaskDone,
     pauseSession,
     resumeSession,

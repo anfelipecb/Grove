@@ -18,7 +18,7 @@ type FocusSessionOverlayProps = {
   onTaskCompleted: (taskId: string) => void;
 };
 
-const END_COUNTDOWN_SECONDS = 5;
+const ENDING_COUNTDOWN_SECONDS = 5;
 
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -159,7 +159,7 @@ function TaskSelectPanel({
 export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }: FocusSessionOverlayProps) {
   const [mounted, setMounted] = useState(false);
   const [rewardLogged, setRewardLogged] = useState(false);
-  const [endCountdown, setEndCountdown] = useState(END_COUNTDOWN_SECONDS);
+  const [endingCountdown, setEndingCountdown] = useState(ENDING_COUNTDOWN_SECONDS);
 
   const {
     phase,
@@ -210,18 +210,24 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
   }, [phase, rewardLogged, summary.completedSprints]);
 
   useEffect(() => {
-    if (phase !== "ending") return;
-    setEndCountdown(END_COUNTDOWN_SECONDS);
-    let remaining = END_COUNTDOWN_SECONDS;
-    const id = setInterval(() => {
-      remaining -= 1;
-      setEndCountdown(remaining);
-      if (remaining <= 0) {
-        clearInterval(id);
-        confirmEnd();
-      }
+    if (phase !== "ending") {
+      setEndingCountdown(ENDING_COUNTDOWN_SECONDS);
+      return;
+    }
+
+    setEndingCountdown(ENDING_COUNTDOWN_SECONDS);
+    const interval = setInterval(() => {
+      setEndingCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          confirmEnd();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
-    return () => clearInterval(id);
+
+    return () => clearInterval(interval);
   }, [phase, confirmEnd]);
 
   async function handleMarkDone() {
@@ -233,34 +239,27 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
     }
   }
 
-  function headerAction() {
-    if (phase === "task-select") {
-      return { label: "Close", onClick: reset };
-    }
-    if (phase === "break" || phase === "done") {
-      return { label: "Back to Grove", onClick: phase === "break" ? skipBreak : dismissDone };
-    }
-    return null;
-  }
-
-  const header = headerAction();
-
   if (!mounted || phase === "idle") return null;
+
+  const showHeaderClose = phase === "task-select" || phase === "transition";
 
   const content = (
     <div className="fixed inset-0 z-[100] flex flex-col bg-zinc-950 text-white">
-      {header ? (
+      {showHeaderClose ? (
         <div className="flex items-center justify-end p-4">
           <button
             type="button"
-            onClick={header.onClick}
+            onClick={() => {
+              if (phase === "task-select") reset();
+              else requestEnd();
+            }}
             className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
           >
-            {header.label}
+            {phase === "task-select" ? "Close" : "End session"}
           </button>
         </div>
       ) : (
-        <div className="h-4 shrink-0" />
+        <div className="h-4 shrink-0" aria-hidden="true" />
       )}
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 pb-12">
@@ -273,12 +272,12 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
         ) : null}
 
         {phase === "running" && currentTask ? (
-          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-between py-4">
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-between py-6">
             <div className="w-full space-y-8 text-center">
               <TimerRing secondsRemaining={secondsRemaining} totalSeconds={sprintTotalSeconds} />
               <p className="text-2xl font-semibold leading-snug text-white">{currentTask.title}</p>
             </div>
-            <div className="w-full space-y-3">
+            <div className="w-full space-y-4">
               <button
                 type="button"
                 onClick={() => void handleMarkDone()}
@@ -305,36 +304,30 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
         ) : null}
 
         {phase === "paused" ? (
-          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-between py-4">
-            <div className="w-full space-y-8 text-center">
-              <p className="text-3xl font-semibold text-white">Paused.</p>
-              <TimerRing secondsRemaining={secondsRemaining} totalSeconds={sprintTotalSeconds} />
-              {currentTask ? (
-                <p className="text-lg text-zinc-300">{currentTask.title}</p>
-              ) : null}
-            </div>
-            <div className="w-full space-y-3">
-              <button
-                type="button"
-                onClick={resumeSession}
-                className="w-full rounded-xl bg-moss py-3 text-sm font-semibold text-moss-fg"
-              >
-                Resume
-              </button>
-              <button
-                type="button"
-                onClick={requestEnd}
-                className="w-full py-2 text-sm text-zinc-500 hover:text-zinc-300"
-              >
-                End session
-              </button>
-            </div>
+          <div className="mx-auto w-full max-w-md space-y-8 text-center">
+            <p className="text-3xl font-semibold text-white">Paused.</p>
+            <p className="font-mono text-4xl tabular-nums text-zinc-300">{formatTime(secondsRemaining)}</p>
+            <button
+              type="button"
+              onClick={resumeSession}
+              className="w-full rounded-xl bg-moss py-3 text-sm font-semibold text-moss-fg"
+            >
+              Resume
+            </button>
+            <button
+              type="button"
+              onClick={requestEnd}
+              className="text-sm text-zinc-400 underline-offset-2 hover:text-white hover:underline"
+            >
+              End session
+            </button>
           </div>
         ) : null}
 
         {phase === "ending" ? (
-          <div className="mx-auto max-w-md space-y-6 text-center">
-            <p className="text-5xl font-semibold tabular-nums text-white">Ending in {endCountdown}…</p>
+          <div className="mx-auto w-full max-w-md space-y-6 text-center">
+            <p className="text-5xl font-semibold tabular-nums text-white">{endingCountdown}</p>
+            <p className="text-lg text-zinc-300">Ending in {endingCountdown}…</p>
             <button
               type="button"
               onClick={cancelEnd}
@@ -356,19 +349,30 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
         ) : null}
 
         {phase === "break" ? (
-          <div className="mx-auto w-full max-w-md space-y-8 text-center">
-            <TimerRing secondsRemaining={secondsRemaining} totalSeconds={5 * 60} />
-            <div className="rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Appetiser</p>
-              <p className="mt-2 text-sm text-zinc-200">{breakAppetiser || appetiser}</p>
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-between py-6">
+            <div className="w-full space-y-8 text-center">
+              <TimerRing secondsRemaining={secondsRemaining} totalSeconds={5 * 60} />
+              <div className="rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Appetiser</p>
+                <p className="mt-2 text-sm text-zinc-200">{breakAppetiser || appetiser}</p>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={skipBreak}
-              className="text-sm font-medium text-zinc-400 underline-offset-2 hover:text-white hover:underline"
-            >
-              Skip break
-            </button>
+            <div className="w-full space-y-3">
+              <button
+                type="button"
+                onClick={skipBreak}
+                className="text-sm font-medium text-zinc-400 underline-offset-2 hover:text-white hover:underline"
+              >
+                Skip break
+              </button>
+              <button
+                type="button"
+                onClick={requestEnd}
+                className="w-full py-2 text-sm text-zinc-500 hover:text-zinc-300"
+              >
+                Back to Grove
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -378,10 +382,15 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
             <p className="text-zinc-300">
               You completed {summary.completedTasks} task{summary.completedTasks === 1 ? "" : "s"} in{" "}
               {summary.elapsedMinutes} min
-              {summary.completedSprints > 0
-                ? ` · +${summary.completedSprints * 20} XP`
-                : ""}
+              {summary.completedSprints > 0 ? ` · +${summary.completedSprints * 20} XP` : ""}
             </p>
+            <button
+              type="button"
+              onClick={dismissDone}
+              className="rounded-xl bg-moss px-6 py-2.5 text-sm font-semibold text-moss-fg"
+            >
+              Back to Grove
+            </button>
           </div>
         ) : null}
       </div>
