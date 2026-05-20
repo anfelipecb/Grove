@@ -19,6 +19,7 @@ import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary } from "@/components/v2/today/surface-classes";
@@ -32,6 +33,7 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [error, setError] = useState<string | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [showTaskChat, setShowTaskChat] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -83,6 +85,21 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
 
   return (
     <div className="px-4 py-2">
+      {showTaskChat && (
+        <TaskChatOverlay
+          onClose={() => setShowTaskChat(false)}
+          onAdd={(task) => {
+            setTasks((prev) => [task, ...prev]);
+            setShowTaskChat(false);
+          }}
+          onQuickAdd={() => {
+            setShowTaskChat(false);
+            setAddPrefill(null);
+            setShowAddSheet(true);
+          }}
+        />
+      )}
+
       {showAddSheet && (
         <AddTaskSheet
           key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
@@ -114,7 +131,7 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
         <button
           onClick={() => {
             setAddPrefill(null);
-            setShowAddSheet(true);
+            setShowTaskChat(true);
           }}
           className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
         >
@@ -151,7 +168,7 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
           <button
             onClick={() => {
               setAddPrefill(null);
-              setShowAddSheet(true);
+              setShowTaskChat(true);
             }}
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
           >
