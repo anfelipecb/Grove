@@ -10,6 +10,7 @@ import { PlanTomorrow } from "@/components/v2/today/plan-tomorrow";
 import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
 import { DomainProgressBars } from "@/components/v2/today/domain-progress-bars";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
 
@@ -60,6 +61,7 @@ export function TodayDesktop({
 
   const [localTasks, setLocalTasks] = useState(tasks);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [showTaskChat, setShowTaskChat] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
 
   const required = localTasks.filter((t) => t.is_required);
@@ -108,6 +110,21 @@ export function TodayDesktop({
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {showTaskChat && (
+        <TaskChatOverlay
+          onClose={() => setShowTaskChat(false)}
+          onAdd={(task) => {
+            setLocalTasks((prev) => [task, ...prev]);
+            setShowTaskChat(false);
+          }}
+          onQuickAdd={() => {
+            setShowTaskChat(false);
+            setAddPrefill(null);
+            setShowAddSheet(true);
+          }}
+        />
+      )}
+
       {showAddSheet && (
         <AddTaskSheet
           key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
@@ -131,7 +148,7 @@ export function TodayDesktop({
             <button
               onClick={() => {
                 setAddPrefill(null);
-                setShowAddSheet(true);
+                setShowTaskChat(true);
               }}
               className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
             >
@@ -167,7 +184,7 @@ export function TodayDesktop({
               <button
                 onClick={() => {
                   setAddPrefill(null);
-                  setShowAddSheet(true);
+                  setShowTaskChat(true);
                 }}
                 className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
               >
