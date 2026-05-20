@@ -66,6 +66,7 @@ export function TodayDesktop({
 
   const required = localTasks.filter((t) => t.is_required);
   const goal = localTasks.filter((t) => !t.is_required);
+  const hasTasks = required.length > 0 || goal.length > 0;
 
   const [nudge, setNudge] = useState<CoachSuggestion | null>(null);
   const [nudgeLoading, setNudgeLoading] = useState(true);
@@ -145,15 +146,18 @@ export function TodayDesktop({
         <div className={`${surfacePrimary} p-4`}>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
-            <button
-              onClick={() => {
-                setAddPrefill(null);
-                setShowTaskChat(true);
-              }}
-              className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add task
-            </button>
+            {hasTasks ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddPrefill(null);
+                  setShowTaskChat(true);
+                }}
+                className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add task
+              </button>
+            ) : null}
           </div>
 
           {required.length > 0 && (
@@ -244,16 +248,19 @@ export function TodayDesktop({
           ) : null}
         </div>
 
-        <CommunityPulseCard
-          profileId={profileId}
-          fallbackPulse={communityPulse}
-          onAddSuggested={(title, domain) => {
-            setAddPrefill({ title, domain });
-            setShowAddSheet(true);
-          }}
-        />
-
-        <FindTimePanel />
+        {hasTasks ? (
+          <>
+            <CommunityPulseCard
+              profileId={profileId}
+              fallbackPulse={communityPulse}
+              onAddSuggested={(title, domain) => {
+                setAddPrefill({ title, domain });
+                setShowAddSheet(true);
+              }}
+            />
+            <FindTimePanel />
+          </>
+        ) : null}
 
         {nextUnlocks.length > 0 ? (
           <div className={`${surfaceSecondary} p-3`}>

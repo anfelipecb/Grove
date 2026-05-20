@@ -45,6 +45,7 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
 
   const required = tasks.filter((t) => t.is_required);
   const goal = tasks.filter((t) => !t.is_required);
+  const hasTasks = required.length > 0 || goal.length > 0;
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -118,13 +119,15 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
         />
       )}
 
-      <CommunityPulseCard
-        profileId={profileId}
-        onAddSuggested={(title, domain) => {
-          setAddPrefill({ title, domain });
-          setShowAddSheet(true);
-        }}
-      />
+      {hasTasks ? (
+        <CommunityPulseCard
+          profileId={profileId}
+          onAddSuggested={(title, domain) => {
+            setAddPrefill({ title, domain });
+            setShowAddSheet(true);
+          }}
+        />
+      ) : null}
 
       {error && (
         <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
@@ -150,17 +153,19 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
             >
               I&apos;m stuck
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAddPrefill(null);
-                setShowTaskChat(true);
-              }}
-              className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add task
-            </button>
+            {hasTasks ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddPrefill(null);
+                  setShowTaskChat(true);
+                }}
+                className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add task
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -216,11 +221,13 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
       )}
       </div>
 
-      <LogSessionForm onLog={handleLog} />
+      {hasTasks ? <LogSessionForm onLog={handleLog} /> : null}
 
-      <div className="mt-4">
-        <FindTimePanel />
-      </div>
+      {hasTasks ? (
+        <div className="mt-4">
+          <FindTimePanel />
+        </div>
+      ) : null}
     </div>
   );
 }
