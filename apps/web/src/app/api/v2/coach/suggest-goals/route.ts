@@ -8,6 +8,7 @@ import {
   type LifeDomainId,
 } from "@grove/core";
 import { getServerUserId } from "@/lib/clerk-auth";
+import { normalizeGoalTitle } from "@/lib/normalize-goal-title";
 import { z } from "zod";
 
 const lifeDomainIds = LIFE_DOMAINS.map((domain) => domain.id) as [LifeDomainId, ...LifeDomainId[]];
@@ -166,6 +167,8 @@ export async function POST(request: Request) {
       "Each suggestion needs 2 to 4 tasks.",
       "At least one task per goal should be required when that helps consistency; required tasks should stay small and repeatable.",
       "Keep titles concrete, short, and non-clinical. No markdown.",
+      "Each title must be a 3–7 word human goal statement from the user's perspective (e.g. 'Show up in community', 'Build a reading habit').",
+      "Never output task-instruction format such as 'Define the next X-minute action for:' or 'Do Y every day'.",
     ].join("\n"),
   };
   const userMessage: AiMessage = {
@@ -192,7 +195,11 @@ export async function POST(request: Request) {
       return Response.json({ suggestions: fallback });
     }
 
-    return Response.json({ suggestions: parsed.data.suggestions });
+    const suggestions = parsed.data.suggestions.map((s) => ({
+      ...s,
+      title: normalizeGoalTitle(s.title),
+    }));
+    return Response.json({ suggestions });
   } catch {
     return Response.json({ suggestions: fallback });
   }

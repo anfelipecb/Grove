@@ -11,6 +11,7 @@ import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/s
 import { fetchCalendarEvents, getValidToken, busyBlocksFromEvents } from "@/lib/google-calendar";
 import { computeFreeWindows, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
 import { containsCrisisSignal, LIFE_DOMAINS, type AiMessage } from "@grove/core";
+import { normalizeGoalTitle } from "@/lib/normalize-goal-title";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -146,7 +147,8 @@ export async function POST(request: Request) {
       "You suggest concrete next tasks for Grove members (ADHD-aware productivity app).",
       "Output ONLY valid JSON: {\"suggestions\":[{\"title\":\"...\",\"domain\":\"...\",\"rationale\":\"...\"}]}",
       `domain must be one of: ${domainsHint}.`,
-      "1 to 3 suggestions; titles are actionable; rationale is one short line (why it helps).",
+      "1 to 3 suggestions; titles are short human goal statements (3–7 words), not task-instruction format.",
+      "Never use prefixes like 'Define the next X-minute action for:'. Rationale is one short line.",
       "No diagnosis, no clinical claims, no markdown.",
       availabilityContext,
     ].filter(Boolean).join("\n"),
@@ -170,7 +172,11 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return Response.json({ suggestions: fallback.length ? fallback : [] });
     }
-    return Response.json({ suggestions: parsed.data.suggestions });
+    const suggestions = parsed.data.suggestions.map((s) => ({
+      ...s,
+      title: normalizeGoalTitle(s.title),
+    }));
+    return Response.json({ suggestions });
   } catch {
     return Response.json({ suggestions: fallback.length ? fallback : [] });
   }
