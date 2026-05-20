@@ -42,6 +42,7 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [showDopamineMenu, setShowDopamineMenu] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
+  const [addPrefillFromChat, setAddPrefillFromChat] = useState(false);
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
   const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
 
@@ -104,9 +105,10 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
             setTasks((prev) => [task, ...prev]);
             setShowTaskChat(false);
           }}
-          onQuickAdd={() => {
+          onQuickAdd={(prefill) => {
             setShowTaskChat(false);
-            setAddPrefill(null);
+            setAddPrefill(prefill ? { title: prefill.title, domain: prefill.domain ?? "" } : null);
+            setAddPrefillFromChat(!!prefill);
             setShowAddSheet(true);
           }}
         />
@@ -138,9 +140,11 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
           key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
           initialTitle={addPrefill?.title}
           initialDomain={addPrefill?.domain}
+          fromChatFallback={addPrefillFromChat}
           onClose={() => {
             setShowAddSheet(false);
             setAddPrefill(null);
+            setAddPrefillFromChat(false);
           }}
           onAdd={(task) => setTasks((prev) => [task, ...prev])}
         />

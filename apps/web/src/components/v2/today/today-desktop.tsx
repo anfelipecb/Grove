@@ -72,6 +72,7 @@ export function TodayDesktop({
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
+  const [addPrefillFromChat, setAddPrefillFromChat] = useState(false);
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
   const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
   const session = useFocusSession();
@@ -183,9 +184,10 @@ export function TodayDesktop({
             setLocalTasks((prev) => [task, ...prev]);
             setShowTaskChat(false);
           }}
-          onQuickAdd={() => {
+          onQuickAdd={(prefill) => {
             setShowTaskChat(false);
-            setAddPrefill(null);
+            setAddPrefill(prefill ? { title: prefill.title, domain: prefill.domain ?? "" } : null);
+            setAddPrefillFromChat(!!prefill);
             setShowAddSheet(true);
           }}
         />
@@ -213,9 +215,11 @@ export function TodayDesktop({
           key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
           initialTitle={addPrefill?.title}
           initialDomain={addPrefill?.domain}
+          fromChatFallback={addPrefillFromChat}
           onClose={() => {
             setShowAddSheet(false);
             setAddPrefill(null);
+            setAddPrefillFromChat(false);
           }}
           onAdd={(task) => setLocalTasks((prev) => [task, ...prev])}
         />

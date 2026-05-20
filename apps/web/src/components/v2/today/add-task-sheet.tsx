@@ -40,6 +40,7 @@ type AddTaskSheetProps = {
   onAdd: (task: TaskRowData) => void;
   initialTitle?: string;
   initialDomain?: string;
+  fromChatFallback?: boolean;
 };
 
 function resolveInitialDomain(override?: string): LifeDomainId {
@@ -74,6 +75,7 @@ export function AddTaskSheet({
   onAdd,
   initialTitle = "",
   initialDomain = "",
+  fromChatFallback = false,
 }: AddTaskSheetProps) {
   const [title, setTitle] = useState(initialTitle);
   const [domain, setDomain] = useState(() => resolveInitialDomain(initialDomain || undefined));
@@ -129,11 +131,19 @@ export function AddTaskSheet({
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">Add task</h2>
+          <h2 className="text-base font-semibold text-foreground">
+            {fromChatFallback && initialTitle ? "Add details" : "Add task"}
+          </h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {fromChatFallback && initialTitle ? (
+          <p className="mb-3 text-xs text-muted-foreground">
+            Couldn&apos;t auto-place on calendar — pick a domain and time, or submit as-is.
+          </p>
+        ) : null}
 
         {/* Title */}
         <input

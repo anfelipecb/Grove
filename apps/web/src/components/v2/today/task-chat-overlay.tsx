@@ -22,10 +22,12 @@ type ParsedTask = {
   suggested_time: string;
 };
 
+type QuickAddPrefill = { title: string; domain?: string };
+
 type TaskChatOverlayProps = {
   onClose: () => void;
   onAdd: (task: TaskRowData) => void;
-  onQuickAdd: () => void;
+  onQuickAdd: (prefill?: QuickAddPrefill) => void;
 };
 
 function todayDateKey(): string {
@@ -66,13 +68,15 @@ export function TaskChatOverlay({ onClose, onAdd, onQuickAdd }: TaskChatOverlayP
         body: JSON.stringify({ message }),
       });
       if (!res.ok) {
-        onQuickAdd();
+        setError("Couldn't place on calendar — adding directly.");
+        onQuickAdd({ title: message });
         return;
       }
       const body = (await res.json()) as ParsedTask;
       setParsed(body);
     } catch {
-      onQuickAdd();
+      setError("Couldn't reach AI — adding directly.");
+      onQuickAdd({ title: message });
     } finally {
       setParsing(false);
     }
@@ -205,7 +209,7 @@ export function TaskChatOverlay({ onClose, onAdd, onQuickAdd }: TaskChatOverlayP
 
         <button
           type="button"
-          onClick={onQuickAdd}
+          onClick={() => onQuickAdd()}
           className="mt-4 w-full text-center text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           Quick add (structured)
