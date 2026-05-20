@@ -16,9 +16,11 @@ type DomainRow = {
 
 type Props = {
   compact?: boolean;
+  variant?: "coach" | "goals";
 };
 
-export function DomainLevels({ compact = false }: Props) {
+export function DomainLevels({ compact = false, variant = "coach" }: Props) {
+  const isGoals = variant === "goals";
   const [rows, setRows] = useState<DomainRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,17 +51,29 @@ export function DomainLevels({ compact = false }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Profile</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          {isGoals ? "Life domains" : "Profile"}
+        </p>
         <h2 className={compact ? "mt-1 text-lg font-semibold text-foreground" : "mt-2 text-2xl font-semibold text-foreground"}>
-          Domain levels
+          {isGoals ? "Domain progress" : "Domain levels"}
         </h2>
         {!compact ? (
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Levels follow{" "}
-            <span className="font-medium text-foreground">
-              floor(points ÷ {POINTS_PER_DOMAIN_LEVEL})
-            </span>{" "}
-            from task completions in each domain.
+            {isGoals
+              ? "Points from finished tasks in each domain. Levels rise as you follow through."
+              : (
+                  <>
+                    Levels follow{" "}
+                    <span className="font-medium text-foreground">
+                      floor(points ÷ {POINTS_PER_DOMAIN_LEVEL})
+                    </span>{" "}
+                    from task completions in each domain.
+                  </>
+                )}
+          </p>
+        ) : isGoals ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Points from finished tasks in each domain.
           </p>
         ) : null}
       </div>
