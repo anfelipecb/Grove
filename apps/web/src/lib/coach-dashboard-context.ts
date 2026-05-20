@@ -2,6 +2,16 @@ import type { LifeDomainId } from "@grove/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeXpConsistency } from "@/lib/xp-consistency";
 
+export type CoachBriefingSnapshot = {
+  activeGoals: { title: string; domain: string }[];
+  todayTasks: { title: string; completed: boolean }[];
+  yesterdayPlanned: number;
+  yesterdayCompleted: number;
+  todayScheduled: number;
+  streakDays: number;
+  lastJournalSnippet: string | null;
+};
+
 export type CoachDashboardContext = {
   displayName: string;
   focusNotesRaw: unknown;
@@ -10,6 +20,7 @@ export type CoachDashboardContext = {
   xpEvents: { created_at: string; reason: string }[];
   commitments: { title: string; status: string }[];
   consistencySummary: string;
+  briefing: CoachBriefingSnapshot;
 };
 
 export async function assertProfileOwnedByUser(
@@ -81,11 +92,61 @@ export function staticCoachSuggestions(ctx: CoachDashboardContext): {
   }));
 }
 
+function dateKeyOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export function staticCoachBriefing(
+  ctx: CoachDashboardContext,
+  debriefPlannedCount = 0,
+): { greeting: string; insight: string } {
+  const { briefing } = ctx;
+  const goalCount = briefing.activeGoals.length;
+  const taskCount = briefing.todayTasks.length;
+  const doneCount = briefing.todayTasks.filter((t) => t.completed).length;
+  let greeting = `Hi ${ctx.displayName}`;
+  if (goalCount > 0) {
+    greeting += ` — ${goalCount} active goal${goalCount === 1 ? "" : "s"}`;
+  }
+  if (taskCount > 0) {
+    greeting += `, ${taskCount} task${taskCount === 1 ? "" : "s"} today`;
+    if (doneCount > 0) {
+      greeting += ` (${doneCount} done)`;
+    }
+  }
+  greeting += ".";
+
+  let insight = ctx.consistencySummary;
+  if (debriefPlannedCount > 0) {
+    insight = `Yesterday you planned ${debriefPlannedCount} task${debriefPlannedCount === 1 ? "" : "s"}. Tap "How did yesterday go?" when you're ready.`;
+  } else if (briefing.lastJournalSnippet) {
+    insight = `Last reflection: ${briefing.lastJournalSnippet.slice(0, 120)}${briefing.lastJournalSnippet.length > 120 ? "…" : ""}`;
+  }
+  return { greeting, insight };
+}
+
 export async function loadCoachDashboardContext(
   supabase: SupabaseClient,
   profileId: string,
 ): Promise<CoachDashboardContext | null> {
-  const [{ data: profile }, { data: goals }, { data: xpRows }, { data: memberships }] = await Promise.all([
+  const today = dateKeyOffset(0);
+  const yesterday = dateKeyOffset(-1);
+
+  const [
+    { data: profile },
+    { data: goals },
+    { data: xpRows },
+    { data: memberships },
+    { data: tasks },
+    { data: todayCompletions },
+    { data: yesterdayCompletions },
+    { count: yesterdayScheduledCount },
+    { count: todayScheduledCount },
+    { data: journalRows },
+    { data: completionDates },
+  ] = await Promise.all([
     supabase.from("profiles").select("display_name, private_focus_notes").eq("id", profileId).maybeSingle(),
     supabase
       .from("goals")
@@ -100,6 +161,44 @@ export async function loadCoachDashboardContext(
       .order("created_at", { ascending: false })
       .limit(40),
     supabase.from("memberships").select("community_id").eq("profile_id", profileId),
+    supabase
+      .from("tasks")
+      .select("id, title, domain")
+      .eq("profile_id", profileId)
+      .eq("status", "active")
+      .in("frequency", ["daily", "weekly"]),
+    supabase
+      .from("task_completions")
+      .select("task_id")
+      .eq("profile_id", profileId)
+      .eq("completed_date", today),
+    supabase
+      .from("task_completions")
+      .select("task_id")
+      .eq("profile_id", profileId)
+      .eq("completed_date", yesterday),
+    supabase
+      .from("scheduled_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+      .eq("scheduled_date", yesterday),
+    supabase
+      .from("scheduled_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+      .eq("scheduled_date", today),
+    supabase
+      .from("journal_entries")
+      .select("content, entry_date")
+      .eq("profile_id", profileId)
+      .order("entry_date", { ascending: false })
+      .limit(1),
+    supabase
+      .from("task_completions")
+      .select("completed_date")
+      .eq("profile_id", profileId)
+      .order("completed_date", { ascending: false })
+      .limit(60),
   ]);
 
   if (!profile?.display_name) {
@@ -136,6 +235,43 @@ export async function loadCoachDashboardContext(
 
   const { message: consistencySummary } = computeXpConsistency(xpEvents);
 
+  const completedToday = new Set((todayCompletions ?? []).map((r) => r.task_id as string));
+  const todayTasksFixed = ((tasks ?? []) as { id: string; title: string; domain: string }[]).map((t) => ({
+    title: t.title,
+    completed: completedToday.has(t.id),
+  }));
+
+  const yesterdayCompleted = (yesterdayCompletions ?? []).length;
+  const yesterdayPlanned = yesterdayScheduledCount ?? 0;
+  const todayScheduled = todayScheduledCount ?? 0;
+
+  const uniqueDates = [...new Set((completionDates ?? []).map((r) => r.completed_date as string))].sort(
+    (a, b) => b.localeCompare(a),
+  );
+  let streakDays = 0;
+  const dateSet = new Set(uniqueDates);
+  for (let i = 0; i < 365; i++) {
+    const d = dateKeyOffset(-i);
+    if (dateSet.has(d)) {
+      streakDays += 1;
+    } else if (i > 0) {
+      break;
+    }
+  }
+
+  const lastJournal = (journalRows ?? [])[0] as { content: string; entry_date: string } | undefined;
+  const lastJournalSnippet = lastJournal?.content?.trim() ? lastJournal.content.trim() : null;
+
+  const briefing: CoachBriefingSnapshot = {
+    activeGoals,
+    todayTasks: todayTasksFixed,
+    yesterdayPlanned,
+    yesterdayCompleted,
+    todayScheduled,
+    streakDays,
+    lastJournalSnippet,
+  };
+
   return {
     displayName: profile.display_name,
     focusNotesRaw: profile.private_focus_notes,
@@ -144,5 +280,6 @@ export async function loadCoachDashboardContext(
     xpEvents,
     commitments,
     consistencySummary,
+    briefing,
   };
 }

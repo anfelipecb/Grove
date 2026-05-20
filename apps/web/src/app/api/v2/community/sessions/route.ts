@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     .from("memberships")
     .select("community_id, role")
     .eq("profile_id", profile.id)
-    .order("created_at", { ascending: true })
+    .order("joined_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 

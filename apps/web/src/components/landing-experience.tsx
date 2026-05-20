@@ -49,7 +49,13 @@ const firstWeek = [
   },
 ] as const;
 
-export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: boolean }) {
+export function LandingExperience({
+  showDemoLinks = false,
+  demoError = null,
+}: {
+  showDemoLinks?: boolean;
+  demoError?: string | null;
+}) {
   return (
     <div className="relative min-h-screen overflow-hidden text-foreground">
       <div
@@ -70,6 +76,14 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
       />
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-4 py-10 sm:px-6 lg:gap-24 lg:px-8 lg:py-16">
+        {demoError ? (
+          <p
+            role="alert"
+            className="rounded-2xl border border-amber-500/40 bg-amber-50/90 px-4 py-3 text-sm leading-6 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100"
+          >
+            <span className="font-semibold">Demo could not start.</span> {demoError}
+          </p>
+        ) : null}
         <header className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/50 bg-white/40 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60 dark:shadow-glass-dark">

@@ -66,13 +66,33 @@ export function PlanTomorrow({ tomorrow, activeTasks }: PlanTomorrowProps) {
     });
   }
 
-  const label = new Date(tomorrow + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  async function handleStartToday(entry: ScheduledEntry) {
+    await fetch("/api/v2/calendar/schedule", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ task_id: entry.task_id, date: todayStr }),
+    });
+    await handleRemove(entry);
+  }
+
+  const label = new Date(tomorrow + "T00:00:00").toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 
   return (
     <div className="mt-4">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Plan for {label}
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Plan for tomorrow</p>
+      <p className="mb-2 text-sm font-medium text-foreground">{label}</p>
+      <details className="mb-2">
+        <summary className="cursor-pointer text-[11px] font-medium text-muted-foreground">?</summary>
+        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          Tasks here are not for today. They stay on your list until you start them or move them back.
+        </p>
+      </details>
       {loading ? (
         <p className="py-2 text-xs text-muted-foreground animate-pulse">Loading…</p>
       ) : (
@@ -87,13 +107,22 @@ export function PlanTomorrow({ tomorrow, activeTasks }: PlanTomorrowProps) {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => handleRemove(s)}
-                className="shrink-0 text-muted-foreground hover:text-destructive"
-                aria-label="Remove from plan"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleStartToday(s)}
+                  className="text-xs font-medium text-moss hover:text-moss/80"
+                >
+                  Start today
+                </button>
+                <button
+                  onClick={() => handleRemove(s)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label="Remove from plan"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           ))}
 

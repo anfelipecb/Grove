@@ -87,7 +87,7 @@ export default async function TodayPage() {
       .from("memberships")
       .select("community_id, communities(name)")
       .eq("profile_id", profile.id)
-      .order("created_at", { ascending: true })
+      .order("joined_at", { ascending: true })
       .limit(1)
       .maybeSingle(),
     supabase

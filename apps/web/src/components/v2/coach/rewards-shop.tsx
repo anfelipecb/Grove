@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+import { twMerge } from "tailwind-merge";
 import {
   LIFE_DOMAINS,
   domainLevelFromPoints,
@@ -27,9 +29,10 @@ function domainLabel(id: string | null | undefined): string {
 
 type Props = {
   spendablePoints: number;
+  collapsed?: boolean;
 };
 
-export function RewardsShop({ spendablePoints }: Props) {
+export function RewardsShop({ spendablePoints, collapsed = false }: Props) {
   const router = useRouter();
   const [pointsMap, setPointsMap] = useState<Record<string, number>>({});
   const [rewards, setRewards] = useState<RewardRow[] | null>(null);
@@ -43,6 +46,7 @@ export function RewardsShop({ spendablePoints }: Props) {
   const [unlockLevel, setUnlockLevel] = useState(1);
   const [cost, setCost] = useState(15);
   const [adding, setAdding] = useState(false);
+  const [expanded, setExpanded] = useState(!collapsed);
 
   const refresh = async () => {
     setLoading(true);
@@ -146,20 +150,28 @@ export function RewardsShop({ spendablePoints }: Props) {
     }
   }
 
+  const rewardCount = rewards?.length ?? 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            Rewards shop
+            Your unlocks ({rewardCount})
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">Private unlocks</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Spendable points:{" "}
-            <span className="font-semibold text-foreground">{spendable}</span>
+          <p className="mt-1 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{spendable}</span> spendable pts
           </p>
         </div>
-      </div>
+        <ChevronDown
+          className={twMerge("h-4 w-4 shrink-0 text-muted-foreground transition", expanded && "rotate-180")}
+          aria-hidden="true"
+        />
+      </button>
 
       {error ? (
         <p className="rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -167,6 +179,8 @@ export function RewardsShop({ spendablePoints }: Props) {
         </p>
       ) : null}
 
+      {!expanded ? null : (
+        <>
       <form
         onSubmit={addReward}
         className="rounded-3xl border border-dashed border-border bg-background/60 p-4"
@@ -296,6 +310,8 @@ export function RewardsShop({ spendablePoints }: Props) {
             );
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );
