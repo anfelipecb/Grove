@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { LIFE_DOMAINS, type IntakeDraft, type MemberProfileCard, type LifeDomainId } from "@grove/core";
 import {
+  briefingGoalsFromWizard,
+  buildOnboardingDoneUrl,
   filterSuggestionsAgainstStatic,
   mergeLines as mergeLinesHelper,
   postProfileForSuggestions,
@@ -184,6 +187,7 @@ function StackedDomainBar({ weights }: { weights: Record<LifeDomainId, number> }
 // ── Main wizard ───────────────────────────────────────────────────────────────
 
 export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: boolean }) {
+  const router = useRouter();
   const TOTAL_STEPS = 5;
 
   const [step, setStep] = useState(0);
@@ -333,7 +337,14 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
         return;
       }
       redirecting = true;
-      window.location.assign("/today");
+      router.push(
+        buildOnboardingDoneUrl({
+          name: (intake.name ?? "").trim(),
+          goals: briefingGoalsFromWizard(goalChips, goalsText),
+          style: intake.supportStyle,
+          weights: normalizeDomainWeights(weights),
+        }),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
     } finally {
