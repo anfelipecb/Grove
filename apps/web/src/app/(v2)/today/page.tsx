@@ -22,7 +22,7 @@ export default async function TodayPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, spendable_points, community_points, google_calendar_token")
+    .select("id, display_name, total_xp, spendable_points, community_points, google_calendar_token")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -182,7 +182,10 @@ export default async function TodayPage() {
       <div className="mx-auto max-w-lg lg:hidden">
         <PointsHeader
           displayName={profile.display_name ?? "there"}
-          totalPoints={profile.spendable_points}
+          totalPoints={Math.max(
+            (profile.total_xp as number | undefined) ?? 0,
+            (profile.spendable_points as number | undefined) ?? 0,
+          )}
           streak={streak}
         />
         <TodayMobileShell
@@ -199,7 +202,10 @@ export default async function TodayPage() {
         <div className="mb-6">
           <PointsHeader
             displayName={profile.display_name ?? "there"}
-            totalPoints={profile.spendable_points}
+            totalPoints={Math.max(
+              (profile.total_xp as number | undefined) ?? 0,
+              (profile.spendable_points as number | undefined) ?? 0,
+            )}
             streak={streak}
           />
         </div>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { CoachExperience } from "@/components/v2/coach/coach-experience";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
+import { humanizeGoalLabel } from "@/lib/coach-briefing-copy";
 import { createDemoAwareServerClient } from "@/lib/supabase-server";
 import { getServerUserId, isClerkConfigured } from "@/lib/clerk-auth";
 
@@ -140,7 +141,7 @@ export default async function CoachPage({
 
     activeGoals = (goals ?? []).map((goal) => ({
       id: goal.id as string,
-      title: goal.title as string,
+      title: humanizeGoalLabel(goal.title as string),
       domain: coerceDomain(goal.domain as string | null | undefined),
     }));
     todayTasks = (tasks ?? []).map((task) => ({

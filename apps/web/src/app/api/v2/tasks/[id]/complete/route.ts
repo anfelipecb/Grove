@@ -12,14 +12,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, spendable_points")
+    .select("id, total_xp, spendable_points, community_points")
     .eq("clerk_user_id", userId)
     .maybeSingle();
   if (!profile) return Response.json({ error: "Profile not found." }, { status: 404 });
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, point_value, community_point_value, is_community_task, profile_id")
+    .select("id, title, point_value, community_point_value, is_community_task, profile_id")
     .eq("id", id)
     .maybeSingle();
   if (!task || task.profile_id !== profile.id) {
@@ -43,14 +43,35 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ error: insertError.message }, { status: 500 });
   }
 
-  const communityGain = task.is_community_task ? task.community_point_value : 0;
+  const pointsEarned = task.point_value ?? 0;
+  const totalXp = (profile.total_xp as number | undefined) ?? 0;
+  const spendable = (profile.spendable_points as number | undefined) ?? 0;
+  const nextTotalXp = totalXp + pointsEarned;
+  const nextSpendable = spendable + pointsEarned;
+  const communityGain = task.is_community_task ? (task.community_point_value ?? 0) : 0;
+  const communityPoints = (profile.community_points as number | undefined) ?? 0;
+
+  await supabase.from("xp_events").insert({
+    profile_id: profile.id,
+    reason: `Completed: ${(task.title as string) || "task"}`,
+    xp: pointsEarned,
+    spendable_points: pointsEarned,
+    metadata: { task_id: id, kind: "task_completion" },
+  });
+
   await supabase
     .from("profiles")
     .update({
-      spendable_points: profile.spendable_points + task.point_value,
-      ...(communityGain > 0 ? { community_points: { increment: communityGain } } : {}),
+      total_xp: nextTotalXp,
+      spendable_points: nextSpendable,
+      ...(communityGain > 0 ? { community_points: communityPoints + communityGain } : {}),
     })
     .eq("id", profile.id);
 
-  return Response.json({ ok: true, points_earned: task.point_value });
+  return Response.json({
+    ok: true,
+    points_earned: pointsEarned,
+    total_xp: nextTotalXp,
+    spendable_points: nextSpendable,
+  });
 }

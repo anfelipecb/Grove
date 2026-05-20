@@ -8,6 +8,7 @@ import { JournalPromptCard } from "@/components/v2/coach/journal-prompt-card";
 import { DopamineMenuPanel } from "@/components/v2/shared/dopamine-menu-panel";
 import type { CoachQuickAction } from "@/lib/coach-quick-actions";
 import type { CoachBriefingSnapshot } from "@/lib/coach-dashboard-context";
+import { clampBriefingLine, humanizeGoalLabel } from "@/lib/coach-briefing-copy";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -40,11 +41,14 @@ type CoachChatPanelProps = {
 };
 
 function buildOpeningLine(context: CoachChatContext, displayName: string): string {
-  const goalTitle = context.topGoalTitle ?? context.activeGoals[0]?.title ?? context.todayTasks[0]?.title ?? null;
-  if (goalTitle) {
-    return `Let's keep ${goalTitle} in view today, ${displayName}. What is the smallest next step?`;
+  const firstName = displayName.split(/\s+/)[0] || displayName;
+  const rawGoal =
+    context.topGoalTitle ?? context.activeGoals[0]?.title ?? context.todayTasks[0]?.title ?? null;
+  if (rawGoal) {
+    const goal = humanizeGoalLabel(rawGoal);
+    return `Hey ${firstName} — you're still working on ${goal}. I'm here when you want to talk it through.`;
   }
-  return `Let's find one small move for today, ${displayName}. What's most important right now?`;
+  return `Hey ${firstName}. I'm here when you want to check in on today.`;
 }
 
 function normalizeMessages(raw: unknown): ChatMessage[] | null {
@@ -131,7 +135,9 @@ export function CoachChatPanel({
         if (!res.ok) return;
         const payload = (await res.json()) as BriefingPayload;
         if (cancelled) return;
-        if (payload.greeting?.trim()) setGreeting(payload.greeting.trim());
+        if (payload.greeting?.trim()) {
+          setGreeting(clampBriefingLine(payload.greeting.trim(), 96));
+        }
         if (payload.insight?.trim()) setInsight(payload.insight.trim());
         if (payload.quickActions?.length) setQuickActions(payload.quickActions);
       } catch {
@@ -277,8 +283,8 @@ export function CoachChatPanel({
               <MessageSquareText className="h-4 w-4 shrink-0 text-moss" aria-hidden="true" />
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Mycelium</p>
             </div>
-            <h1 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
-              {greeting ?? `Hi ${displayName}.`}
+            <h1 className="mt-2 text-xl font-semibold leading-snug text-foreground sm:text-2xl">
+              {greeting ?? clampBriefingLine(`Hi ${displayName.split(/\s+/)[0] || displayName}.`, 96)}
             </h1>
             {insight ? (
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{insight}</p>

@@ -1,5 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Flame } from "lucide-react";
 import { formatGlobalLevelLabel, getGlobalLevel, getSeniorityProgress } from "@grove/core";
+import { XP_UPDATED_EVENT, type XpUpdateDetail } from "@/lib/xp-client";
 
 type PointsHeaderProps = {
   displayName: string;
@@ -7,10 +11,27 @@ type PointsHeaderProps = {
   streak: number;
 };
 
-export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderProps) {
+export function PointsHeader({ displayName, totalPoints: initialTotal, streak }: PointsHeaderProps) {
+  const [totalPoints, setTotalPoints] = useState(initialTotal);
+
+  useEffect(() => {
+    setTotalPoints(initialTotal);
+  }, [initialTotal]);
+
+  useEffect(() => {
+    const onXpUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<XpUpdateDetail>).detail;
+      if (detail && typeof detail.totalXp === "number") {
+        setTotalPoints(detail.totalXp);
+      }
+    };
+    window.addEventListener(XP_UPDATED_EVENT, onXpUpdated);
+    return () => window.removeEventListener(XP_UPDATED_EVENT, onXpUpdated);
+  }, []);
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const { currentTier, nextTier, progressPercent } = getSeniorityProgress(totalPoints);
+  const { nextTier, progressPercent } = getSeniorityProgress(totalPoints);
   const levelLabel = formatGlobalLevelLabel(totalPoints);
   const { xpIntoLevel, xpForLevel } = getGlobalLevel(totalPoints);
 
@@ -26,9 +47,7 @@ export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderP
             <span className="inline-flex items-center rounded-full bg-moss/15 px-2 py-0.5 text-xs font-semibold text-moss">
               {levelLabel}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {totalPoints.toLocaleString()} XP
-            </span>
+            <span className="text-xs text-muted-foreground">{totalPoints.toLocaleString()} XP</span>
           </div>
         </div>
         {streak > 0 && (
@@ -42,7 +61,7 @@ export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderP
       <div className="mt-3">
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-moss transition-all"
+            className="h-full rounded-full bg-moss transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

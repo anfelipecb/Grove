@@ -1,5 +1,6 @@
 import type { LifeDomainId } from "@grove/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildStaticCoachBriefing, humanizeGoalLabel } from "@/lib/coach-briefing-copy";
 import { computeXpConsistency } from "@/lib/xp-consistency";
 
 export type CoachBriefingSnapshot = {
@@ -63,21 +64,8 @@ export function coachCrisisScanParts(ctx: CoachDashboardContext): string[] {
 }
 
 export function staticCoachGreeting(ctx: CoachDashboardContext): { greeting: string; insight: string } {
-  const h = new Date().getHours();
-  const tod = h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
-  const firstGoal = ctx.activeGoals[0]?.title;
-  let greeting = `Good ${tod}, ${ctx.displayName}.`;
-  if (firstGoal) {
-    greeting += ` Your next queued target: ${firstGoal}.`;
-  } else {
-    greeting += ` Add one small target when you're ready.`;
-  }
-  const lastDone = ctx.lastCompletedGoalTitle;
-  let insight = ctx.consistencySummary;
-  if (lastDone) {
-    insight = `Latest win: ${lastDone}. ${ctx.consistencySummary}`;
-  }
-  return { greeting, insight };
+  const briefing = buildStaticCoachBriefing(ctx);
+  return { greeting: briefing.greeting, insight: briefing.insight };
 }
 
 export function staticCoachSuggestions(ctx: CoachDashboardContext): {
@@ -102,29 +90,7 @@ export function staticCoachBriefing(
   ctx: CoachDashboardContext,
   debriefPlannedCount = 0,
 ): { greeting: string; insight: string } {
-  const { briefing } = ctx;
-  const goalCount = briefing.activeGoals.length;
-  const taskCount = briefing.todayTasks.length;
-  const doneCount = briefing.todayTasks.filter((t) => t.completed).length;
-  let greeting = `Hi ${ctx.displayName}`;
-  if (goalCount > 0) {
-    greeting += ` — ${goalCount} active goal${goalCount === 1 ? "" : "s"}`;
-  }
-  if (taskCount > 0) {
-    greeting += `, ${taskCount} task${taskCount === 1 ? "" : "s"} today`;
-    if (doneCount > 0) {
-      greeting += ` (${doneCount} done)`;
-    }
-  }
-  greeting += ".";
-
-  let insight = ctx.consistencySummary;
-  if (debriefPlannedCount > 0) {
-    insight = `Yesterday you planned ${debriefPlannedCount} task${debriefPlannedCount === 1 ? "" : "s"}. Tap "How did yesterday go?" when you're ready.`;
-  } else if (briefing.lastJournalSnippet) {
-    insight = `Last reflection: ${briefing.lastJournalSnippet.slice(0, 120)}${briefing.lastJournalSnippet.length > 120 ? "…" : ""}`;
-  }
-  return { greeting, insight };
+  return buildStaticCoachBriefing(ctx, debriefPlannedCount);
 }
 
 export async function loadCoachDashboardContext(
@@ -211,10 +177,12 @@ export async function loadCoachDashboardContext(
     status: string;
     completed_at: string | null;
   }[];
-  const activeGoals = goalList.filter((g) => g.status === "active").map((g) => ({ title: g.title, domain: g.domain }));
+  const activeGoals = goalList
+    .filter((g) => g.status === "active")
+    .map((g) => ({ title: humanizeGoalLabel(g.title), domain: g.domain }));
   const completed = goalList.filter((g) => g.status === "completed" && g.completed_at);
   completed.sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
-  const lastCompletedGoalTitle = completed[0]?.title ?? null;
+  const lastCompletedGoalTitle = completed[0]?.title ? humanizeGoalLabel(completed[0].title) : null;
 
   const xpEvents = ((xpRows ?? []) as { created_at: string; reason: string }[]).map((e) => ({
     created_at: e.created_at,

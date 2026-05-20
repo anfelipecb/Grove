@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { GoalCard, type GoalCardData, type GoalTask } from "@/components/v2/goals/goal-card";
 import { GoalsDomainLevelsSection } from "@/components/v2/goals/goals-domain-levels-section";
 import { GoalsProgressSection } from "@/components/v2/goals/goals-progress-section";
+import { applyTaskCompleteXp, type TaskCompleteResponse } from "@/lib/complete-task-client";
 
 const QUICK_TASK_POINT_VALUE = 14;
 
@@ -95,6 +96,10 @@ export function GoalsView({
     );
 
     const response = await fetch(`/api/v2/tasks/${taskId}/complete`, { method: "POST" });
+    if (response.ok) {
+      const body = (await response.json().catch(() => ({}))) as TaskCompleteResponse;
+      applyTaskCompleteXp(body);
+    }
     if (!response.ok) {
       setGoals((current) =>
         current.map((goal) =>

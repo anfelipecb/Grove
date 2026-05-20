@@ -2,16 +2,16 @@
 id: "GRO-075"
 title: "Landing community section — animated growing plant SVG, less copy"
 slug: "landing-community-section-animated-growing-plant-svg-less-copy"
-status: "ready"
+status: "in_review"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["landing", "ux", "motion"]
+owner: "cursor"
+branch: "ticket/gro-075-landing-community-section-animated-growing-plant-svg-less-copy"
+worktree: ".worktrees/gro-075-landing-community-section-animated-growing-plant-svg-less-copy"
+pr_url: "https://github.com/anfelipecb/Grove/pull/63"
+labels: []
 depends_on: []
 created_at: "2026-05-20T21:34:53.045Z"
-updated_at: "2026-05-20T21:34:53.045Z"
+updated_at: "2026-05-20T21:38:52.803Z"
 ---
 
 ## Context

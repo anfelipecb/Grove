@@ -29,6 +29,7 @@ import { CommunityPulseCard } from "@/components/v2/community/community-pulse-ca
 import { surfacePrimary } from "@/components/v2/today/surface-classes";
 import { DopamineMenu } from "@/components/v2/today/dopamine-menu";
 import type { DopamineMainTask } from "@/components/v2/today/today-tabs";
+import { applyTaskCompleteXp, type TaskCompleteResponse } from "@/lib/complete-task-client";
 
 type DailyCardProps = {
   initialTasks: TaskRowData[];
@@ -103,7 +104,10 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: false } : t)));
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       setError(body.error ?? "Could not complete task.");
+      return;
     }
+    const body = (await res.json().catch(() => ({}))) as TaskCompleteResponse;
+    applyTaskCompleteXp(body);
   }, []);
 
   const handleLog = useCallback(async (title: string, domain: string, notes: string) => {

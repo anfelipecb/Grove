@@ -4,6 +4,7 @@ import {
   loadCoachDashboardContext,
   staticCoachBriefing,
 } from "@/lib/coach-dashboard-context";
+import { sanitizeAiBriefing } from "@/lib/coach-briefing-copy";
 import { COACH_QUICK_ACTIONS } from "@/lib/coach-quick-actions";
 import { demoCoachGreeting } from "@/lib/demo-data";
 import { getServerUserId, demoSessionActiveServer } from "@/lib/clerk-auth";
@@ -119,8 +120,9 @@ export async function POST(request: Request) {
     content: [
       "You are Grove's brief ADHD-aware coach (not a clinician).",
       'Output ONLY valid JSON: {"greeting":"...","insight":"..."}.',
-      "greeting: one short sentence naming active goals and today's tasks if any.",
-      "insight: one short sentence about yesterday plan/completions, streak, or last journal; or \"\" if thin.",
+      "greeting: max 12 words. Warm briefing only — name the member once, mention at most one goal in plain language.",
+      "Never ask a question. Never use: smallest next step, 25-minute, define the next action, focus on (as a command).",
+      "insight: max 20 words. Celebrate yesterday completions, streak, or today's progress; encouraging tone only.",
       "No diagnosis, no clinical claims, no markdown.",
     ].join("\n"),
   };
@@ -149,12 +151,14 @@ export async function POST(request: Request) {
         quickActions: COACH_QUICK_ACTIONS,
       });
     }
+    const cleaned = sanitizeAiBriefing(
+      parsed.data.greeting.trim() || fallback.greeting,
+      parsed.data.insight?.trim() ?? "",
+      fallback,
+    );
     return Response.json({
-      greeting: parsed.data.greeting.trim() || fallback.greeting,
-      insight:
-        parsed.data.insight && parsed.data.insight.trim().length > 0
-          ? parsed.data.insight.trim()
-          : fallback.insight,
+      greeting: cleaned.greeting,
+      insight: cleaned.insight || fallback.insight,
       snapshot: ctx.briefing,
       quickActions: COACH_QUICK_ACTIONS,
     });

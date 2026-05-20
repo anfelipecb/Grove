@@ -32,6 +32,7 @@ import { DopamineMenu } from "@/components/v2/today/dopamine-menu";
 import { TOMORROW_DROP_ID } from "@/components/v2/today/today-dnd-ids";
 import type { DopamineMainTask } from "@/components/v2/today/today-tabs";
 import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
+import { applyTaskCompleteXp, type TaskCompleteResponse } from "@/lib/complete-task-client";
 
 type CommunityPulse = {
   communityName: string | null;
@@ -123,7 +124,10 @@ export function TodayDesktop({
     const res = await fetch(`/api/v2/tasks/${id}/complete`, { method: "POST" });
     if (!res.ok) {
       setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: false } : t)));
+      return;
     }
+    const body = (await res.json().catch(() => ({}))) as TaskCompleteResponse;
+    applyTaskCompleteXp(body);
   };
 
   const scheduleForDate = async (taskId: string, date: string) => {
@@ -274,11 +278,16 @@ export function TodayDesktop({
 
         <div className={`${surfacePrimary} p-4`}>
           <div className="mb-3 flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-1.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Daily tasks reset each day. Plan tomorrow in the log column.
-              </p>
+              <button
+                type="button"
+                title="Today's list resets daily. Plan tomorrow in the log column."
+                aria-label="How today tasks work"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 text-[11px] font-semibold leading-none text-muted-foreground transition hover:border-moss/40 hover:bg-muted/60 hover:text-foreground"
+              >
+                ?
+              </button>
             </div>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               <button

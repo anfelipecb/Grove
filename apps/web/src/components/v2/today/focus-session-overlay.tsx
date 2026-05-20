@@ -11,6 +11,7 @@ import {
   type SprintPreset,
 } from "@/hooks/use-focus-session";
 import type { TaskRowData } from "@/components/v2/today/task-row";
+import { applyTaskCompleteXp, type TaskCompleteResponse } from "@/lib/complete-task-client";
 
 type FocusSessionOverlayProps = {
   session: FocusSession;
@@ -234,6 +235,8 @@ export function FocusSessionOverlay({ session, availableTasks, onTaskCompleted }
     if (!currentTask) return;
     const res = await fetch(`/api/v2/tasks/${currentTask.id}/complete`, { method: "POST" });
     if (res.ok) {
+      const body = (await res.json().catch(() => ({}))) as TaskCompleteResponse;
+      applyTaskCompleteXp(body);
       onTaskCompleted(currentTask.id);
       markTaskDone();
     }
