@@ -2,16 +2,16 @@
 id: "GRO-042"
 title: "Return-login coach debrief — daily check-in on new-day login"
 slug: "return-login-coach-debrief-daily-check-in-on-new-day-login"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "coach", "ux"]
-depends_on: ["GRO-040"]
+owner: "cursor"
+branch: "ticket/gro-042-return-login-coach-debrief-daily-check-in-on-new-day-login"
+worktree: ".worktrees/gro-042-return-login-coach-debrief-daily-check-in-on-new-day-login"
+pr_url: "https://github.com/anfelipecb/Grove/pull/33"
+labels: []
+depends_on: []
 created_at: "2026-05-19T23:01:22.636Z"
-updated_at: "2026-05-19T23:01:22.636Z"
+updated_at: "2026-05-20T01:09:42.309Z"
 ---
 
 ## Context

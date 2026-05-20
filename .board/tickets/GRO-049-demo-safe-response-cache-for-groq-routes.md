@@ -2,16 +2,16 @@
 id: "GRO-049"
 title: "Demo-safe response cache for Groq routes"
 slug: "demo-safe-response-cache-for-groq-routes"
-status: "ready"
+status: "done"
 priority: "p0"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "ai", "infra", "demo"]
+owner: "cursor"
+branch: "ticket/gro-049-demo-safe-response-cache-for-groq-routes"
+worktree: ".worktrees/gro-049-demo-safe-response-cache-for-groq-routes"
+pr_url: "https://github.com/anfelipecb/Grove/pull/31"
+labels: []
 depends_on: []
 created_at: "2026-05-20T00:48:19.252Z"
-updated_at: "2026-05-20T00:48:19.252Z"
+updated_at: "2026-05-20T01:09:41.707Z"
 ---
 
 ## Context

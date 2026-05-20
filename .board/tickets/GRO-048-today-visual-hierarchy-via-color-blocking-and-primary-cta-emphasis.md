@@ -2,12 +2,12 @@
 id: "GRO-048"
 title: "Today: visual hierarchy via color blocking and primary CTA emphasis"
 slug: "today-visual-hierarchy-via-color-blocking-and-primary-cta-emphasis"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
+owner: "cursor"
+branch: "ticket/gro-048-today-visual-hierarchy-via-color-blocking-and-primary-cta-emphasis"
+worktree: ".worktrees/gro-048-today-visual-hierarchy-via-color-blocking-and-primary-cta-emphasis"
+pr_url: "https://github.com/anfelipecb/Grove/pull/34"
 labels:
   - "v2"
   - "today"
@@ -17,7 +17,7 @@ labels:
 depends_on:
   - "GRO-047"
 created_at: "2026-05-19T23:59:07.158Z"
-updated_at: "2026-05-19T23:59:07.158Z"
+updated_at: "2026-05-20T01:09:42.613Z"
 ---
 
 ## Context
