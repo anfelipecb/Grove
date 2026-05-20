@@ -1,5 +1,6 @@
 import type { AiMessage } from "@grove/core";
 import { groqText } from "@/lib/groq";
+import { getOrFetch } from "@/lib/response-cache";
 
 export type LlmTier = "fast" | "balanced" | "deep";
 
@@ -21,12 +22,20 @@ export function resolveTierModel(tier: LlmTier): string {
 export async function routedCompletion(
   messages: AiMessage[],
   tier: LlmTier,
-  options?: { temperature?: number },
+  options?: { temperature?: number; cacheKey?: string; cacheTtlSeconds?: number },
 ): Promise<string> {
-  return groqText(messages, {
-    temperature: options?.temperature,
-    model: resolveTierModel(tier),
-  });
+  const call = () =>
+    groqText(messages, {
+      temperature: options?.temperature,
+      model: resolveTierModel(tier),
+    });
+
+  const cacheKey = options?.cacheKey?.trim();
+  if (cacheKey) {
+    return getOrFetch(cacheKey, options?.cacheTtlSeconds ?? 600, call);
+  }
+
+  return call();
 }
 
 export function compressPromptBodyForTier<T>(body: T, tier: LlmTier): T {

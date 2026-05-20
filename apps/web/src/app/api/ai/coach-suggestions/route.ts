@@ -157,7 +157,12 @@ export async function POST(request: Request) {
   };
 
   try {
-    const raw = await routedCompletion([system, userMsg], "balanced", { temperature: 0.38 });
+    const suggestionBucket = Math.floor(Date.now() / 600_000);
+    const raw = await routedCompletion([system, userMsg], "balanced", {
+      temperature: 0.38,
+      cacheKey: `suggestions:${userId}:${suggestionBucket}`,
+      cacheTtlSeconds: 600,
+    });
     if (!raw) {
       return Response.json({ suggestions: fallback });
     }
