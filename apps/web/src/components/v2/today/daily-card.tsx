@@ -21,6 +21,7 @@ import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
 import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
+import type { FocusTask } from "@/hooks/use-focus-session";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary } from "@/components/v2/today/surface-classes";
@@ -31,7 +32,7 @@ type DailyCardProps = {
   initialTasks: TaskRowData[];
   profileId: string;
   mainTask: DopamineMainTask | null;
-  onStartFocusSession?: (task?: { id: string; title: string }) => void;
+  onStartFocusSession?: (task?: FocusTask) => void;
 };
 
 export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSession }: DailyCardProps) {
@@ -41,8 +42,10 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [showDopamineMenu, setShowDopamineMenu] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
-  const [startedTasks, setStartedTasks] = useState<Map<string, string>>(() => new Map());
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
+  const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
+
+  const startTask = startTaskId ? tasks.find((t) => t.id === startTaskId) : null;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -79,8 +82,6 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
     }
   }, []);
 
-  const startTask = startTaskId ? tasks.find((t) => t.id === startTaskId) : null;
-
   const handleLog = useCallback(async (title: string, domain: string, notes: string) => {
     setError(null);
     const res = await fetch("/api/v2/tasks/log", {
@@ -113,14 +114,20 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
 
       {startTask ? (
         <StartTaskSheet
-          task={startTask}
+          taskId={startTask.id}
+          taskTitle={startTask.title}
           onClose={() => setStartTaskId(null)}
-          onScheduled={(id, displayTime) => {
-            setStartedTasks((prev) => new Map(prev).set(id, displayTime));
+          onScheduled={(id, label) => {
+            setStartedTasks((prev) => ({ ...prev, [id]: label }));
+            setStartTaskId(null);
           }}
           onScheduleAndFocus={
             onStartFocusSession
-              ? () => onStartFocusSession({ id: startTask.id, title: startTask.title })
+              ? (id, label) => {
+                  setStartedTasks((prev) => ({ ...prev, [id]: label }));
+                  setStartTaskId(null);
+                  onStartFocusSession({ id: startTask.id, title: startTask.title });
+                }
               : undefined
           }
         />
@@ -211,8 +218,8 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
               key={t.id}
               task={t}
               onComplete={handleComplete}
-              onStart={setStartTaskId}
-              scheduledTime={startedTasks.get(t.id)}
+              onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+              scheduledTime={startedTasks[t.id] ?? null}
             />
           ))}
         </section>
@@ -228,8 +235,8 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
                   key={t.id}
                   task={t}
                   onComplete={handleComplete}
-                  onStart={setStartTaskId}
-                  scheduledTime={startedTasks.get(t.id)}
+                  onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+                  scheduledTime={startedTasks[t.id] ?? null}
                 />
               ))}
             </SortableContext>

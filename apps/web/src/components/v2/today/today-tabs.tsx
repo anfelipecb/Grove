@@ -4,6 +4,7 @@ import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { DailyCard } from "@/components/v2/today/daily-card";
 import { CalendarTab } from "@/components/v2/today/calendar-tab";
+import type { FocusTask } from "@/hooks/use-focus-session";
 import type { TaskRowData } from "@/components/v2/today/task-row";
 
 type ActiveTask = { id: string; title: string; domain: string };
@@ -20,7 +21,7 @@ type TodayTabsProps = {
   profileId: string;
   mainTask: DopamineMainTask | null;
   googleCalendarConnected: boolean;
-  onStartFocusSession?: (task?: { id: string; title: string }) => void;
+  onStartFocusSession?: (task?: FocusTask) => void;
 };
 
 const TABS = ["Daily Card", "Calendar"] as const;

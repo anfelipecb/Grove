@@ -4,14 +4,17 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 
-type DraggableTaskRowProps = {
+export function DraggableTaskRow({
+  task,
+  onComplete,
+  onStart,
+  scheduledTime,
+}: {
   task: TaskRowData;
   onComplete: (id: string) => Promise<void>;
   onStart?: (taskId: string) => void;
-  scheduledTime?: string;
-};
-
-export function DraggableTaskRow({ task, onComplete, onStart, scheduledTime }: DraggableTaskRowProps) {
+  scheduledTime?: string | null;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (

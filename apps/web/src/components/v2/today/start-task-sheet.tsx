@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { TaskRowData } from "@/components/v2/today/task-row";
+import { twMerge } from "tailwind-merge";
 
 const DURATION_OPTIONS = [15, 30, 45, 60] as const;
 
@@ -10,20 +10,15 @@ function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function formatTimeInput(d: Date): string {
-  const h = d.getHours();
-  const m = d.getMinutes();
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+function formatHHMM(d: Date) {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function formatDisplayTime(hhmm: string): string {
-  const [hStr, mStr] = hhmm.split(":");
-  const h = Number(hStr);
-  const m = Number(mStr);
-  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+export function formatScheduledTimeLabel(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
   const d = new Date();
   d.setHours(h, m, 0, 0);
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase();
 }
 
 function ChipButton({
@@ -39,11 +34,12 @@ function ChipButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={twMerge(
+        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
         selected
           ? "border-moss bg-moss/10 text-moss"
-          : "border-border bg-background text-muted-foreground hover:border-moss/50"
-      }`}
+          : "border-border bg-background text-muted-foreground hover:border-moss/50",
+      )}
     >
       {label}
     </button>
@@ -51,26 +47,31 @@ function ChipButton({
 }
 
 type StartTaskSheetProps = {
-  task: TaskRowData;
+  taskId: string;
+  taskTitle: string;
+  initialTime?: string;
   onClose: () => void;
   onScheduled: (taskId: string, displayTime: string) => void;
-  onScheduleAndFocus?: () => void;
+  onScheduleAndFocus?: (taskId: string, displayTime: string) => void;
 };
 
 export function StartTaskSheet({
-  task,
+  taskId,
+  taskTitle,
+  initialTime,
   onClose,
   onScheduled,
   onScheduleAndFocus,
 }: StartTaskSheetProps) {
-  const [startTime, setStartTime] = useState(() => formatTimeInput(new Date()));
-  const [duration, setDuration] = useState<(typeof DURATION_OPTIONS)[number]>(30);
-  const [error, setError] = useState<string | null>(null);
+  const now = new Date();
+  const [startTime, setStartTime] = useState(initialTime ?? formatHHMM(now));
+  const [duration, setDuration] = useState<number>(30);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSchedule(andFocus: boolean) {
+  async function schedule(andFocus: boolean) {
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
-      setError("Use HH:MM format.");
+      setError("Use a valid time (HH:MM).");
       return;
     }
     setSaving(true);
@@ -80,8 +81,8 @@ export function StartTaskSheet({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        task_id: task.id,
-        date: toDateStr(new Date()),
+        task_id: taskId,
+        date: toDateStr(now),
         start_time: startTime,
         duration_minutes: duration,
       }),
@@ -89,14 +90,16 @@ export function StartTaskSheet({
 
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(body.error ?? "Could not schedule.");
+      setError(body.error ?? "Could not schedule task.");
       setSaving(false);
       return;
     }
 
-    onScheduled(task.id, formatDisplayTime(startTime));
+    const label = formatScheduledTimeLabel(startTime);
     if (andFocus && onScheduleAndFocus) {
-      onScheduleAndFocus();
+      onScheduleAndFocus(taskId, label);
+    } else {
+      onScheduled(taskId, label);
     }
     onClose();
   }
@@ -108,13 +111,17 @@ export function StartTaskSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground truncate pr-2">{task.title}</h2>
-          <button type="button" onClick={onClose} className="shrink-0 text-muted-foreground hover:text-foreground">
+          <h2 className="text-base font-semibold text-foreground">Schedule for now</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Schedule for now</p>
+        <p className="mb-4 line-clamp-2 text-sm text-foreground">{taskTitle}</p>
+
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Start time
+        </label>
         <input
           type="time"
           value={startTime}
@@ -143,7 +150,7 @@ export function StartTaskSheet({
           <button
             type="button"
             disabled={saving}
-            onClick={() => void handleSchedule(false)}
+            onClick={() => void schedule(false)}
             className="w-full rounded-xl bg-moss py-3 text-sm font-semibold text-white transition-colors hover:bg-moss/90 disabled:opacity-40"
           >
             {saving ? "Scheduling…" : "Schedule"}
@@ -152,8 +159,8 @@ export function StartTaskSheet({
             <button
               type="button"
               disabled={saving}
-              onClick={() => void handleSchedule(true)}
-              className="w-full rounded-xl border border-moss py-3 text-sm font-semibold text-moss transition-colors hover:bg-moss/10 disabled:opacity-40"
+              onClick={() => void schedule(true)}
+              className="w-full rounded-xl border border-moss/40 py-3 text-sm font-semibold text-moss transition-colors hover:bg-moss/10 disabled:opacity-40"
             >
               Schedule + Focus
             </button>
