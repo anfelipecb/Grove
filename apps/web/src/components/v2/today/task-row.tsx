@@ -49,10 +49,10 @@ export function TaskRow({ task, onComplete }: TaskRowProps) {
         disabled={task.completed || loading}
         aria-label={task.completed ? "Completed" : `Complete ${task.title}`}
         className={twMerge(
-          "h-5 w-5 shrink-0 rounded-md border-2 transition-colors",
+          "h-5 w-5 shrink-0 rounded-md border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2",
           task.completed
-            ? "border-moss bg-moss/80 flex items-center justify-center"
-            : "border-border hover:border-moss",
+            ? "border-moss bg-moss flex items-center justify-center"
+            : "border-moss/50 bg-moss/10 hover:border-moss hover:bg-moss/20",
           loading && "animate-pulse",
         )}
       >

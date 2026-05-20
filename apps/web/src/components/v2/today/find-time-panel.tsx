@@ -90,7 +90,7 @@ export function FindTimePanel() {
 
   if (status === "idle" || status === "error") {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 dark:bg-muted/10">
         <div className="flex items-center gap-2 mb-3">
           <CalendarClock className="h-4 w-4 text-moss" />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find Time</p>
@@ -108,7 +108,7 @@ export function FindTimePanel() {
 
   if (status === "loading") {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 dark:bg-muted/10">
         <div className="flex items-center gap-2 mb-3">
           <CalendarClock className="h-4 w-4 text-moss" />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find Time</p>
@@ -125,7 +125,7 @@ export function FindTimePanel() {
 
   if (status === "done") {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 dark:bg-muted/10">
         <div className="flex items-center gap-2 mb-2">
           <Check className="h-4 w-4 text-moss" />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Scheduled</p>
