@@ -2,16 +2,16 @@
 id: "GRO-053"
 title: "Locked-in focus sessions full-screen pomodoro overlay"
 slug: "locked-in-focus-sessions-full-screen-pomodoro-overlay"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "adhd", "focus"]
-depends_on: ["GRO-052"]
+owner: "cursor"
+branch: "ticket/gro-053-locked-in-focus-sessions-full-screen-pomodoro-overlay"
+worktree: ".worktrees/gro-053-locked-in-focus-sessions-full-screen-pomodoro-overlay"
+pr_url: "https://github.com/anfelipecb/Grove/pull/40"
+labels: []
+depends_on: []
 created_at: "2026-05-20T00:48:19.252Z"
-updated_at: "2026-05-20T00:48:19.252Z"
+updated_at: "2026-05-20T04:45:39.593Z"
 ---
 
 ## Context

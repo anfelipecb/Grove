@@ -2,16 +2,16 @@
 id: "GRO-052"
 title: "Dopamine menu understimulation recovery panel"
 slug: "dopamine-menu-understimulation-recovery-panel"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "adhd", "ux"]
-depends_on: ["GRO-054"]
+owner: "cursor"
+branch: "ticket/gro-052-dopamine-menu-understimulation-recovery-panel"
+worktree: ".worktrees/gro-052-dopamine-menu-understimulation-recovery-panel"
+pr_url: "https://github.com/anfelipecb/Grove/pull/39"
+labels: []
+depends_on: []
 created_at: "2026-05-20T00:48:19.252Z"
-updated_at: "2026-05-20T00:48:19.252Z"
+updated_at: "2026-05-20T04:37:47.958Z"
 ---
 
 ## Context
