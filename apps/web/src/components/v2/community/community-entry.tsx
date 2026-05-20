@@ -2,14 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Search, Users } from "lucide-react";
+import {
+  BuddyCoordinationPanel,
+  type CommunityInviteView,
+  type CommunityPlanView,
+} from "@/components/v2/community/buddy-coordination-panel";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-moss/40";
 
 const ALREADY_MEMBER_MSG = "You are already a member of this community.";
 
-export function CommunityEntry() {
+type DiscoverableCommunity = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+};
+
+type Props = {
+  pendingInvites: CommunityInviteView[];
+  discoverableCommunities: DiscoverableCommunity[];
+};
+
+export function CommunityEntry({ pendingInvites, discoverableCommunities }: Props) {
   const [joinSlug, setJoinSlug] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinPending, setJoinPending] = useState(false);
@@ -88,6 +105,14 @@ export function CommunityEntry() {
         </p>
       </header>
 
+      {pendingInvites.length > 0 ? (
+        <BuddyCoordinationPanel
+          invites={pendingInvites}
+          plans={[] as CommunityPlanView[]}
+          canCreate={false}
+        />
+      ) : null}
+
       <section className="rounded-xl border border-border/80 bg-card shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3 bg-muted/20">
           <Users className="h-4 w-4 text-moss" />
@@ -135,6 +160,42 @@ export function CommunityEntry() {
             </button>
           </form>
         )}
+      </section>
+
+      <section className="rounded-xl border border-border/80 bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3 bg-muted/20">
+          <Search className="h-4 w-4 text-moss" />
+          <h2 className="text-sm font-semibold text-foreground">Browse communities</h2>
+        </div>
+        <div className="space-y-3 p-4">
+          {discoverableCommunities.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No communities to browse yet. Start one below.</p>
+          ) : (
+            discoverableCommunities.map((community) => (
+              <article key={community.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{community.name}</p>
+                    <p className="mt-1 font-mono text-[11px] text-muted-foreground">{community.slug}</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={joinPending}
+                    onClick={() => {
+                      setJoinSlug(community.slug);
+                      setAlreadyMember(false);
+                      setJoinError(null);
+                    }}
+                    className="rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/40"
+                  >
+                    Use slug
+                  </button>
+                </div>
+                {community.description ? <p className="mt-2 text-sm text-muted-foreground">{community.description}</p> : null}
+              </article>
+            ))
+          )}
+        </div>
       </section>
 
       <section className="rounded-xl border border-border/80 bg-card shadow-sm overflow-hidden">

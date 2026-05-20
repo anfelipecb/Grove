@@ -6,6 +6,11 @@ import { SharedGoalsList, type SharedGoal } from "@/components/v2/community/shar
 import { MemberActivity, type CommunityMember } from "@/components/v2/community/member-activity";
 import { SessionsPanel, type UpcomingSession } from "@/components/v2/community/sessions-panel";
 import { AlignmentModal } from "@/components/v2/community/alignment-modal";
+import {
+  BuddyCoordinationPanel,
+  type CommunityInviteView,
+  type CommunityPlanView,
+} from "@/components/v2/community/buddy-coordination-panel";
 
 type CommunityData = {
   id: string;
@@ -23,6 +28,8 @@ type Props = {
   communityPoints: number;
   communityId: string;
   showAlignmentPrompt: boolean;
+  invites: CommunityInviteView[];
+  plans: CommunityPlanView[];
 };
 
 export function CommunityHome({
@@ -35,6 +42,8 @@ export function CommunityHome({
   communityPoints,
   communityId,
   showAlignmentPrompt,
+  invites,
+  plans,
 }: Props) {
   const [sessions, setSessions] = useState(upcomingSessions);
   const [alignmentOpen, setAlignmentOpen] = useState(showAlignmentPrompt);
@@ -80,6 +89,16 @@ export function CommunityHome({
           sessions={sessions}
           isOrganizer={isOrganizer}
           onSessionCreated={(s) => setSessions((cur) => [...cur, s].sort((a, b) => a.startsAt.localeCompare(b.startsAt)).slice(0, 3))}
+        />
+      </section>
+
+      <section className="space-y-2">
+        <BuddyCoordinationPanel
+          communityId={communityId}
+          communityName={community.name}
+          invites={invites}
+          plans={plans}
+          canCreate
         />
       </section>
     </div>

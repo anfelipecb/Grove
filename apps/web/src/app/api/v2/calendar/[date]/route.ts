@@ -43,6 +43,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ date: st
       .order("start_time", { ascending: true, nullsFirst: false }),
   ]);
 
+  const { data: planParticipants } = await supabase
+    .from("community_plan_participants")
+    .select("plan_id")
+    .eq("profile_id", profile.id);
+
+  const planIds = (planParticipants ?? []).map((row) => row.plan_id as string);
+  const { data: communityPlans } = planIds.length > 0
+    ? await supabase
+        .from("community_plans")
+        .select("id, title, scheduled_date, start_time, duration_minutes")
+        .in("id", planIds)
+        .eq("scheduled_date", date)
+        .eq("status", "confirmed")
+        .order("start_time", { ascending: true })
+    : { data: [] as { id: string; title: string; scheduled_date: string; start_time: string; duration_minutes: number }[] };
+
   const scheduledWithGoals = (scheduled ?? []).map((row) => {
     const raw = row.tasks as unknown;
     const task = (Array.isArray(raw) ? raw[0] : raw) as {
@@ -112,6 +128,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ date: st
   return Response.json({
     completions: completions ?? [],
     scheduled: scheduledWithGoals,
+    communityPlans: communityPlans ?? [],
     busy,
     ...(goalsProgress !== undefined ? { goalsProgress } : {}),
   });

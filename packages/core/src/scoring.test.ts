@@ -4,6 +4,7 @@ import {
   COMMUNITY_UNLOCK_GLOBAL_LEVEL,
   getClosestSurpriseUnlock,
   getGlobalLevel,
+  getMinXpForGlobalLevel,
   getNextSeniorityTier,
   getSeniorityProgress,
   getSeniorityTier,
@@ -85,7 +86,8 @@ describe("seniority tiers", () => {
 
 describe("global levels", () => {
   it("maps XP to tier sub-levels and global level", () => {
-    assert.equal(COMMUNITY_UNLOCK_GLOBAL_LEVEL, 11);
+    assert.equal(COMMUNITY_UNLOCK_GLOBAL_LEVEL, 5);
+    assert.equal(getMinXpForGlobalLevel(COMMUNITY_UNLOCK_GLOBAL_LEVEL), 100);
 
     const seedStart = getGlobalLevel(0);
     assert.equal(seedStart.tier.label, "Seed");
@@ -96,13 +98,13 @@ describe("global levels", () => {
     assert.equal(seedEnd.tier.label, "Seed");
     assert.equal(seedEnd.tierLevel, 10);
     assert.equal(seedEnd.globalLevel, 10);
-    assert.equal(hasCommunityAccess(249), false);
+    assert.equal(hasCommunityAccess(99), false);
 
-    const sproutStart = getGlobalLevel(250);
-    assert.equal(sproutStart.tier.label, "Sprout");
-    assert.equal(sproutStart.tierLevel, 1);
-    assert.equal(sproutStart.globalLevel, 11);
-    assert.equal(hasCommunityAccess(250), true);
+    const unlockStart = getGlobalLevel(100);
+    assert.equal(unlockStart.tier.label, "Seed");
+    assert.equal(unlockStart.tierLevel, 5);
+    assert.equal(unlockStart.globalLevel, 5);
+    assert.equal(hasCommunityAccess(100), true);
 
     const sproutEnd = getGlobalLevel(749);
     assert.equal(sproutEnd.tier.label, "Sprout");

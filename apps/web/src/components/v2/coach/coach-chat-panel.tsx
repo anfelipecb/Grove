@@ -24,6 +24,8 @@ type CoachChatPanelProps = {
   profileId: string;
   context: CoachChatContext;
   initialAssistantMessage?: string;
+  /** Icon-only send button (no "Send" label). */
+  compactSend?: boolean;
 };
 
 function buildOpeningLine(context: CoachChatContext, displayName: string): string {
@@ -66,6 +68,7 @@ export function CoachChatPanel({
   profileId,
   context,
   initialAssistantMessage,
+  compactSend = false,
 }: CoachChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -249,10 +252,14 @@ export function CoachChatPanel({
           type="button"
           onClick={() => void send()}
           disabled={loading || input.trim().length === 0}
-          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-2xl bg-moss px-4 py-3 text-sm font-semibold text-moss-fg transition hover:bg-moss/90 disabled:pointer-events-none disabled:opacity-50"
+          aria-label="Send message"
+          className={twMerge(
+            "inline-flex shrink-0 items-center justify-center rounded-2xl bg-moss text-moss-fg transition hover:bg-moss/90 disabled:pointer-events-none disabled:opacity-50",
+            compactSend ? "h-[56px] w-[56px]" : "gap-1 px-4 py-3 text-sm font-semibold",
+          )}
         >
           <Send className="h-4 w-4" aria-hidden="true" />
-          Send
+          {compactSend ? null : "Send"}
         </button>
       </div>
     </section>

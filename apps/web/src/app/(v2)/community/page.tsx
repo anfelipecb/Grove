@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerUserId } from "@/lib/clerk-auth";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
 import { CommunityGate } from "@/components/v2/community/community-gate";
 import { CommunityHome } from "@/components/v2/community/community-home";
 import { CommunityEntry } from "@/components/v2/community/community-entry";
@@ -9,6 +10,10 @@ import { hasCommunityAccess } from "@grove/core";
 import type { SharedGoal } from "@/components/v2/community/shared-goals-list";
 import type { CommunityMember } from "@/components/v2/community/member-activity";
 import type { UpcomingSession } from "@/components/v2/community/sessions-panel";
+import type {
+  CommunityInviteView,
+  CommunityPlanView,
+} from "@/components/v2/community/buddy-coordination-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +25,176 @@ function getMondayISO(): string {
   monday.setDate(now.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
   return monday.toISOString().slice(0, 10);
+}
+
+type InviteRow = {
+  id: string;
+  community_id: string;
+  inviter_profile_id: string;
+  invitee_profile_id: string | null;
+  invitee_email: string;
+  activity_title: string;
+  message: string | null;
+  goal_context: string | null;
+  proposed_date: string | null;
+  proposed_start_time: string | null;
+  duration_minutes: number;
+  status: "pending" | "proposed" | "accepted" | "declined" | "canceled";
+  counter_date: string | null;
+  counter_start_time: string | null;
+  response_note: string | null;
+};
+
+async function loadCoordinationData(args: {
+  profileId: string;
+  profileEmail: string | null;
+  communityId?: string;
+  fallbackSupabase: SupabaseClient;
+}) {
+  const supabase = createServiceSupabaseClient() ?? args.fallbackSupabase;
+
+  const sentPromise = supabase
+    .from("community_invites")
+    .select(
+      "id, community_id, inviter_profile_id, invitee_profile_id, invitee_email, activity_title, message, goal_context, proposed_date, proposed_start_time, duration_minutes, status, counter_date, counter_start_time, response_note",
+    )
+    .eq("inviter_profile_id", args.profileId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const receivedByProfilePromise = supabase
+    .from("community_invites")
+    .select(
+      "id, community_id, inviter_profile_id, invitee_profile_id, invitee_email, activity_title, message, goal_context, proposed_date, proposed_start_time, duration_minutes, status, counter_date, counter_start_time, response_note",
+    )
+    .eq("invitee_profile_id", args.profileId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const receivedByEmailPromise = args.profileEmail
+    ? supabase
+        .from("community_invites")
+        .select(
+          "id, community_id, inviter_profile_id, invitee_profile_id, invitee_email, activity_title, message, goal_context, proposed_date, proposed_start_time, duration_minutes, status, counter_date, counter_start_time, response_note",
+        )
+        .ilike("invitee_email", args.profileEmail)
+        .order("created_at", { ascending: false })
+        .limit(20)
+    : Promise.resolve({ data: [] as InviteRow[] });
+
+  const [{ data: sent }, { data: receivedByProfile }, { data: receivedByEmail }] = await Promise.all([
+    sentPromise,
+    receivedByProfilePromise,
+    receivedByEmailPromise,
+  ]);
+
+  const inviteMap = new Map<string, InviteRow>();
+  for (const row of [...(sent ?? []), ...(receivedByProfile ?? []), ...(receivedByEmail ?? [])]) {
+    inviteMap.set(row.id as string, row as InviteRow);
+  }
+
+  const inviteRows = Array.from(inviteMap.values());
+  const communityIds = new Set<string>();
+  const profileIds = new Set<string>([args.profileId]);
+  for (const invite of inviteRows) {
+    communityIds.add(invite.community_id);
+    profileIds.add(invite.inviter_profile_id);
+    if (invite.invitee_profile_id) profileIds.add(invite.invitee_profile_id);
+  }
+
+  const [{ data: communities }, { data: profiles }] = await Promise.all([
+    communityIds.size > 0
+      ? supabase.from("communities").select("id, name, slug, description").in("id", Array.from(communityIds))
+      : Promise.resolve({ data: [] as { id: string; name: string; slug: string; description: string | null }[] }),
+    profileIds.size > 0
+      ? supabase.from("profiles").select("id, display_name").in("id", Array.from(profileIds))
+      : Promise.resolve({ data: [] as { id: string; display_name: string | null }[] }),
+  ]);
+
+  const communityMap = new Map((communities ?? []).map((community) => [community.id as string, community]));
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id as string, profile.display_name ?? "Member"]));
+
+  const invites: CommunityInviteView[] = inviteRows
+    .filter((invite) => !args.communityId || invite.community_id === args.communityId)
+    .map((invite) => ({
+      id: invite.id,
+      communityId: invite.community_id,
+      communityName: communityMap.get(invite.community_id)?.name ?? "Community",
+      inviterName: profileMap.get(invite.inviter_profile_id) ?? "Member",
+      inviteeEmail: invite.invitee_email,
+      activityTitle: invite.activity_title,
+      message: invite.message,
+      goalContext: invite.goal_context,
+      proposedDate: invite.proposed_date,
+      proposedStartTime: invite.proposed_start_time,
+      durationMinutes: invite.duration_minutes,
+      status: invite.status,
+      counterDate: invite.counter_date,
+      counterStartTime: invite.counter_start_time,
+      responseNote: invite.response_note,
+      isIncoming: invite.inviter_profile_id !== args.profileId,
+      isInviter: invite.inviter_profile_id === args.profileId,
+    }));
+
+  let plans: CommunityPlanView[] = [];
+  if (args.communityId) {
+    const { data: participantRows } = await supabase
+      .from("community_plan_participants")
+      .select("plan_id")
+      .eq("profile_id", args.profileId);
+
+    const planIds = (participantRows ?? []).map((row) => row.plan_id as string);
+    if (planIds.length > 0) {
+      const { data: rawPlans } = await supabase
+        .from("community_plans")
+        .select("id, community_id, title, scheduled_date, start_time, duration_minutes")
+        .eq("community_id", args.communityId)
+        .in("id", planIds)
+        .eq("status", "confirmed")
+        .order("scheduled_date", { ascending: true })
+        .limit(10);
+
+      const filteredPlanIds = (rawPlans ?? []).map((plan) => plan.id as string);
+      const { data: planParticipants } = filteredPlanIds.length
+        ? await supabase
+            .from("community_plan_participants")
+            .select("plan_id, profile_id")
+            .in("plan_id", filteredPlanIds)
+        : { data: [] as { plan_id: string; profile_id: string }[] };
+
+      plans = (rawPlans ?? []).map((plan) => ({
+        id: plan.id as string,
+        communityName: communityMap.get(plan.community_id as string)?.name ?? "Community",
+        title: plan.title as string,
+        scheduledDate: plan.scheduled_date as string,
+        startTime: plan.start_time as string,
+        durationMinutes: plan.duration_minutes as number,
+        participantNames: (planParticipants ?? [])
+          .filter((participant) => participant.plan_id === plan.id)
+          .map((participant) => profileMap.get(participant.profile_id as string) ?? "Member"),
+      }));
+    }
+  }
+
+  if (!args.communityId) {
+    const { data: recentCommunities } = await supabase
+      .from("communities")
+      .select("id, name, slug, description")
+      .order("created_at", { ascending: false })
+      .limit(6);
+    return {
+      invites,
+      plans,
+      discoverableCommunities: (recentCommunities ?? []).map((community) => ({
+        id: community.id as string,
+        name: community.name as string,
+        slug: community.slug as string,
+        description: (community.description as string | null | undefined) ?? null,
+        })),
+    };
+  }
+
+  return { invites, plans, discoverableCommunities: [] };
 }
 
 export default async function CommunityPage() {
@@ -38,7 +213,7 @@ export default async function CommunityPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, community_points, private_focus_notes, total_xp")
+    .select("id, email, community_points, private_focus_notes, total_xp")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -58,7 +233,12 @@ export default async function CommunityPage() {
     .maybeSingle();
 
   if (!membership) {
-    return <CommunityEntry />;
+    const { invites, discoverableCommunities } = await loadCoordinationData({
+      profileId: profile.id as string,
+      profileEmail: (profile.email as string | null | undefined) ?? null,
+      fallbackSupabase: supabase,
+    });
+    return <CommunityEntry pendingInvites={invites.filter((invite) => invite.isIncoming)} discoverableCommunities={discoverableCommunities} />;
   }
 
   const communityId = membership.community_id;
@@ -175,6 +355,12 @@ export default async function CommunityPage() {
   const alignmentStatus = notes?.community_alignment_status;
   const showAlignmentPrompt =
     alignmentStatus !== "skipped" && alignmentStatus !== "completed";
+  const { invites, plans } = await loadCoordinationData({
+    profileId: profile.id as string,
+    profileEmail: (profile.email as string | null | undefined) ?? null,
+    communityId,
+    fallbackSupabase: supabase,
+  });
 
   return (
     <CommunityHome
@@ -187,6 +373,8 @@ export default async function CommunityPage() {
       communityPoints={profile.community_points ?? 0}
       communityId={communityId}
       showAlignmentPrompt={showAlignmentPrompt}
+      invites={invites}
+      plans={plans}
     />
   );
 }

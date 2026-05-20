@@ -50,12 +50,26 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "landing-ring-spin": {
+          to: { transform: "rotate(360deg)" },
+        },
+        "landing-dot": {
+          "0%, 100%": { opacity: "0.35", transform: "translateY(0)" },
+          "50%": { opacity: "1", transform: "translateY(-3px)" },
+        },
+        "landing-grow-badge": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.04)", opacity: "0.92" },
+        },
       },
       animation: {
         "landing-float": "landing-float 14s ease-in-out infinite",
         "landing-float-slow": "landing-float 22s ease-in-out infinite reverse",
         "landing-drift": "landing-drift 6s ease-in-out infinite",
         "landing-shine": "landing-shine 8s linear infinite",
+        "landing-ring-spin": "landing-ring-spin 5s linear infinite",
+        "landing-dot": "landing-dot 1s ease-in-out infinite",
+        "landing-grow-badge": "landing-grow-badge 2.4s ease-in-out infinite",
         fadeIn: "fadeIn 0.35s ease-out forwards",
       },
     },

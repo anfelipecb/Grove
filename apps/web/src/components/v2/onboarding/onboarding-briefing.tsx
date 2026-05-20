@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { LIFE_DOMAINS } from "@grove/core";
-import { CoachChatPanel, type CoachChatContext } from "@/components/v2/coach/coach-chat-panel";
+import { OnboardingBriefingChat } from "@/components/v2/onboarding/onboarding-briefing-chat";
 import { DomainTag } from "@/components/v2/shared/domain-tag";
+import { coerceBriefingDomain } from "@/lib/onboarding-briefing-goals";
 
 const STYLE_LABELS: Record<string, string> = {
   structured: "Structured",
@@ -18,24 +20,23 @@ export type OnboardingBriefingProps = {
   goals: string[];
   style: string;
   topDomains: Array<{ domain: string; pct: number }>;
+  profileId: string | null;
   devPreview?: boolean;
 };
 
-export function OnboardingBriefing({ name, goals, style, topDomains, devPreview = false }: OnboardingBriefingProps) {
+export function OnboardingBriefing({
+  name,
+  goals,
+  style,
+  topDomains,
+  profileId,
+  devPreview = false,
+}: OnboardingBriefingProps) {
   const router = useRouter();
+  const [readyForToday, setReadyForToday] = useState(false);
   const displayName = name.trim() || "there";
   const styleLabel = STYLE_LABELS[style] ?? style;
-  const goalsLine = goals.length > 0 ? goals.join(", ") : "your goals";
-
-  const context: CoachChatContext = {
-    today: new Date().toISOString().slice(0, 10),
-    topGoalTitle: goals[0] ?? null,
-    activeGoals: goals.map((title) => ({ title, domain: topDomains[0]?.domain ?? "work_build" })),
-    todayTasks: [],
-    recentXp: [],
-  };
-
-  const initialAssistantMessage = `Based on what you shared, here's what I'm thinking for your first week: ${goalsLine}. Want me to break any of these into smaller tasks?`;
+  const primaryDomain = coerceBriefingDomain(topDomains[0]?.domain);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -55,7 +56,7 @@ export function OnboardingBriefing({ name, goals, style, topDomains, devPreview 
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:items-stretch">
-        <section className="rounded-xl border border-border bg-card p-5 lg:w-[min(360px,40%)] lg:shrink-0">
+        <section className="rounded-xl border border-border bg-card p-5 lg:w-[min(300px,36%)] lg:shrink-0">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your focus</h2>
           {goals.length > 0 ? (
             <ul className="mt-3 space-y-2 text-sm text-foreground">
@@ -67,22 +68,19 @@ export function OnboardingBriefing({ name, goals, style, topDomains, devPreview 
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">Goals will show up once you add them on Today.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Goals will show on Today once Coach finishes.</p>
           )}
 
           {topDomains.length > 0 && (
             <div className="mt-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top domains</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {topDomains.map(({ domain, pct }) => {
-                  const label = LIFE_DOMAINS.find((d) => d.id === domain)?.label ?? domain;
-                  return (
-                    <span key={domain} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <DomainTag domain={domain} showInfo={false} />
-                      <span>{pct}%</span>
-                    </span>
-                  );
-                })}
+                {topDomains.map(({ domain, pct }) => (
+                  <span key={domain} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <DomainTag domain={domain} showInfo={false} />
+                    <span>{pct}%</span>
+                  </span>
+                ))}
               </div>
             </div>
           )}
@@ -95,13 +93,14 @@ export function OnboardingBriefing({ name, goals, style, topDomains, devPreview 
           </div>
         </section>
 
-        <section className="flex min-h-[320px] flex-1 flex-col rounded-xl border border-border bg-card overflow-hidden">
-          <CoachChatPanel
-            demoMode
+        <section className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
+          <OnboardingBriefingChat
             displayName={displayName}
-            profileId="onboarding"
-            context={context}
-            initialAssistantMessage={initialAssistantMessage}
+            goals={goals}
+            primaryDomain={primaryDomain}
+            profileId={profileId}
+            devPreview={devPreview}
+            onReadyChange={setReadyForToday}
           />
         </section>
       </main>
@@ -109,16 +108,18 @@ export function OnboardingBriefing({ name, goals, style, topDomains, devPreview 
       <footer className="border-t border-border px-4 py-4 sm:px-6">
         <button
           type="button"
+          disabled={!readyForToday}
           onClick={() => {
             if (devPreview) {
               window.location.assign("/api/dev/set-demo-cookie");
             } else {
               router.push("/today");
+              router.refresh();
             }
           }}
-          className="mx-auto block w-full max-w-5xl rounded-xl bg-moss py-3.5 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
+          className="mx-auto block w-full max-w-5xl rounded-xl bg-moss py-3.5 text-sm font-semibold text-white transition-colors hover:bg-moss/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Let&apos;s go →
+          {readyForToday ? "Let's go →" : "Building your starter tasks…"}
         </button>
       </footer>
     </div>

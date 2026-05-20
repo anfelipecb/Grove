@@ -63,10 +63,26 @@ export const SENIORITY_TIERS = [
 
 export type SeniorityTier = (typeof SENIORITY_TIERS)[number];
 
-/** Global level 11 = Sprout L1 — community unlocks here. */
-export const COMMUNITY_UNLOCK_GLOBAL_LEVEL = 11;
+/** Community unlocks at global level 5 in v2. */
+export const COMMUNITY_UNLOCK_GLOBAL_LEVEL = 5;
 
 const XP_PER_TIER_LEVEL = [25, 50, 85, 140, 300] as const;
+
+export function getMinXpForGlobalLevel(globalLevel: number): number {
+  const safeLevel = Math.max(1, Math.floor(globalLevel));
+  let levelsRemaining = safeLevel - 1;
+  let xp = 0;
+
+  for (let tierIndex = 0; tierIndex < XP_PER_TIER_LEVEL.length; tierIndex += 1) {
+    const xpPerLevel = XP_PER_TIER_LEVEL[tierIndex] ?? XP_PER_TIER_LEVEL[XP_PER_TIER_LEVEL.length - 1];
+    const levelsInTier = Math.min(10, levelsRemaining);
+    xp += levelsInTier * xpPerLevel;
+    levelsRemaining -= levelsInTier;
+    if (levelsRemaining <= 0) break;
+  }
+
+  return xp;
+}
 
 export function getGlobalLevel(totalXp: number): {
   tier: SeniorityTier;

@@ -23,6 +23,14 @@ type ScheduledBlock = {
   duration_minutes: number;
 };
 
+type CommunityPlanBlock = {
+  id: string;
+  title: string;
+  scheduled_date: string;
+  start_time: string;
+  duration_minutes: number;
+};
+
 type BusyBlock = {
   title: string;
   start: string; // ISO datetime
@@ -62,7 +70,7 @@ function busyDuration(isoStart: string, isoEnd: string): number {
   return Math.round((new Date(isoEnd).getTime() - new Date(isoStart).getTime()) / 60000);
 }
 
-type DayData = { scheduled: ScheduledBlock[]; busy: BusyBlock[] };
+type DayData = { scheduled: ScheduledBlock[]; busy: BusyBlock[]; communityPlans: CommunityPlanBlock[] };
 
 type WeekCalendarProps = {
   googleCalendarConnected: boolean;
@@ -91,6 +99,7 @@ export function WeekCalendar({ googleCalendarConnected, filterGoalId = null }: W
               duration_minutes?: number | null;
               tasks?: { title: string; domain: string; goal_id?: string | null } | null;
             }[];
+            communityPlans?: CommunityPlanBlock[];
             busy?: BusyBlock[];
           };
           const scheduled: ScheduledBlock[] = (data.scheduled ?? [])
@@ -108,11 +117,11 @@ export function WeekCalendar({ googleCalendarConnected, filterGoalId = null }: W
                 duration_minutes: s.duration_minutes ?? 30,
               };
             });
-          return { date, scheduled, busy: data.busy ?? [] };
+          return { date, scheduled, busy: data.busy ?? [], communityPlans: data.communityPlans ?? [] };
         })
       );
       const map: Record<string, DayData> = {};
-      for (const r of results) map[r.date] = { scheduled: r.scheduled, busy: r.busy };
+      for (const r of results) map[r.date] = { scheduled: r.scheduled, busy: r.busy, communityPlans: r.communityPlans };
       setDayData(map);
       setLoading(false);
     };
@@ -126,7 +135,7 @@ export function WeekCalendar({ googleCalendarConnected, filterGoalId = null }: W
   });
 
   function DayColumn({ date }: { date: string }) {
-    const data = dayData[date] ?? { scheduled: [], busy: [] };
+    const data = dayData[date] ?? { scheduled: [], busy: [], communityPlans: [] };
     const d = new Date(date + "T00:00:00");
     const isToday = date === today;
     const weekday = d.toLocaleDateString(undefined, { weekday: "short" });
@@ -175,6 +184,17 @@ export function WeekCalendar({ googleCalendarConnected, filterGoalId = null }: W
               </div>
             );
           })}
+          {data.communityPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className="absolute left-0.5 right-0.5 overflow-hidden rounded border border-violet-400 bg-violet-100/90 text-violet-900"
+              style={{ top: slotTop(plan.start_time), height: slotHeight(plan.duration_minutes) }}
+            >
+              <p className="truncate px-1 pt-0.5 text-[9px] font-semibold">Buddy plan</p>
+              <p className="truncate px-1 text-[8px]">{plan.title}</p>
+              <p className="px-1 text-[8px] opacity-70">{plan.start_time}</p>
+            </div>
+          ))}
         </div>
       </div>
     );

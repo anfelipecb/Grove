@@ -1,20 +1,6 @@
 import { ArrowRight, Leaf, Sparkles, Users, CalendarDays } from "lucide-react";
 import Link from "next/link";
-
-const painPoints = [
-  {
-    title: "You know what matters, but starting still feels heavy",
-    body: "The problem is rarely a lack of ambition. It is friction, context switching, and the quiet guilt that builds when a plan is too big to re-enter.",
-  },
-  {
-    title: "Most tools punish the exact day you needed a softer reset",
-    body: "Miss one day, lose the streak, feel behind, stop opening the app. Grove is designed for getting back in motion without pretending the hard day never happened.",
-  },
-  {
-    title: "Community usually sits in a separate tab, disconnected from real follow-through",
-    body: "Grove treats showing up with other people as part of the system, not an optional social layer bolted on later.",
-  },
-] as const;
+import { LandingGrowthSection } from "@/components/landing-growth-section";
 
 const productScenes = [
   {
@@ -216,19 +202,7 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
           </aside>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {painPoints.map((item, index) => (
-            <article
-              key={item.title}
-              style={{ animationDelay: `${index * 120}ms` }}
-              className="rounded-[1.75rem] border border-white/45 bg-white/35 p-6 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-clay">Why this matters</p>
-              <h2 className="mt-3 text-xl font-semibold text-bark dark:text-foreground">{item.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{item.body}</p>
-            </article>
-          ))}
-        </section>
+        <LandingGrowthSection />
 
         <section className="rounded-[2rem] border border-white/45 bg-white/35 p-6 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/40 dark:shadow-glass-dark sm:p-8">
           <div className="max-w-2xl">

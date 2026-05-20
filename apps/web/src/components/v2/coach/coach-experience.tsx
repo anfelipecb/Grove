@@ -52,6 +52,7 @@ export function CoachExperience({
       <div className="hidden gap-6 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <div>{coachPane}</div>
         <CoachChatPanel
+          compactSend
           demoMode={demoMode}
           displayName={displayName}
           profileId={profileId}
@@ -82,12 +83,13 @@ export function CoachExperience({
         </div>
         <div className={mobileTab === "Chat" ? "block" : "hidden"}>
           <CoachChatPanel
-          demoMode={demoMode}
-          displayName={displayName}
-          profileId={profileId}
-          context={chatContext}
-          initialAssistantMessage={initialAssistantMessage}
-        />
+            compactSend
+            demoMode={demoMode}
+            displayName={displayName}
+            profileId={profileId}
+            context={chatContext}
+            initialAssistantMessage={initialAssistantMessage}
+          />
         </div>
       </div>
     </div>

@@ -82,3 +82,27 @@ textarea {
 .dark ::selection {
   background: hsl(142 20% 24% / 0.45);
 }
+
+/* Landing: Gemini-style animated prompt ring (background layer only) */
+.landing-gradient-ring-bg {
+  background: conic-gradient(
+    from 0deg,
+    hsl(138 24% 39%),
+    hsl(43 76% 59%),
+    hsl(18 42% 52%),
+    hsl(200 35% 55%),
+    hsl(138 24% 39%)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-gradient-ring-bg {
+    inset: 0 !important;
+    background: linear-gradient(
+      135deg,
+      hsl(138 24% 39%),
+      hsl(43 76% 59%),
+      hsl(200 35% 55%)
+    );
+  }
+}

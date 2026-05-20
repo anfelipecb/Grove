@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { LIFE_DOMAINS, type IntakeDraft, type MemberProfileCard, type LifeDomainId } from "@grove/core";
-import { DomainInfoTooltip } from "@/components/v2/shared/domain-info-tooltip";
+import {
+  OnboardingDomainWeightsDisplay,
+  OnboardingDomainWeightsSkeleton,
+} from "@/components/v2/onboarding/onboarding-domain-weights-display";
 import {
   briefingGoalsFromWizard,
   buildOnboardingDoneUrl,
@@ -39,16 +42,6 @@ const SUPPORT_STYLES = [
   { value: "direct", label: "Direct" },
   { value: "brief", label: "Brief" },
 ] as const;
-
-const DOMAIN_BAR_COLORS: Record<string, string> = {
-  wellbeing: "bg-emerald-500",
-  learning: "bg-blue-500",
-  work_build: "bg-orange-500",
-  relationships: "bg-pink-500",
-  community: "bg-violet-500",
-  life_admin: "bg-slate-400",
-  rest_play: "bg-amber-500",
-};
 
 function equalDefaultWeights(): Record<LifeDomainId, number> {
   const n = LIFE_DOMAINS.length;
@@ -158,51 +151,6 @@ function InputBase({
       placeholder={placeholder}
       className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-moss/30"
     />
-  );
-}
-
-function DomainWeightsExplainer() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="mb-3">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="text-xs font-medium text-moss underline underline-offset-2 hover:text-moss/80"
-      >
-        What are life domains?
-      </button>
-      {open ? (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Life domains are the 7 areas of your life Grove tracks. Mycelium uses these weights to prioritize which area gets more attention in your suggestions.
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function StackedDomainBar({ weights }: { weights: Record<LifeDomainId, number> }) {
-  return (
-    <div className="space-y-3 pt-3 scroll-pt-3">
-      <div className="flex h-4 w-full overflow-hidden rounded-full">
-        {LIFE_DOMAINS.map((d) => (
-          <div
-            key={d.id}
-            className={DOMAIN_BAR_COLORS[d.id] ?? "bg-moss"}
-            style={{ flex: `0 0 ${weights[d.id]}%` }}
-            title={`${d.label} ${weights[d.id]}%`}
-          />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-2">
-        {LIFE_DOMAINS.map((d) => (
-          <span key={d.id} className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            {d.label} · {weights[d.id]}%
-            <DomainInfoTooltip domainId={d.id} />
-          </span>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -431,17 +379,6 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
 
         {step === 0 && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-moss/20 bg-moss/5 px-4 py-3">
-              <div className="flex items-start gap-2">
-                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-moss" />
-                <div>
-                  <p className="text-xs font-semibold text-moss">Powered by Mycelium</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Your AI growth coach that learns from what you share and adapts its suggestions over time.
-                  </p>
-                </div>
-              </div>
-            </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Welcome to Grove</h1>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -594,15 +531,11 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                 Mycelium calibrated these from your goals. Adjust later in your profile.
               </p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-              <DomainWeightsExplainer />
+            <div className="rounded-xl border border-border bg-card p-4">
               {loading && !weightsLoaded ? (
-                <div className="space-y-3 animate-pulse">
-                  <div className="h-4 w-full rounded-full bg-muted" />
-                  <p className="text-xs text-muted-foreground text-center">Calibrating…</p>
-                </div>
+                <OnboardingDomainWeightsSkeleton />
               ) : (
-                <StackedDomainBar weights={weights} />
+                <OnboardingDomainWeightsDisplay weights={weights} />
               )}
             </div>
           </div>

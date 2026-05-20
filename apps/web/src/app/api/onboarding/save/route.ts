@@ -1,8 +1,17 @@
 import { currentUser } from "@clerk/nextjs/server";
 import type { IntakeDraft, MemberProfileCard } from "@grove/core";
 import type { LifeDomainId } from "@grove/core";
-import { getServerUserId } from "@/lib/clerk-auth";
-import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
+import { demoSessionActiveServer, getServerUserId } from "@/lib/clerk-auth";
+import {
+  ONBOARDING_SAVE_SETUP_HINT,
+  isRlsPolicyError,
+  runOnboardingSave,
+} from "@/lib/onboarding-save";
+import {
+  createDemoAwareServerClient,
+  createServerSupabaseClient,
+  createServiceSupabaseClient,
+} from "@/lib/supabase-server";
 
 type SaveBody = {
   intake: IntakeDraft;
@@ -24,18 +33,6 @@ export async function POST(request: Request) {
 
   const isAssessment = body.mode === "assessment";
 
-  const userSupabase = await createServerSupabaseClient();
-  const supabase = userSupabase ?? createServiceSupabaseClient();
-  if (!supabase) {
-    return Response.json(
-      {
-        error:
-          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or anon key) in Vercel.",
-      },
-      { status: 500 },
-    );
-  }
-
   const user = await currentUser();
   const displayName =
     body.intake.name?.trim() ||
@@ -45,137 +42,57 @@ export async function POST(request: Request) {
     "Member";
   const email = user?.primaryEmailAddress?.emailAddress ?? null;
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        clerk_user_id: userId,
-        display_name: displayName,
-        email,
-        onboarding_step: 5,
-        xp_domain_weights: body.xpDomainWeights,
-        private_focus_notes: {
-          focus_disclosure: body.intake.focusDisclosure ?? "",
-          support_style: body.intake.supportStyle,
-        },
-        public_support_preferences: {},
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "clerk_user_id" },
-    )
-    .select("id")
-    .single();
+  const saveInput = {
+    clerkUserId: userId,
+    displayName,
+    email,
+    intake: body.intake,
+    profileCard: body.profileCard,
+    xpDomainWeights: body.xpDomainWeights,
+    isAssessment,
+  };
 
-  if (profileError || !profile) {
-    return Response.json(
-      { error: profileError?.message ?? "Profile upsert failed. Check Supabase + Clerk third-party auth." },
-      { status: 500 },
-    );
-  }
+  let supabase = null as Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  let usedServiceRole = false;
 
-  const profileId = profile.id;
-
-  const { error: onboardError } = await supabase.from("onboarding_responses").insert({
-    profile_id: profileId,
-    responses: body.intake,
-    profile_card: body.profileCard,
-  });
-
-  if (onboardError) {
-    return Response.json({ error: onboardError.message }, { status: 500 });
-  }
-
-  const sortedDomains = (Object.entries(body.xpDomainWeights) as [LifeDomainId, number][])
-    .sort((a, b) => b[1] - a[1])
-    .map(([k]) => k);
-  const primaryDomain = sortedDomains[0] ?? "learning";
-
-  const targets = body.profileCard.firstTargets.slice(0, 3);
-  if (isAssessment) {
-    const { data: activeGoals, error: goalsError } = await supabase
-      .from("goals")
-      .select("id")
-      .eq("profile_id", profileId)
-      .eq("status", "active")
-      .order("created_at", { ascending: true });
-
-    if (goalsError) {
-      return Response.json({ error: goalsError.message }, { status: 500 });
-    }
-
-    const goalIds = (activeGoals ?? []).map((goal) => goal.id as string);
-    for (let i = 0; i < targets.length; i += 1) {
-      const title = targets[i];
-      const goalId = goalIds[i];
-      if (goalId) {
-        const { error: updateError } = await supabase
-          .from("goals")
-          .update({
-            title,
-            domain: primaryDomain,
-            subarea: null,
-            xp_value: 25,
-            status: "active",
-          })
-          .eq("id", goalId);
-        if (updateError) {
-          return Response.json({ error: updateError.message }, { status: 500 });
-        }
-      } else {
-        const { error: goalError } = await supabase.from("goals").insert({
-          profile_id: profileId,
-          title,
-          domain: primaryDomain,
-          subarea: null,
-          xp_value: 25,
-          status: "active",
-        });
-        if (goalError) {
-          return Response.json({ error: goalError.message }, { status: 500 });
-        }
-      }
-    }
+  if (demoSessionActiveServer()) {
+    const { client } = await createDemoAwareServerClient();
+    supabase = client;
+    usedServiceRole = true;
   } else {
-    for (const title of targets) {
-      const { error: goalError } = await supabase.from("goals").insert({
-        profile_id: profileId,
-        title,
-        domain: primaryDomain,
-        subarea: null,
-        xp_value: 25,
-        status: "active",
-      });
-      if (goalError) {
-        return Response.json({ error: goalError.message }, { status: 500 });
-      }
+    supabase = await createServerSupabaseClient();
+  }
+
+  if (!supabase) {
+    const service = createServiceSupabaseClient();
+    if (!service) {
+      return Response.json(
+        {
+          error:
+            "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or anon key) in .env.local.",
+        },
+        { status: 500 },
+      );
+    }
+    supabase = service;
+    usedServiceRole = true;
+  }
+
+  let result = await runOnboardingSave(supabase, saveInput);
+
+  if (!result.ok && result.rlsBlocked && !usedServiceRole) {
+    const service = createServiceSupabaseClient();
+    if (service) {
+      result = await runOnboardingSave(service, saveInput);
+      usedServiceRole = true;
     }
   }
 
-  // First-time onboarding: ensure welcome community membership (RLS-safe insert + migration-based update on conflict).
-  // Reassessment: skip entirely — existing members should not trigger duplicate upserts.
-  if (!isAssessment) {
-    const { data: community } = await supabase
-      .from("communities")
-      .select("id")
-      .eq("slug", "grove-welcome")
-      .maybeSingle();
-
-    if (community) {
-      const { error: memError } = await supabase
-        .from("memberships")
-        .upsert(
-          {
-            community_id: community.id,
-            profile_id: profileId,
-            role: "member",
-          },
-          { onConflict: "community_id,profile_id" },
-        );
-      if (memError) {
-        return Response.json({ error: memError.message }, { status: 500 });
-      }
-    }
+  if (!result.ok) {
+    const message =
+      result.rlsBlocked && !usedServiceRole ? ONBOARDING_SAVE_SETUP_HINT : result.error;
+    return Response.json({ error: message }, { status: 500 });
   }
 
-  return Response.json({ ok: true, profileId });
+  return Response.json({ ok: true, profileId: result.profileId });
 }
