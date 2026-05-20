@@ -21,11 +21,19 @@ const goalSchema = z.object({
   tasks: z.array(taskSchema).min(1).max(8),
 });
 
+const scheduledTaskSchema = z.object({
+  title: z.string().min(1).max(140),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  duration_minutes: z.number().int().min(15).max(240).optional(),
+});
+
 const bodySchema = z
   .object({
     displayName: z.string().optional(),
     editingGoalId: z.string().uuid().nullable().optional(),
     goals: z.array(goalSchema).min(1).max(6),
+    scheduledTasks: z.array(scheduledTaskSchema).optional(),
   })
   .refine((data) => !data.editingGoalId || data.goals.length === 1, {
     message: "editingGoalId only supports replacing one goal at a time.",
@@ -161,9 +169,31 @@ export async function POST(request: Request) {
       status: "active",
     }));
 
-    const { error: tasksError } = await supabase.from("tasks").insert(tasksPayload);
+    const { data: insertedTasks, error: tasksError } = await supabase
+      .from("tasks")
+      .insert(tasksPayload)
+      .select("id, title");
     if (tasksError) {
       return Response.json({ error: tasksError.message }, { status: 500 });
+    }
+
+    const scheduleForGoal = (body.scheduledTasks ?? []).filter((slot) =>
+      goal.tasks.some((t) => t.title === slot.title),
+    );
+    for (const slot of scheduleForGoal) {
+      const taskRow = (insertedTasks ?? []).find((t) => t.title === slot.title);
+      if (!taskRow) continue;
+      const duration = slot.duration_minutes ?? 30;
+      await supabase.from("scheduled_tasks").upsert(
+        {
+          task_id: taskRow.id,
+          profile_id: profileId,
+          scheduled_date: slot.date,
+          start_time: slot.start_time,
+          duration_minutes: duration,
+        },
+        { onConflict: "task_id,profile_id,scheduled_date", ignoreDuplicates: false },
+      );
     }
   }
 

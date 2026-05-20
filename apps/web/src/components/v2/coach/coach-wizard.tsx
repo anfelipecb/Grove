@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { WizardStepConfirm } from "@/components/v2/coach/wizard-step-confirm";
+import {
+  WizardStepSchedule,
+  type ProposedScheduleItem,
+} from "@/components/v2/coach/wizard-step-schedule";
 import { WizardStepIntentions } from "@/components/v2/coach/wizard-step-intentions";
 import { WizardStepIntake } from "@/components/v2/coach/wizard-step-intake";
 import { WizardStepTasks } from "@/components/v2/coach/wizard-step-tasks";
@@ -113,6 +117,7 @@ export function CoachWizard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [safetyMessage, setSafetyMessage] = useState<string | null>(null);
+  const [acceptedSchedule, setAcceptedSchedule] = useState<ProposedScheduleItem[] | null>(null);
 
   const maxSelections = editingGoalId ? 1 : 3;
 
@@ -257,7 +262,20 @@ export function CoachWizard({
     }
 
     setError(null);
+    setAcceptedSchedule(null);
     setStep(3);
+  }
+
+  function continueFromSchedule(items: ProposedScheduleItem[]) {
+    setAcceptedSchedule(items);
+    setError(null);
+    setStep(4);
+  }
+
+  function skipSchedule() {
+    setAcceptedSchedule(null);
+    setError(null);
+    setStep(4);
   }
 
   async function confirmSetup() {
@@ -292,6 +310,7 @@ export function CoachWizard({
           displayName: initialDisplayName,
           editingGoalId,
           goals: payloadGoals,
+          scheduledTasks: acceptedSchedule ?? undefined,
         }),
       });
 
@@ -375,12 +394,25 @@ export function CoachWizard({
       ) : null}
 
       {step === 3 ? (
-        <WizardStepConfirm
+        <WizardStepSchedule
           error={error}
           goals={goalDrafts}
           onBack={() => {
             setError(null);
             setStep(2);
+          }}
+          onSkip={skipSchedule}
+          onAccept={continueFromSchedule}
+        />
+      ) : null}
+
+      {step === 4 ? (
+        <WizardStepConfirm
+          error={error}
+          goals={goalDrafts}
+          onBack={() => {
+            setError(null);
+            setStep(3);
           }}
           onConfirm={() => void confirmSetup()}
           submitting={submitting}
