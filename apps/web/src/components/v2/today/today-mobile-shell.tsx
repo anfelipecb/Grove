@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFocusSession } from "@/hooks/use-focus-session";
 import { FocusSessionOverlay } from "@/components/v2/today/focus-session-overlay";
 import { TodayTabs } from "@/components/v2/today/today-tabs";
+import type { FocusTask } from "@/hooks/use-focus-session";
 import type { TaskRowData } from "@/components/v2/today/task-row";
 import type { DopamineMainTask } from "@/components/v2/today/today-tabs";
 
@@ -33,7 +34,9 @@ export function TodayMobileShell({
         profileId={profileId}
         mainTask={mainTask}
         googleCalendarConnected={googleCalendarConnected}
-        onStartFocusSession={session.openTaskSelect}
+        onStartFocusSession={(task?: FocusTask) =>
+          task ? session.startWithTasks([task]) : session.openTaskSelect()
+        }
       />
       {session.phase !== "idle" ? (
         <FocusSessionOverlay

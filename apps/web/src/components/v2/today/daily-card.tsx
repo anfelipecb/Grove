@@ -19,7 +19,9 @@ import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
 import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
+import type { FocusTask } from "@/hooks/use-focus-session";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary } from "@/components/v2/today/surface-classes";
@@ -30,7 +32,7 @@ type DailyCardProps = {
   initialTasks: TaskRowData[];
   profileId: string;
   mainTask: DopamineMainTask | null;
-  onStartFocusSession?: () => void;
+  onStartFocusSession?: (task?: FocusTask) => void;
 };
 
 export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSession }: DailyCardProps) {
@@ -40,6 +42,10 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [showDopamineMenu, setShowDopamineMenu] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
+  const [startTaskId, setStartTaskId] = useState<string | null>(null);
+  const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
+
+  const startTask = startTaskId ? tasks.find((t) => t.id === startTaskId) : null;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -106,6 +112,27 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
         />
       )}
 
+      {startTask ? (
+        <StartTaskSheet
+          taskId={startTask.id}
+          taskTitle={startTask.title}
+          onClose={() => setStartTaskId(null)}
+          onScheduled={(id, label) => {
+            setStartedTasks((prev) => ({ ...prev, [id]: label }));
+            setStartTaskId(null);
+          }}
+          onScheduleAndFocus={
+            onStartFocusSession
+              ? (id, label) => {
+                  setStartedTasks((prev) => ({ ...prev, [id]: label }));
+                  setStartTaskId(null);
+                  onStartFocusSession({ id: startTask.id, title: startTask.title });
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
       {showAddSheet && (
         <AddTaskSheet
           key={addPrefill ? `pulse-${addPrefill.title.slice(0, 24)}` : "manual"}
@@ -140,7 +167,7 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
             {onStartFocusSession ? (
               <button
                 type="button"
-                onClick={onStartFocusSession}
+                onClick={() => onStartFocusSession()}
                 className="rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
               >
                 Start focus session
@@ -187,7 +214,13 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
         <section className="mb-4">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Required by coach</p>
           {required.map((t) => (
-            <TaskRow key={t.id} task={t} onComplete={handleComplete} />
+            <TaskRow
+              key={t.id}
+              task={t}
+              onComplete={handleComplete}
+              onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+              scheduledTime={startedTasks[t.id] ?? null}
+            />
           ))}
         </section>
       )}
@@ -198,7 +231,13 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={goal.map((t) => t.id)} strategy={verticalListSortingStrategy}>
               {goal.map((t) => (
-                <DraggableTaskRow key={t.id} task={t} onComplete={handleComplete} />
+                <DraggableTaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={handleComplete}
+                  onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+                  scheduledTime={startedTasks[t.id] ?? null}
+                />
               ))}
             </SortableContext>
           </DndContext>

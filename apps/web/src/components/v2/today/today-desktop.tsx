@@ -12,7 +12,10 @@ import { PlanTomorrow } from "@/components/v2/today/plan-tomorrow";
 import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
 import { DomainProgressBars } from "@/components/v2/today/domain-progress-bars";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
+import { FocusSessionOverlay } from "@/components/v2/today/focus-session-overlay";
 import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
+import { useFocusSession } from "@/hooks/use-focus-session";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
 
@@ -68,6 +71,11 @@ export function TodayDesktop({
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
+  const [startTaskId, setStartTaskId] = useState<string | null>(null);
+  const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
+  const session = useFocusSession();
+
+  const startTask = startTaskId ? localTasks.find((t) => t.id === startTaskId) : null;
 
   const required = localTasks.filter((t) => t.is_required);
   const goal = localTasks.filter((t) => !t.is_required);
@@ -116,6 +124,16 @@ export function TodayDesktop({
 
   return (
     <div>
+      {session.phase !== "idle" ? (
+        <FocusSessionOverlay
+          session={session}
+          availableTasks={localTasks}
+          onTaskCompleted={(taskId) =>
+            setLocalTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: true } : t)))
+          }
+        />
+      ) : null}
+
       <div className="mb-4 flex gap-1 rounded-full border border-border bg-muted/30 p-1 w-fit">
         {(["today", "calendar"] as const).map((view) => (
           <button
@@ -152,6 +170,23 @@ export function TodayDesktop({
           }}
         />
       )}
+
+      {startTask ? (
+        <StartTaskSheet
+          taskId={startTask.id}
+          taskTitle={startTask.title}
+          onClose={() => setStartTaskId(null)}
+          onScheduled={(id, label) => {
+            setStartedTasks((prev) => ({ ...prev, [id]: label }));
+            setStartTaskId(null);
+          }}
+          onScheduleAndFocus={(id, label) => {
+            setStartedTasks((prev) => ({ ...prev, [id]: label }));
+            setStartTaskId(null);
+            session.startWithTasks([{ id: startTask.id, title: startTask.title }]);
+          }}
+        />
+      ) : null}
 
       {showAddSheet && (
         <AddTaskSheet
@@ -193,7 +228,13 @@ export function TodayDesktop({
                 Required by coach
               </p>
               {required.map((t) => (
-                <TaskRow key={t.id} task={t} onComplete={handleComplete} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={handleComplete}
+                  onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+                  scheduledTime={startedTasks[t.id] ?? null}
+                />
               ))}
             </section>
           )}
@@ -204,7 +245,13 @@ export function TodayDesktop({
                 Your goals
               </p>
               {goal.map((t) => (
-                <TaskRow key={t.id} task={t} onComplete={handleComplete} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={handleComplete}
+                  onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+                  scheduledTime={startedTasks[t.id] ?? null}
+                />
               ))}
             </section>
           )}

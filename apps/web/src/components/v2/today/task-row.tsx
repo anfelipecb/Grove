@@ -25,9 +25,11 @@ const PREFERRED_TIME_LABELS: Record<string, string> = {
 type TaskRowProps = {
   task: TaskRowData;
   onComplete: (id: string) => Promise<void>;
+  onStart?: (taskId: string) => void;
+  scheduledTime?: string | null;
 };
 
-export function TaskRow({ task, onComplete }: TaskRowProps) {
+export function TaskRow({ task, onComplete, onStart, scheduledTime }: TaskRowProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleCheck() {
@@ -64,8 +66,24 @@ export function TaskRow({ task, onComplete }: TaskRowProps) {
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className={twMerge("text-sm text-foreground truncate", task.completed && "line-through")}>{task.title}</p>
+        <div className="flex min-w-0 items-center gap-2">
+          <p className={twMerge("min-w-0 flex-1 truncate text-sm text-foreground", task.completed && "line-through")}>
+            {task.title}
+          </p>
+          {!task.completed && onStart ? (
+            <button
+              type="button"
+              onClick={() => onStart(task.id)}
+              className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
+            >
+              {scheduledTime ? "Reschedule" : "Start →"}
+            </button>
+          ) : null}
+        </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+          {scheduledTime ? (
+            <span className="text-[11px] text-muted-foreground">📅 {scheduledTime}</span>
+          ) : null}
           <DomainTag domain={task.domain} />
           {task.preferred_time && task.preferred_time !== "flexible" && (
             <span className="text-[11px] text-muted-foreground">
