@@ -69,6 +69,17 @@ export async function POST(request: Request) {
         ).data
       : [];
 
+  let recentReflections: { entry_date: string; content: string }[] = [];
+  if (profileId != null) {
+    const { data: journalRows } = await supabase
+      .from("journal_entries")
+      .select("entry_date, content")
+      .eq("profile_id", profileId)
+      .order("entry_date", { ascending: false })
+      .limit(3);
+    recentReflections = (journalRows ?? []) as { entry_date: string; content: string }[];
+  }
+
   let commitments: { title: string; status: string }[] = [];
   if (body.communityId) {
     const { data } = await supabase
@@ -86,6 +97,9 @@ export async function POST(request: Request) {
     `Member name: ${profile?.display_name ?? "Member"}`,
     `Active goals: ${JSON.stringify(goals ?? [])}`,
     `Community commitments snapshot: ${JSON.stringify(commitments)}`,
+    recentReflections.length > 0
+      ? `User's recent reflections: ${JSON.stringify(recentReflections)}`
+      : null,
     body.context
       ? `Realtime coach context: ${JSON.stringify({
           today: body.context.today,
