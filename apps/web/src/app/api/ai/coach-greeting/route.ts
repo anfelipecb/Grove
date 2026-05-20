@@ -107,7 +107,11 @@ export async function POST(request: Request) {
   };
 
   try {
-    const raw = await routedCompletion([system, userMsg], "fast", { temperature: 0.38 });
+    const raw = await routedCompletion([system, userMsg], "fast", {
+      temperature: 0.38,
+      cacheKey: `greeting:${userId}`,
+      cacheTtlSeconds: 600,
+    });
     if (!raw) {
       return Response.json(fallback);
     }
