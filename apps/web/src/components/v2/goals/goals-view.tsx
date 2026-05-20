@@ -6,6 +6,7 @@ import { CheckCheck, ListTodo, Plus, Target } from "lucide-react";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { GoalCard, type GoalCardData, type GoalTask } from "@/components/v2/goals/goal-card";
+import { GoalsDomainLevelsSection } from "@/components/v2/goals/goals-domain-levels-section";
 import { GoalsProgressSection } from "@/components/v2/goals/goals-progress-section";
 
 const QUICK_TASK_POINT_VALUE = 14;
@@ -255,6 +256,7 @@ export function GoalsView({
         </div>
       )}
 
+      <GoalsDomainLevelsSection />
       <GoalsProgressSection completions30d={completions30d} monthlyXp={monthlyXp} today={today} />
     </section>
   );
