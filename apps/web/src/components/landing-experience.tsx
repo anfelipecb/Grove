@@ -1,4 +1,4 @@
-import { ArrowRight, Leaf, Sparkles, Users, CheckCircle2, Compass, CalendarDays } from "lucide-react";
+import { ArrowRight, Leaf, Sparkles, Users, CalendarDays } from "lucide-react";
 import Link from "next/link";
 
 const painPoints = [
@@ -61,12 +61,6 @@ const firstWeek = [
     title: "Community makes the loop stronger",
     body: "You can see shared momentum, upcoming sessions, and visible contribution, which makes follow-through feel social instead of private and brittle.",
   },
-] as const;
-
-const proofPoints = [
-  "Coach helps you define the next small task instead of asking for a perfect plan.",
-  "Today keeps the surface short, current, and easier to re-enter after a lost day.",
-  "Community turns showing up into part of your growth loop, not a side quest.",
 ] as const;
 
 export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: boolean }) {
@@ -142,18 +136,11 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
 
         <section className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           <div className="max-w-2xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/30 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-bark shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/50 dark:text-foreground">
-              <Compass className="h-3.5 w-3.5 text-moss" aria-hidden="true" />
-              Built for follow-through, not just tracking
-            </p>
-            <h1 className="mt-6 text-4xl font-semibold leading-[1.03] tracking-tight text-bark dark:text-foreground sm:text-5xl lg:text-[4.1rem]">
-              Some days you know exactly what matters and still cannot begin.
+            <h1 className="mt-2 text-4xl font-semibold leading-[1.03] tracking-tight text-bark dark:text-foreground sm:text-5xl lg:text-[4.1rem]">
+              Turn one messy intention into a few small tasks you can start today.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-700 dark:text-muted-foreground">
-              Grove helps you turn one messy intention into a few small tasks, keep them visible today, and stay connected to people who are also trying to follow through.
-            </p>
-            <p className="mt-4 max-w-xl text-base leading-7 text-stone-600 dark:text-muted-foreground">
-              It is ADHD-aware by design. Coach helps shape the system. Today keeps the next move visible. Community makes it easier to come back after a hard day.
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone-700 dark:text-muted-foreground">
+              Some days you know what matters and still cannot begin. Grove is ADHD-aware follow-through with Coach, Today, and Community in one loop.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -172,18 +159,6 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {proofPoints.map((point, index) => (
-                <article
-                  key={point}
-                  style={{ animationDelay: `${index * 140}ms` }}
-                  className="rounded-2xl border border-white/45 bg-white/38 p-4 shadow-glass backdrop-blur-md motion-safe:animate-fadeIn motion-safe:opacity-0 dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-moss" aria-hidden="true" />
-                  <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{point}</p>
-                </article>
-              ))}
-            </div>
           </div>
 
           <aside className="relative overflow-hidden rounded-[2rem] border border-white/50 bg-white/40 p-6 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark sm:p-7">
@@ -259,9 +234,6 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">How Grove works</p>
             <h2 className="mt-3 text-3xl font-semibold text-bark dark:text-foreground">Three surfaces, one loop</h2>
-            <p className="mt-3 text-base leading-7 text-stone-700 dark:text-muted-foreground">
-              Grove is not a generic assistant with a productivity skin. The product has a shape: Coach helps design the system, Today keeps it actionable, and Community keeps momentum social.
-            </p>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -279,7 +251,6 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
                   <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-moss">{scene.eyebrow}</p>
                   <h3 className="mt-2 text-2xl font-semibold text-bark dark:text-foreground">{scene.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-stone-700 dark:text-muted-foreground">{scene.body}</p>
-                  <p className="mt-4 text-sm leading-6 text-stone-600 dark:text-muted-foreground">{scene.detail}</p>
                 </article>
               );
             })}
@@ -346,8 +317,8 @@ export function LandingExperience({ showDemoLinks = false }: { showDemoLinks?: b
         <footer className="rounded-[1.75rem] border border-white/40 bg-white/30 px-6 py-8 text-center shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">Start here</p>
           <h2 className="mt-3 text-3xl font-semibold text-bark dark:text-foreground">If you want a clearer way to keep going, Grove is ready.</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-stone-700 dark:text-muted-foreground">
-            Sign up to shape your first goals with Coach, land on Today with a smaller plan, and build momentum with people instead of by yourself.
+          <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-stone-700 dark:text-muted-foreground">
+            Shape goals with Coach, then land on Today with a plan you can enter.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
