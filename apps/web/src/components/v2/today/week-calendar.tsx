@@ -17,6 +17,8 @@ type ScheduledBlock = {
   task_id: string;
   title: string;
   domain: string;
+  goal_id: string | null;
+  goal_title: string | null;
   start_time: string;
   duration_minutes: number;
 };
@@ -64,9 +66,10 @@ type DayData = { scheduled: ScheduledBlock[]; busy: BusyBlock[] };
 
 type WeekCalendarProps = {
   googleCalendarConnected: boolean;
+  filterGoalId?: string | null;
 };
 
-export function WeekCalendar({ googleCalendarConnected }: WeekCalendarProps) {
+export function WeekCalendar({ googleCalendarConnected, filterGoalId = null }: WeekCalendarProps) {
   const today = new Date().toISOString().slice(0, 10);
   const weekDates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
 
@@ -83,22 +86,28 @@ export function WeekCalendar({ googleCalendarConnected }: WeekCalendarProps) {
             scheduled?: {
               id: string;
               task_id: string;
+              goal_title?: string | null;
               start_time?: string | null;
               duration_minutes?: number | null;
-              tasks?: { title: string; domain: string } | null;
+              tasks?: { title: string; domain: string; goal_id?: string | null } | null;
             }[];
             busy?: BusyBlock[];
           };
           const scheduled: ScheduledBlock[] = (data.scheduled ?? [])
             .filter((s) => s.start_time)
-            .map((s) => ({
-              id: s.id,
-              task_id: s.task_id,
-              title: (s.tasks as { title: string; domain: string } | null)?.title ?? "Task",
-              domain: (s.tasks as { title: string; domain: string } | null)?.domain ?? "work_build",
-              start_time: s.start_time!,
-              duration_minutes: s.duration_minutes ?? 30,
-            }));
+            .map((s) => {
+              const task = s.tasks as { title: string; domain: string; goal_id?: string | null } | null;
+              return {
+                id: s.id,
+                task_id: s.task_id,
+                title: task?.title ?? "Task",
+                domain: task?.domain ?? "work_build",
+                goal_id: task?.goal_id ?? null,
+                goal_title: s.goal_title ?? null,
+                start_time: s.start_time!,
+                duration_minutes: s.duration_minutes ?? 30,
+              };
+            });
           return { date, scheduled, busy: data.busy ?? [] };
         })
       );
@@ -151,13 +160,17 @@ export function WeekCalendar({ googleCalendarConnected }: WeekCalendarProps) {
           {/* Scheduled task blocks */}
           {data.scheduled.map((s) => {
             const colorClass = DOMAIN_COLORS[s.domain] ?? "bg-moss/10 border-moss text-moss";
+            const dimmed = filterGoalId && s.goal_id !== filterGoalId ? "opacity-30" : "opacity-100";
             return (
               <div
                 key={s.id}
-                className={`absolute left-0.5 right-0.5 overflow-hidden rounded border ${colorClass}`}
+                className={`absolute left-0.5 right-0.5 overflow-hidden rounded border ${colorClass} ${dimmed}`}
                 style={{ top: slotTop(s.start_time), height: slotHeight(s.duration_minutes) }}
               >
                 <p className="truncate px-1 pt-0.5 text-[9px] font-medium">{s.title}</p>
+                {s.goal_title ? (
+                  <p className="truncate px-1 text-[8px] text-muted-foreground">{s.goal_title}</p>
+                ) : null}
                 <p className="px-1 text-[8px] opacity-60">{s.start_time}</p>
               </div>
             );

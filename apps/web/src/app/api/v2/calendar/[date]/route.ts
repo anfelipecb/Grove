@@ -2,7 +2,15 @@ import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { fetchCalendarEvents, getValidToken } from "@/lib/google-calendar";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ date: string }> }) {
+function getMondayISO(fromDate: string): string {
+  const d = new Date(fromDate + "T00:00:00");
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+export async function GET(req: Request, { params }: { params: Promise<{ date: string }> }) {
   const userId = await getServerUserId();
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -29,11 +37,27 @@ export async function GET(_req: Request, { params }: { params: Promise<{ date: s
       .eq("completed_date", date),
     supabase
       .from("scheduled_tasks")
-      .select("id, task_id, start_time, duration_minutes, tasks(title, domain)")
+      .select("id, task_id, start_time, duration_minutes, tasks(title, domain, goal_id, goals(title))")
       .eq("profile_id", profile.id)
       .eq("scheduled_date", date)
       .order("start_time", { ascending: true, nullsFirst: false }),
   ]);
+
+  const scheduledWithGoals = (scheduled ?? []).map((row) => {
+    const raw = row.tasks as unknown;
+    const task = (Array.isArray(raw) ? raw[0] : raw) as {
+      title: string;
+      domain: string;
+      goal_id: string | null;
+      goals: { title: string } | { title: string }[] | null;
+    } | null;
+    const goals = task?.goals;
+    const goalTitle = Array.isArray(goals) ? goals[0]?.title : goals?.title;
+    return {
+      ...row,
+      goal_title: goalTitle ?? null,
+    };
+  });
 
   // Fetch Google Calendar busy blocks for this day if connected
   let busy: { title: string; start: string; end: string }[] = [];
@@ -52,5 +76,43 @@ export async function GET(_req: Request, { params }: { params: Promise<{ date: s
     } catch { /* non-fatal */ }
   }
 
-  return Response.json({ completions: completions ?? [], scheduled: scheduled ?? [], busy });
+  const url = new URL(req.url);
+  let goalsProgress: Array<{ id: string; title: string; completed: number; total: number }> | undefined;
+
+  if (url.searchParams.get("goals_progress") === "1") {
+    const monday = getMondayISO(date);
+    const { data: goals } = await supabase
+      .from("goals")
+      .select("id, title")
+      .eq("profile_id", profile.id)
+      .eq("status", "active");
+    const goalIds = (goals ?? []).map((g) => g.id as string);
+
+    if (goalIds.length > 0) {
+      const [{ data: goalTasks }, { data: weekCompletions }] = await Promise.all([
+        supabase.from("tasks").select("id, goal_id").in("goal_id", goalIds).eq("status", "active"),
+        supabase
+          .from("task_completions")
+          .select("task_id")
+          .eq("profile_id", profile.id)
+          .gte("completed_date", monday),
+      ]);
+      const completedTaskIds = new Set((weekCompletions ?? []).map((c) => c.task_id as string));
+      goalsProgress = (goals ?? []).map((goal) => {
+        const tasksForGoal = (goalTasks ?? []).filter((t) => t.goal_id === goal.id);
+        const total = tasksForGoal.length;
+        const completed = tasksForGoal.filter((t) => completedTaskIds.has(t.id as string)).length;
+        return { id: goal.id as string, title: goal.title as string, completed, total };
+      });
+    } else {
+      goalsProgress = [];
+    }
+  }
+
+  return Response.json({
+    completions: completions ?? [],
+    scheduled: scheduledWithGoals,
+    busy,
+    ...(goalsProgress !== undefined ? { goalsProgress } : {}),
+  });
 }
