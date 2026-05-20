@@ -2,11 +2,11 @@
 id: "GRO-046"
 title: "Landing hero: outcome-led copy and fewer value-prop layers"
 slug: "landing-hero-outcome-led-copy-and-fewer-value-prop-layers"
-status: "in_review"
+status: "done"
 priority: "p1"
 owner: "cursor"
-branch: "ticket/gro-046-landing-hero-outcome-led-copy-and-fewer-value-prop-layers"
-worktree: ".worktrees/gro-046-landing-hero-outcome-led-copy-and-fewer-value-prop-layers"
+branch: ""
+worktree: ""
 pr_url: "https://github.com/anfelipecb/Grove/pull/27"
 labels:
   - "marketing"
@@ -15,7 +15,7 @@ labels:
   - "ux"
 depends_on: []
 created_at: "2026-05-19T23:59:06.594Z"
-updated_at: "2026-05-20T00:26:00.811Z"
+updated_at: "2026-05-20T00:41:26.280Z"
 ---
 
 ## Context
