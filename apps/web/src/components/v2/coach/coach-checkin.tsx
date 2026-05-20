@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
-import { DomainLevels } from "@/components/v2/coach/domain-levels";
 import { RewardsShop } from "@/components/v2/coach/rewards-shop";
 import type { ExistingCoachGoal } from "@/components/v2/coach/types";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
@@ -96,11 +95,8 @@ export function CoachCheckin({ activeGoals, demoMode, displayName, profileId, sp
 
       <CommunityPulseCard profileId={profileId} />
 
-      <section className="space-y-8 rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
-        <DomainLevels />
-        <div className="border-t border-border pt-8">
-          <RewardsShop spendablePoints={spendablePoints} />
-        </div>
+      <section className="rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
+        <RewardsShop spendablePoints={spendablePoints} />
       </section>
 
       <section className="rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">

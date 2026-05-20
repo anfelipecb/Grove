@@ -300,7 +300,7 @@ export function TodayDesktop({
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
-          <Link href="/coach" className="underline underline-offset-2 hover:text-foreground">
+          <Link href="/goals#domain-levels" className="underline underline-offset-2 hover:text-foreground">
             Domain levels →
           </Link>
         </p>

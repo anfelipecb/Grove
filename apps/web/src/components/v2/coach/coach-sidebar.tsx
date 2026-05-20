@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
-import { DomainLevels } from "@/components/v2/coach/domain-levels";
 import { RewardsShop } from "@/components/v2/coach/rewards-shop";
 import type { ExistingCoachGoal } from "@/components/v2/coach/types";
 
@@ -44,10 +43,7 @@ export function CoachSidebar({ activeGoals, demoMode, displayName, profileId, sp
   return (
     <div className="space-y-4">
       <section className="rounded-[28px] border border-border bg-card/95 p-4 shadow-panel dark:shadow-panel-dark">
-        <DomainLevels compact />
-        <div className="mt-6 border-t border-border pt-4">
-          <RewardsShop spendablePoints={spendablePoints} collapsed />
-        </div>
+        <RewardsShop spendablePoints={spendablePoints} collapsed />
       </section>
 
       <section className="rounded-[28px] border border-border bg-card/95 p-4 shadow-panel dark:shadow-panel-dark">
