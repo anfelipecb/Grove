@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Sparkles, Gift, Plus } from "lucide-react";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
+import { CalendarTab } from "@/components/v2/today/calendar-tab";
+import { twMerge } from "tailwind-merge";
 import { getSurpriseUnlocks, type ProgressionSnapshot } from "@grove/core";
 import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DayLog } from "@/components/v2/today/day-log";
@@ -30,6 +32,7 @@ export type TodayDesktopProps = {
   communityPulse: CommunityPulse;
   unlockedSurpriseIds: string[];
   profileId: string;
+  googleCalendarConnected?: boolean;
 };
 
 type CoachSuggestion = {
@@ -52,7 +55,9 @@ export function TodayDesktop({
   communityPulse,
   unlockedSurpriseIds,
   profileId,
+  googleCalendarConnected = false,
 }: TodayDesktopProps) {
+  const [activeView, setActiveView] = useState<"today" | "calendar">("today");
   const todayDate = new Date();
   const today = toDateStr(todayDate);
   const tomorrowDate = new Date(todayDate);
@@ -110,6 +115,28 @@ export function TodayDesktop({
     .slice(0, 2);
 
   return (
+    <div>
+      <div className="mb-4 flex gap-1 rounded-full border border-border bg-muted/30 p-1 w-fit">
+        {(["today", "calendar"] as const).map((view) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => setActiveView(view)}
+            className={twMerge(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              activeView === view
+                ? "bg-moss text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {view === "today" ? "Today" : "Calendar"}
+          </button>
+        ))}
+      </div>
+
+      {activeView === "calendar" ? (
+        <CalendarTab activeTasks={activeTasks} googleCalendarConnected={googleCalendarConnected} />
+      ) : (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {showTaskChat && (
         <TaskChatOverlay
@@ -302,6 +329,8 @@ export function TodayDesktop({
           </div>
         ) : null}
       </div>
+    </div>
+      )}
     </div>
   );
 }
