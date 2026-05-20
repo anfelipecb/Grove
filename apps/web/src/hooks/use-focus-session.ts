@@ -5,7 +5,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export const SPRINT_PRESETS = [10, 15, 25, 45] as const;
 export type SprintPreset = (typeof SPRINT_PRESETS)[number];
 
-export type FocusPhase = "idle" | "task-select" | "running" | "transition" | "break" | "done";
+export type FocusPhase =
+  | "idle"
+  | "task-select"
+  | "running"
+  | "paused"
+  | "ending"
+  | "transition"
+  | "break"
+  | "done";
 
 export type FocusTask = {
   id: string;
@@ -31,6 +39,7 @@ export function useFocusSession() {
   const [completedTasks, setCompletedTasks] = useState(0);
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [breakAppetiser, setBreakAppetiser] = useState("");
+  const [phaseBeforeEnd, setPhaseBeforeEnd] = useState<"running" | "paused">("running");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -53,6 +62,7 @@ export function useFocusSession() {
     setCompletedTasks(0);
     setSessionStartedAt(null);
     setBreakAppetiser("");
+    setPhaseBeforeEnd("running");
   }, [clearTimer]);
 
   const startTimer = useCallback(
@@ -104,7 +114,13 @@ export function useFocusSession() {
     if (secondsRemaining !== 0) return;
 
     const currentPhase = phaseRef.current;
-    if (currentPhase === "idle" || currentPhase === "task-select" || currentPhase === "done") {
+    if (
+      currentPhase === "idle" ||
+      currentPhase === "task-select" ||
+      currentPhase === "done" ||
+      currentPhase === "paused" ||
+      currentPhase === "ending"
+    ) {
       return;
     }
 
@@ -152,6 +168,41 @@ export function useFocusSession() {
     goToNextTaskOrBreak(currentTaskIndex, selectedTasks.length, sprintMinutes);
   }, [clearTimer, currentTaskIndex, selectedTasks.length, sprintMinutes, goToNextTaskOrBreak]);
 
+  const pauseSession = useCallback(() => {
+    if (phaseRef.current !== "running") return;
+    clearTimer();
+    setPhase("paused");
+  }, [clearTimer]);
+
+  const resumeSession = useCallback(() => {
+    if (phaseRef.current !== "paused") return;
+    setPhase("running");
+    startTimer(secondsRemaining > 0 ? secondsRemaining : sprintMinutes * 60);
+  }, [startTimer, secondsRemaining, sprintMinutes]);
+
+  const requestEnd = useCallback(() => {
+    const current = phaseRef.current;
+    if (current !== "running" && current !== "paused") return;
+    setPhaseBeforeEnd(current);
+    clearTimer();
+    setPhase("ending");
+  }, [clearTimer]);
+
+  const confirmEnd = useCallback(() => {
+    if (phaseRef.current !== "ending") return;
+    clearTimer();
+    setPhase("done");
+  }, [clearTimer]);
+
+  const cancelEnd = useCallback(() => {
+    if (phaseRef.current !== "ending") return;
+    const returnTo = phaseBeforeEnd;
+    setPhase(returnTo);
+    if (returnTo === "running" && secondsRemaining > 0) {
+      startTimer(secondsRemaining);
+    }
+  }, [phaseBeforeEnd, secondsRemaining, startTimer]);
+
   const endSession = useCallback(() => {
     clearTimer();
     setPhase("done");
@@ -190,6 +241,11 @@ export function useFocusSession() {
     openTaskSelect,
     confirmTaskSelect,
     markTaskDone,
+    pauseSession,
+    resumeSession,
+    requestEnd,
+    confirmEnd,
+    cancelEnd,
     endSession,
     skipBreak,
     dismissDone,
