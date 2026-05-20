@@ -44,8 +44,20 @@ export function FindTimePanel() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ regenerate }),
       });
-      const data = (await res.json()) as { plan?: PlanItem[]; error?: string };
-      if (!res.ok || !data.plan) {
+      let data: { plan?: PlanItem[]; error?: string };
+      try {
+        data = (await res.json()) as { plan?: PlanItem[]; error?: string };
+      } catch {
+        setErrorMsg("Could not read server response.");
+        setStatus("error");
+        return;
+      }
+      if (!res.ok) {
+        setErrorMsg(data.error ?? `Could not generate schedule (${res.status}).`);
+        setStatus("error");
+        return;
+      }
+      if (!data.plan) {
         setErrorMsg(data.error ?? "Could not generate schedule.");
         setStatus("error");
         return;
