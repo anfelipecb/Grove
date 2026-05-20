@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
-import { LIFE_DOMAINS } from "@grove/core";
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import type { TaskRowData } from "@/components/v2/today/task-row";
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -14,6 +14,13 @@ const DOMAIN_COLORS: Record<string, string> = {
   life_admin: "border-slate-400 bg-slate-50 text-slate-700 dark:bg-slate-900/20 dark:text-slate-400",
   rest_play: "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
 };
+
+const VALID_DOMAIN_IDS = new Set<string>(LIFE_DOMAINS.map((d) => d.id));
+const LAST_DOMAIN_KEY = "grove_last_domain";
+
+function isLifeDomainId(id: string): id is LifeDomainId {
+  return VALID_DOMAIN_IDS.has(id);
+}
 
 const FREQUENCIES = [
   { value: "daily", label: "Daily" },
@@ -34,6 +41,15 @@ type AddTaskSheetProps = {
   initialTitle?: string;
   initialDomain?: string;
 };
+
+function resolveInitialDomain(override?: string): LifeDomainId {
+  if (override && isLifeDomainId(override)) return override;
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem(LAST_DOMAIN_KEY);
+    if (stored && isLifeDomainId(stored)) return stored;
+  }
+  return "work_build";
+}
 
 function ChipButton({
   label, selected, onClick, colorClass,
@@ -60,15 +76,24 @@ export function AddTaskSheet({
   initialDomain = "",
 }: AddTaskSheetProps) {
   const [title, setTitle] = useState(initialTitle);
-  const [domain, setDomain] = useState(initialDomain);
-  const [frequency, setFrequency] = useState<"daily" | "weekly" | "once">("daily");
+  const [domain, setDomain] = useState(() => resolveInitialDomain(initialDomain || undefined));
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "once">("once");
   const [preferredTime, setPreferredTime] = useState<"morning" | "afternoon" | "evening" | "flexible">("flexible");
+  const [moreOpen, setMoreOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (initialDomain) setDomain(resolveInitialDomain(initialDomain));
+  }, [initialDomain]);
+
+  const domainLabel = LIFE_DOMAINS.find((d) => d.id === domain)?.label ?? domain;
+  const frequencyLabel = FREQUENCIES.find((f) => f.value === frequency)?.label ?? frequency;
+  const timeLabel = TIMES.find((t) => t.value === preferredTime)?.label ?? preferredTime;
+  const canSubmit = title.trim().length > 0 && !saving;
+
   async function handleSubmit() {
     if (!title.trim()) { setError("Title is required."); return; }
-    if (!domain) { setError("Pick a domain."); return; }
     setSaving(true);
     setError(null);
 
@@ -83,6 +108,12 @@ export function AddTaskSheet({
       setError(body.error ?? "Could not create task.");
       setSaving(false);
       return;
+    }
+
+    try {
+      localStorage.setItem(LAST_DOMAIN_KEY, domain);
+    } catch {
+      /* private mode / quota */
     }
 
     const body = (await res.json()) as { task: TaskRowData };
@@ -113,54 +144,69 @@ export function AddTaskSheet({
           placeholder="What do you want to do?"
           maxLength={140}
           className="mb-4 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-moss/30"
-          onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && canSubmit) void handleSubmit(); }}
         />
 
-        {/* Domain */}
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Domain</p>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {LIFE_DOMAINS.map((d) => (
-            <ChipButton
-              key={d.id}
-              label={d.label}
-              selected={domain === d.id}
-              onClick={() => { setDomain(d.id); setError(null); }}
-              colorClass={domain === d.id ? DOMAIN_COLORS[d.id] : undefined}
-            />
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setMoreOpen((o) => !o)}
+          className="mb-3 flex w-full items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+        >
+          <span>
+            {domainLabel} · {frequencyLabel} · {timeLabel}
+          </span>
+          <span className="inline-flex items-center gap-0.5 text-xs font-medium text-moss">
+            More options
+            {moreOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          </span>
+        </button>
 
-        {/* Frequency */}
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">How often</p>
-        <div className="mb-4 flex gap-2">
-          {FREQUENCIES.map((f) => (
-            <ChipButton
-              key={f.value}
-              label={f.label}
-              selected={frequency === f.value}
-              onClick={() => setFrequency(f.value)}
-            />
-          ))}
-        </div>
+        {moreOpen && (
+          <>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Domain</p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {LIFE_DOMAINS.map((d) => (
+                <ChipButton
+                  key={d.id}
+                  label={d.label}
+                  selected={domain === d.id}
+                  onClick={() => { setDomain(d.id); setError(null); }}
+                  colorClass={domain === d.id ? DOMAIN_COLORS[d.id] : undefined}
+                />
+              ))}
+            </div>
 
-        {/* Preferred time */}
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Best time of day</p>
-        <div className="mb-5 flex flex-wrap gap-2">
-          {TIMES.map((t) => (
-            <ChipButton
-              key={t.value}
-              label={t.label}
-              selected={preferredTime === t.value}
-              onClick={() => setPreferredTime(t.value)}
-            />
-          ))}
-        </div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">How often</p>
+            <div className="mb-4 flex gap-2">
+              {FREQUENCIES.map((f) => (
+                <ChipButton
+                  key={f.value}
+                  label={f.label}
+                  selected={frequency === f.value}
+                  onClick={() => setFrequency(f.value)}
+                />
+              ))}
+            </div>
+
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Best time of day</p>
+            <div className="mb-5 flex flex-wrap gap-2">
+              {TIMES.map((t) => (
+                <ChipButton
+                  key={t.value}
+                  label={t.label}
+                  selected={preferredTime === t.value}
+                  onClick={() => setPreferredTime(t.value)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {error && <p className="mb-3 text-xs text-destructive">{error}</p>}
 
         <button
           onClick={() => void handleSubmit()}
-          disabled={saving}
+          disabled={!canSubmit}
           className="w-full rounded-xl bg-moss py-3 text-sm font-semibold text-white transition-colors hover:bg-moss/90 disabled:opacity-40"
         >
           {saving ? "Adding…" : "Add task"}
