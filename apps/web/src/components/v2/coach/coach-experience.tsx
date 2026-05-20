@@ -19,7 +19,7 @@ type CoachExperienceProps = {
   debriefPlannedCount?: number;
 };
 
-const MOBILE_TABS = ["Chat", "Profile"] as const;
+const MOBILE_TABS = ["Chat", "Plan"] as const;
 type MobileTab = (typeof MOBILE_TABS)[number];
 
 export function CoachExperience({
@@ -84,7 +84,7 @@ export function CoachExperience({
         </div>
 
         <div className={mobileTab === "Chat" ? "block" : "hidden"}>{chatPanel}</div>
-        <div className={mobileTab === "Profile" ? "block" : "hidden"}>{sidebarPane}</div>
+        <div className={mobileTab === "Plan" ? "block" : "hidden"}>{sidebarPane}</div>
       </div>
     </div>
   );
