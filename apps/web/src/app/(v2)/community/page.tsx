@@ -117,21 +117,21 @@ async function loadCoordinationData(args: {
   const invites: CommunityInviteView[] = inviteRows
     .filter((invite) => !args.communityId || invite.community_id === args.communityId)
     .map((invite) => ({
-      id: invite.id,
-      communityId: invite.community_id,
-      communityName: communityMap.get(invite.community_id)?.name ?? "Community",
-      inviterName: profileMap.get(invite.inviter_profile_id) ?? "Member",
-      inviteeEmail: invite.invitee_email,
-      activityTitle: invite.activity_title,
-      message: invite.message,
-      goalContext: invite.goal_context,
-      proposedDate: invite.proposed_date,
-      proposedStartTime: invite.proposed_start_time,
-      durationMinutes: invite.duration_minutes,
-      status: invite.status,
-      counterDate: invite.counter_date,
-      counterStartTime: invite.counter_start_time,
-      responseNote: invite.response_note,
+      id: invite.id as string,
+      communityId: invite.community_id as string,
+      communityName: (communityMap.get(invite.community_id as string) as { name?: string } | undefined)?.name ?? "Community",
+      inviterName: profileMap.get(invite.inviter_profile_id as string) ?? "Member",
+      inviteeEmail: invite.invitee_email as string,
+      activityTitle: invite.activity_title as string,
+      message: (invite.message as string | null) ?? null,
+      goalContext: (invite.goal_context as string | null) ?? null,
+      proposedDate: (invite.proposed_date as string | null) ?? null,
+      proposedStartTime: (invite.proposed_start_time as string | null) ?? null,
+      durationMinutes: invite.duration_minutes as number,
+      status: invite.status as import("@/components/v2/community/buddy-coordination-panel").CommunityInviteView["status"],
+      counterDate: (invite.counter_date as string | null) ?? null,
+      counterStartTime: (invite.counter_start_time as string | null) ?? null,
+      responseNote: (invite.response_note as string | null) ?? null,
       isIncoming: invite.inviter_profile_id !== args.profileId,
       isInviter: invite.inviter_profile_id === args.profileId,
     }));
@@ -228,7 +228,7 @@ export default async function CommunityPage() {
     .from("memberships")
     .select("community_id, role")
     .eq("profile_id", profile.id)
-    .order("created_at", { ascending: true })
+    .order("joined_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 

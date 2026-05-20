@@ -2,12 +2,12 @@
 id: "GRO-074"
 title: "Focus session — pause button 5-second end friction and cleaner blocking UI"
 slug: "focus-session-pause-button-5-second-end-friction-and-cleaner-blocking-ui"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/60"
 labels: ["v2", "today", "focus", "ux"]
 depends_on: []
 created_at: "2026-05-20T19:00:00.000Z"

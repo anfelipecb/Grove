@@ -2,12 +2,12 @@
 id: "GRO-073"
 title: "Task start now — schedule on calendar with time confirmation"
 slug: "task-start-now-schedule-on-calendar-with-time-confirmation"
-status: "ready"
+status: "done"
 priority: "p1"
 owner: ""
 branch: ""
 worktree: ""
-pr_url: ""
+pr_url: "https://github.com/anfelipecb/Grove/pull/59"
 labels: ["v2", "today", "calendar", "ux"]
 depends_on: []
 created_at: "2026-05-20T19:00:00.000Z"
