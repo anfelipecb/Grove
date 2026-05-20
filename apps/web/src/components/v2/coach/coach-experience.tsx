@@ -15,6 +15,7 @@ type CoachExperienceProps = {
   profileId: string;
   spendablePoints: number;
   hasTasks: boolean;
+  initialAssistantMessage?: string;
 };
 
 const MOBILE_TABS = ["Coach", "Chat"] as const;
@@ -28,6 +29,7 @@ export function CoachExperience({
   profileId,
   spendablePoints,
   hasTasks,
+  initialAssistantMessage,
 }: CoachExperienceProps) {
   const [mobileTab, setMobileTab] = useState<MobileTab>("Coach");
 
@@ -47,7 +49,13 @@ export function CoachExperience({
     <div className="space-y-6">
       <div className="hidden gap-6 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <div>{coachPane}</div>
-        <CoachChatPanel demoMode={demoMode} displayName={displayName} profileId={profileId} context={chatContext} />
+        <CoachChatPanel
+          demoMode={demoMode}
+          displayName={displayName}
+          profileId={profileId}
+          context={chatContext}
+          initialAssistantMessage={initialAssistantMessage}
+        />
       </div>
 
       <div className="md:hidden">
@@ -71,7 +79,13 @@ export function CoachExperience({
           {coachPane}
         </div>
         <div className={mobileTab === "Chat" ? "block" : "hidden"}>
-          <CoachChatPanel demoMode={demoMode} displayName={displayName} profileId={profileId} context={chatContext} />
+          <CoachChatPanel
+          demoMode={demoMode}
+          displayName={displayName}
+          profileId={profileId}
+          context={chatContext}
+          initialAssistantMessage={initialAssistantMessage}
+        />
         </div>
       </div>
     </div>

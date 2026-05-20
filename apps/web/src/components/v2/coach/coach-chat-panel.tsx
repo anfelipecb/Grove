@@ -22,6 +22,7 @@ type CoachChatPanelProps = {
   displayName: string;
   profileId: string;
   context: CoachChatContext;
+  initialAssistantMessage?: string;
 };
 
 function buildOpeningLine(context: CoachChatContext, displayName: string): string {
@@ -58,17 +59,31 @@ function normalizeMessages(raw: unknown): ChatMessage[] | null {
   return next.length > 0 ? next : null;
 }
 
-export function CoachChatPanel({ demoMode, displayName, profileId, context }: CoachChatPanelProps) {
+export function CoachChatPanel({
+  demoMode,
+  displayName,
+  profileId,
+  context,
+  initialAssistantMessage,
+}: CoachChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const listEndRef = useRef<HTMLDivElement | null>(null);
-  const storageKey = `grove-coach-chat:${profileId}`;
-  const openingLine = buildOpeningLine(context, displayName);
+  const storageKey = initialAssistantMessage
+    ? `grove-coach-chat:${profileId}:debrief`
+    : `grove-coach-chat:${profileId}`;
+  const openingLine = initialAssistantMessage?.trim() || buildOpeningLine(context, displayName);
 
   useEffect(() => {
+    if (initialAssistantMessage?.trim()) {
+      setMessages([{ role: "assistant", content: initialAssistantMessage.trim() }]);
+      setReady(true);
+      return;
+    }
+
     let nextMessages: ChatMessage[] | null = null;
     try {
       const stored = window.sessionStorage.getItem(storageKey);
@@ -86,7 +101,7 @@ export function CoachChatPanel({ demoMode, displayName, profileId, context }: Co
       ],
     );
     setReady(true);
-  }, [storageKey, openingLine]);
+  }, [storageKey, openingLine, initialAssistantMessage]);
 
   useEffect(() => {
     if (!ready) {

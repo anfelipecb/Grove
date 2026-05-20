@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { PointsHeader } from "@/components/v2/shared/points-header";
 import { TodayTabs } from "@/components/v2/today/today-tabs";
 import { TodayDesktop } from "@/components/v2/today/today-desktop";
+import { TodayDebriefRedirect } from "@/components/v2/today/today-debrief-redirect";
 import type { TaskRowData } from "@/components/v2/today/task-row";
 
 export default async function TodayPage() {
@@ -28,6 +29,9 @@ export default async function TodayPage() {
   if (!profile) redirect("/sign-in");
 
   const today = new Date().toISOString().slice(0, 10);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
 
   // Compute Monday of current week
   const nowDate = new Date();
@@ -43,6 +47,7 @@ export default async function TodayPage() {
     { data: recentCompletions },
     { data: domainCompletions },
     { data: membership },
+    { count: yesterdayPlannedCount },
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -76,6 +81,11 @@ export default async function TodayPage() {
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("scheduled_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profile.id)
+      .eq("scheduled_date", yesterday),
   ]);
 
   const completedToday = new Set((completions ?? []).map((c) => c.task_id));
@@ -141,8 +151,11 @@ export default async function TodayPage() {
 
   const unlockedSurpriseIds: string[] = [];
 
+  const plannedYesterday = yesterdayPlannedCount ?? 0;
+
   return (
     <div>
+      <TodayDebriefRedirect yesterdayPlannedCount={plannedYesterday} />
       {/* Mobile / tablet: max-w-lg centered, tabs UI */}
       <div className="mx-auto max-w-lg lg:hidden">
         <PointsHeader
