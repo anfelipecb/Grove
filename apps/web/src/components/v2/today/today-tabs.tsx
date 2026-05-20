@@ -20,7 +20,7 @@ type TodayTabsProps = {
   profileId: string;
   mainTask: DopamineMainTask | null;
   googleCalendarConnected: boolean;
-  onStartFocusSession?: () => void;
+  onStartFocusSession?: (task?: { id: string; title: string }) => void;
 };
 
 const TABS = ["Daily Card", "Calendar"] as const;

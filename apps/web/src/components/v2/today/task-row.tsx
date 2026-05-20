@@ -25,9 +25,11 @@ const PREFERRED_TIME_LABELS: Record<string, string> = {
 type TaskRowProps = {
   task: TaskRowData;
   onComplete: (id: string) => Promise<void>;
+  onStart?: (taskId: string) => void;
+  scheduledTime?: string;
 };
 
-export function TaskRow({ task, onComplete }: TaskRowProps) {
+export function TaskRow({ task, onComplete, onStart, scheduledTime }: TaskRowProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleCheck() {
@@ -41,6 +43,7 @@ export function TaskRow({ task, onComplete }: TaskRowProps) {
   }
 
   const totalPts = task.point_value + (task.is_community_task ? task.community_point_value : 0);
+  const showStart = onStart && !task.completed;
 
   return (
     <div className={twMerge("flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0", task.completed && "opacity-60")}>
@@ -64,9 +67,25 @@ export function TaskRow({ task, onComplete }: TaskRowProps) {
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className={twMerge("text-sm text-foreground truncate", task.completed && "line-through")}>{task.title}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className={twMerge("text-sm text-foreground truncate flex-1 min-w-0", task.completed && "line-through")}>
+            {task.title}
+          </p>
+          {showStart ? (
+            <button
+              type="button"
+              onClick={() => onStart(task.id)}
+              className="shrink-0 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {scheduledTime ? "Reschedule" : "Start →"}
+            </button>
+          ) : null}
+        </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
           <DomainTag domain={task.domain} />
+          {scheduledTime ? (
+            <span className="text-[11px] text-muted-foreground">📅 {scheduledTime}</span>
+          ) : null}
           {task.preferred_time && task.preferred_time !== "flexible" && (
             <span className="text-[11px] text-muted-foreground">
               {PREFERRED_TIME_LABELS[task.preferred_time] ?? task.preferred_time}

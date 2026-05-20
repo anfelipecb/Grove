@@ -33,7 +33,13 @@ export function TodayMobileShell({
         profileId={profileId}
         mainTask={mainTask}
         googleCalendarConnected={googleCalendarConnected}
-        onStartFocusSession={session.openTaskSelect}
+        onStartFocusSession={(task) => {
+          if (task) {
+            session.confirmTaskSelect([{ id: task.id, title: task.title }], 15);
+          } else {
+            session.openTaskSelect();
+          }
+        }}
       />
       {session.phase !== "idle" ? (
         <FocusSessionOverlay

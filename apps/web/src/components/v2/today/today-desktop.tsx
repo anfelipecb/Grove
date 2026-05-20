@@ -12,6 +12,7 @@ import { PlanTomorrow } from "@/components/v2/today/plan-tomorrow";
 import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
 import { DomainProgressBars } from "@/components/v2/today/domain-progress-bars";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
+import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
 import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
@@ -68,10 +69,13 @@ export function TodayDesktop({
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
+  const [startedTasks, setStartedTasks] = useState<Map<string, string>>(() => new Map());
+  const [startTaskId, setStartTaskId] = useState<string | null>(null);
 
   const required = localTasks.filter((t) => t.is_required);
   const goal = localTasks.filter((t) => !t.is_required);
   const hasTasks = required.length > 0 || goal.length > 0;
+  const startTask = startTaskId ? localTasks.find((t) => t.id === startTaskId) : null;
 
   const [nudge, setNudge] = useState<CoachSuggestion | null>(null);
   const [nudgeLoading, setNudgeLoading] = useState(true);
@@ -166,6 +170,16 @@ export function TodayDesktop({
         />
       )}
 
+      {startTask ? (
+        <StartTaskSheet
+          task={startTask}
+          onClose={() => setStartTaskId(null)}
+          onScheduled={(id, displayTime) => {
+            setStartedTasks((prev) => new Map(prev).set(id, displayTime));
+          }}
+        />
+      ) : null}
+
       {/* LEFT COLUMN */}
       <div className="space-y-4">
         <TodayStatsRow doneTodayCount={doneTodayCount} pointsToday={pointsToday} streak={streak} />
@@ -193,7 +207,13 @@ export function TodayDesktop({
                 Required by coach
               </p>
               {required.map((t) => (
-                <TaskRow key={t.id} task={t} onComplete={handleComplete} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={handleComplete}
+                  onStart={setStartTaskId}
+                  scheduledTime={startedTasks.get(t.id)}
+                />
               ))}
             </section>
           )}
@@ -204,7 +224,13 @@ export function TodayDesktop({
                 Your goals
               </p>
               {goal.map((t) => (
-                <TaskRow key={t.id} task={t} onComplete={handleComplete} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={handleComplete}
+                  onStart={setStartTaskId}
+                  scheduledTime={startedTasks.get(t.id)}
+                />
               ))}
             </section>
           )}
