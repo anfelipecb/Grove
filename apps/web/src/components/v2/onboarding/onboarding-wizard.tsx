@@ -85,34 +85,24 @@ function normalizeDomainWeights(
   return normalized;
 }
 
-function weightsTotal(weights: Record<LifeDomainId, number>): number {
-  return LIFE_DOMAINS.reduce((s, d) => s + weights[d.id], 0);
-}
-
-function weightTotalTone(total: number): string {
-  if (total === 100) return "text-emerald-600 dark:text-emerald-400";
-  if (Math.abs(total - 100) <= 5) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
-}
-
 function parseJson<T>(raw: string): T | null {
   try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function StepDots({ current, total }: { current: number; total: number }) {
+function StepProgressBar({ current, total }: { current: number; total: number }) {
   return (
-    <div className="flex items-center justify-center gap-2 pb-6">
+    <div className="flex items-center justify-center gap-1.5 pb-6">
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
-          className={`h-2 rounded-full transition-all ${
-            i === current
-              ? "w-6 bg-moss"
-              : i < current
-              ? "w-2 bg-moss/40"
-              : "w-2 bg-muted"
+          className={`h-1 flex-1 max-w-14 rounded-full transition-colors ${
+            i < current
+              ? "bg-moss"
+              : i === current
+              ? "bg-moss/40"
+              : "border border-border bg-transparent"
           }`}
         />
       ))}
@@ -124,11 +114,14 @@ function ChipButton({
   label,
   selected,
   onClick,
+  showCheck,
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
+  showCheck?: boolean;
 }) {
+  const display = showCheck && selected ? `✓ ${label}` : label;
   return (
     <button
       type="button"
@@ -139,7 +132,7 @@ function ChipButton({
           : "border-border bg-background text-muted-foreground hover:border-moss/50 hover:text-foreground"
       }`}
     >
-      {label}
+      {display}
     </button>
   );
 }
@@ -161,6 +154,30 @@ function InputBase({
       placeholder={placeholder}
       className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-moss/30"
     />
+  );
+}
+
+function StackedDomainBar({ weights }: { weights: Record<LifeDomainId, number> }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex h-4 w-full overflow-hidden rounded-full">
+        {LIFE_DOMAINS.map((d) => (
+          <div
+            key={d.id}
+            className={DOMAIN_BAR_COLORS[d.id] ?? "bg-moss"}
+            style={{ flex: `0 0 ${weights[d.id]}%` }}
+            title={`${d.label} ${weights[d.id]}%`}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        {LIFE_DOMAINS.map((d) => (
+          <span key={d.id} className="text-xs text-muted-foreground">
+            {d.label} · {weights[d.id]}%
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -331,6 +348,15 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
     (step === 3 && (weightsLoaded || !loading)) ||
     step === 4;
 
+  const primaryCtaLabel =
+    loading
+      ? "Saving…"
+      : step === TOTAL_STEPS - 1
+      ? "Finish setup"
+      : step === 3
+      ? "Looks good →"
+      : "Continue";
+
   function advanceStep() {
     if (step < TOTAL_STEPS - 1) {
       if (step < 3) setWeightsLoaded(false);
@@ -341,31 +367,29 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-moss/10 to-background px-4 pt-12 pb-24">
-      {/* Logo */}
+    <div className="relative flex min-h-screen flex-col items-center justify-start bg-background px-4 pt-12 pb-24">
+      <div className="fixed top-0 inset-x-0 h-1 bg-gradient-to-r from-moss/40 via-moss to-moss/40" aria-hidden />
+
       <div className="mb-8 flex items-center gap-2">
         <span className="text-xl font-bold text-moss">Grove</span>
         <Sparkles className="h-4 w-4 text-moss/60" />
       </div>
 
       <div className="w-full max-w-md">
-        <StepDots current={step} total={TOTAL_STEPS} />
+        <StepProgressBar current={step} total={TOTAL_STEPS} />
 
-        {/* Safety message */}
         {safetyMessage && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-200">
             {safetyMessage}
           </div>
         )}
 
-        {/* Error message */}
         {error && (
           <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        {/* ── Step 0: Name ─────────────────────────────────────────────── */}
         {step === 0 && (
           <div className="space-y-4">
             <div>
@@ -389,13 +413,19 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
           </div>
         )}
 
-        {/* ── Step 1: Goals ─────────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h1 className="text-xl font-bold text-foreground">What do you want to grow?</h1>
+              <div className="flex items-baseline justify-between gap-2">
+                <h1 className="text-xl font-bold text-foreground">What are you working on right now?</h1>
+                {goalChips.length > 0 && (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {goalChips.length} selected
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Pick what resonates. You can add specifics or adjust later.
+                Pick 2 or 3 things — most people come with more than one.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4 space-y-4">
@@ -409,7 +439,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {suggestedGoalChips.map((c) => (
-                        <ChipButton key={c} label={c} selected={goalChips.includes(c)} onClick={() => toggleGoalChip(c)} />
+                        <ChipButton key={c} label={c} selected={goalChips.includes(c)} showCheck onClick={() => toggleGoalChip(c)} />
                       ))}
                     </div>
                   )}
@@ -421,7 +451,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {GOAL_CHIPS.map((c) => (
-                    <ChipButton key={c} label={c} selected={goalChips.includes(c)} onClick={() => toggleGoalChip(c)} />
+                    <ChipButton key={c} label={c} selected={goalChips.includes(c)} showCheck onClick={() => toggleGoalChip(c)} />
                   ))}
                 </div>
               </div>
@@ -441,7 +471,6 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
           </div>
         )}
 
-        {/* ── Step 2: Friction ──────────────────────────────────────────── */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
@@ -507,63 +536,27 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
           </div>
         )}
 
-        {/* ── Step 3: Domain weights ────────────────────────────────────── */}
         {step === 3 && (
           <div className="space-y-4">
             <div>
               <h1 className="text-xl font-bold text-foreground">Balance your focus areas</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Mycelium suggested weights based on your goals. Tune them to match how you want to spend your energy.
+                Mycelium calibrated these from your goals. Adjust later in your profile.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4 space-y-4">
               {loading && !weightsLoaded ? (
                 <div className="space-y-3 animate-pulse">
-                  {LIFE_DOMAINS.map((d) => (
-                    <div key={d.id}>
-                      <div className="mb-1 h-3 w-1/3 rounded bg-muted" />
-                      <div className="h-2 w-full rounded-full bg-muted" />
-                    </div>
-                  ))}
+                  <div className="h-4 w-full rounded-full bg-muted" />
                   <p className="text-xs text-muted-foreground text-center">Calibrating…</p>
                 </div>
               ) : (
-                <>
-                {LIFE_DOMAINS.map((d) => {
-                  const barColor = DOMAIN_BAR_COLORS[d.id] ?? "bg-moss";
-                  return (
-                    <div key={d.id}>
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-xs font-medium text-foreground">{d.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{weights[d.id]}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={1}
-                        max={100}
-                        value={weights[d.id]}
-                        onChange={(e) => setWeights((w) => ({ ...w, [d.id]: Number.parseInt(e.target.value, 10) }))}
-                        className="w-full accent-moss"
-                      />
-                      <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${barColor} transition-all`}
-                          style={{ width: `${weights[d.id]}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                <p className={`text-center text-xs font-medium ${weightTotalTone(weightsTotal(weights))}`}>
-                  Total: {weightsTotal(weights)}%
-                </p>
-                </>
+                <StackedDomainBar weights={weights} />
               )}
             </div>
           </div>
         )}
 
-        {/* ── Step 4: Community + privacy ───────────────────────────────── */}
         {step === 4 && (
           <div className="space-y-4">
             <div>
@@ -575,25 +568,24 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
             <div className="rounded-xl border border-border bg-card p-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                  Community interest
+                  Who do you want to grow with?
                 </label>
                 <textarea
                   value={intake.communityInterest}
                   onChange={(e) => setIntake({ ...intake, communityInterest: e.target.value })}
-                  placeholder="What kind of group helps you stay engaged?"
+                  placeholder="e.g. builders shipping side projects, parents staying consistent, students finishing degrees"
                   rows={3}
                   className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-moss/30 resize-none"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                  Focus context{" "}
-                  <span className="normal-case font-normal text-muted-foreground">(private, optional)</span>
+                  Anything else Mycelium should know?
                 </label>
                 <textarea
                   value={intake.focusDisclosure}
                   onChange={(e) => setIntake({ ...intake, focusDisclosure: e.target.value })}
-                  placeholder="Used only to adapt planning and nudges."
+                  placeholder="e.g. I have ADHD, I work nights, I have a big deadline in 3 weeks — Mycelium uses this to adjust its suggestions"
                   rows={3}
                   className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-moss/30 resize-none"
                 />
@@ -602,7 +594,6 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
           </div>
         )}
 
-        {/* ── Navigation ───────────────────────────────────────────────── */}
         <div className="mt-6 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -620,11 +611,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
             onClick={advanceStep}
             className="flex-1 rounded-xl bg-moss px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-moss/90 disabled:opacity-40"
           >
-            {loading
-              ? "Saving…"
-              : step === TOTAL_STEPS - 1
-              ? "Finish setup"
-              : "Continue"}
+            {primaryCtaLabel}
           </button>
         </div>
 
