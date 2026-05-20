@@ -226,12 +226,10 @@ export default async function GoalsPage() {
 
   const completionsWithDomain = (completions30d ?? []).map((row) => {
     const join = row.tasks as { domain?: string | null } | null;
-    const raw = join?.domain ?? "";
-    const domain = knownDomains.has(raw) ? raw : "learning";
     return {
       task_id: row.task_id as string,
       completed_date: row.completed_date as string,
-      domain,
+      domain: coerceDomain(join?.domain),
     };
   });
 
