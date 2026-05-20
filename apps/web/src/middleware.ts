@@ -18,6 +18,7 @@ const isPublicRoute = createRouteMatcher([
   "/api(.*)",
   "/demo/start(.*)",
   "/demo/exit(.*)",
+  "/dev/(.*)",
 ]);
 
 const requiresOnboardingComplete = createRouteMatcher([
