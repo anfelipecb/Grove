@@ -2,16 +2,16 @@
 id: "GRO-055"
 title: "Skip CoachWizard when onboarding complete — show check-in instead"
 slug: "skip-coachwizard-when-onboarding-complete-show-check-in-instead"
-status: "ready"
+status: "done"
 priority: "p0"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "coach", "onboarding", "bug"]
+owner: "cursor"
+branch: "ticket/gro-055-skip-coachwizard-when-onboarding-complete-show-check-in-instead"
+worktree: ".worktrees/gro-055-skip-coachwizard-when-onboarding-complete-show-check-in-instead"
+pr_url: "https://github.com/anfelipecb/Grove/pull/41"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:03.938Z"
 ---
 
 ## Context

@@ -2,16 +2,16 @@
 id: "GRO-057"
 title: "Today empty state — task primacy demote Find Time and Community pulse"
 slug: "today-empty-state-task-primacy-demote-find-time-and-community-pulse"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "ux", "bug"]
+owner: "cursor"
+branch: "ticket/gro-057-today-empty-state-task-primacy-demote-find-time-and-community-pulse"
+worktree: ".worktrees/gro-057-today-empty-state-task-primacy-demote-find-time-and-community-pulse"
+pr_url: "https://github.com/anfelipecb/Grove/pull/43"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:04.527Z"
 ---
 
 ## Context

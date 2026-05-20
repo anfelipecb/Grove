@@ -2,16 +2,16 @@
 id: "GRO-063"
 title: "Domain colors dark mode refresh and info tooltip button"
 slug: "domain-colors-dark-mode-refresh-and-info-tooltip-button"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "design", "dark-mode", "domains"]
+owner: "cursor"
+branch: "ticket/gro-063-domain-colors-dark-mode-refresh-and-info-tooltip-button"
+worktree: ".worktrees/gro-063-domain-colors-dark-mode-refresh-and-info-tooltip-button"
+pr_url: "https://github.com/anfelipecb/Grove/pull/46"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:05.394Z"
 ---
 
 ## Context

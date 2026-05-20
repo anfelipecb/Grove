@@ -2,16 +2,16 @@
 id: "GRO-062"
 title: "Dark mode design refresh — moss CSS variable inner glow borders card warmth"
 slug: "dark-mode-design-refresh-moss-css-variable-inner-glow-borders-card-warmth"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "design", "dark-mode"]
+owner: "cursor"
+branch: "ticket/gro-062-dark-mode-design-refresh-moss-css-variable-inner-glow-borders-card-warmth"
+worktree: ".worktrees/gro-062-dark-mode-design-refresh-moss-css-variable-inner-glow-borders-card-warmth"
+pr_url: "https://github.com/anfelipecb/Grove/pull/45"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:05.103Z"
 ---
 
 ## Context

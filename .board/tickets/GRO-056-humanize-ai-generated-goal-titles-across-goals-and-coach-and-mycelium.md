@@ -2,16 +2,16 @@
 id: "GRO-056"
 title: "Humanize AI-generated goal titles across Goals and Coach and Mycelium"
 slug: "humanize-ai-generated-goal-titles-across-goals-and-coach-and-mycelium"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "ai", "coach", "bug"]
+owner: "cursor"
+branch: "ticket/gro-056-humanize-ai-generated-goal-titles-across-goals-and-coach-and-mycelium"
+worktree: ".worktrees/gro-056-humanize-ai-generated-goal-titles-across-goals-and-coach-and-mycelium"
+pr_url: "https://github.com/anfelipecb/Grove/pull/42"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:04.234Z"
 ---
 
 ## Context

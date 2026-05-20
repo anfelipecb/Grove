@@ -2,16 +2,16 @@
 id: "GRO-060"
 title: "Community join — handle already-member state gracefully"
 slug: "community-join-handle-already-member-state-gracefully"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "community", "bug", "ux"]
+owner: "cursor"
+branch: "ticket/gro-060-community-join-handle-already-member-state-gracefully"
+worktree: ".worktrees/gro-060-community-join-handle-already-member-state-gracefully"
+pr_url: "https://github.com/anfelipecb/Grove/pull/44"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:05:04.816Z"
 ---
 
 ## Context
