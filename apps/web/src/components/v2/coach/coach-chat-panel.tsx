@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageSquareText, Send } from "lucide-react";
 import { twMerge } from "tailwind-merge";
+import { JournalPromptCard } from "@/components/v2/coach/journal-prompt-card";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -197,6 +198,12 @@ export function CoachChatPanel({
           {error}
         </p>
       ) : null}
+
+      <JournalPromptCard
+        onSaved={(confirmation) =>
+          setMessages((current) => [...current, { role: "assistant", content: confirmation }])
+        }
+      />
 
       <div className="flex-1 space-y-3 overflow-y-auto rounded-[24px] border border-border bg-background/70 p-4">
         {messages.map((message, index) => (
