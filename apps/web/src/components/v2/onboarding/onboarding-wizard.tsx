@@ -332,19 +332,25 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
         }),
       });
       const saveBody = parseJson<{ ok?: boolean; error?: string }>(await saveRes.text());
+      const briefingParams = {
+        name: (intake.name ?? "").trim(),
+        goals: briefingGoalsFromWizard(goalChips, goalsText),
+        style: intake.supportStyle,
+        weights: normalizeDomainWeights(weights),
+      };
+
+      if (saveRes.status === 401) {
+        redirecting = true;
+        router.push(buildOnboardingDoneUrl({ ...briefingParams, dev: true }));
+        return;
+      }
+
       if (!saveRes.ok || !saveBody?.ok) {
         setError(saveBody?.error ?? `Save failed (${saveRes.status}). Try again.`);
         return;
       }
       redirecting = true;
-      router.push(
-        buildOnboardingDoneUrl({
-          name: (intake.name ?? "").trim(),
-          goals: briefingGoalsFromWizard(goalChips, goalsText),
-          style: intake.supportStyle,
-          weights: normalizeDomainWeights(weights),
-        }),
-      );
+      router.push(buildOnboardingDoneUrl(briefingParams));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
     } finally {
