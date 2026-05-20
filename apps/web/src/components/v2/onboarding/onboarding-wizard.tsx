@@ -57,6 +57,44 @@ function equalDefaultWeights(): Record<LifeDomainId, number> {
   return w;
 }
 
+/** Proportional scale to 100%; bump largest domain to fix rounding drift. */
+function normalizeDomainWeights(
+  weights: Record<LifeDomainId, number>,
+): Record<LifeDomainId, number> {
+  const total = LIFE_DOMAINS.reduce((s, d) => s + (weights[d.id] ?? 0), 0);
+  if (total <= 0) return equalDefaultWeights();
+
+  const normalized = {} as Record<LifeDomainId, number>;
+  for (const d of LIFE_DOMAINS) {
+    normalized[d.id] = Math.round(((weights[d.id] ?? 0) / total) * 100);
+  }
+
+  const sum = LIFE_DOMAINS.reduce((s, d) => s + normalized[d.id], 0);
+  const drift = 100 - sum;
+  if (drift !== 0) {
+    let maxId: LifeDomainId = LIFE_DOMAINS[0].id;
+    let maxVal = normalized[maxId];
+    for (const d of LIFE_DOMAINS) {
+      if (normalized[d.id] > maxVal) {
+        maxVal = normalized[d.id];
+        maxId = d.id;
+      }
+    }
+    normalized[maxId] = Math.max(1, normalized[maxId] + drift);
+  }
+  return normalized;
+}
+
+function weightsTotal(weights: Record<LifeDomainId, number>): number {
+  return LIFE_DOMAINS.reduce((s, d) => s + weights[d.id], 0);
+}
+
+function weightTotalTone(total: number): string {
+  if (total === 100) return "text-emerald-600 dark:text-emerald-400";
+  if (Math.abs(total - 100) <= 5) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
+}
+
 function parseJson<T>(raw: string): T | null {
   try { return JSON.parse(raw) as T; } catch { return null; }
 }
@@ -233,7 +271,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
           const v = payload.weights[d.id];
           if (typeof v === "number") next[d.id] = v;
         }
-        setWeights(next);
+        setWeights(normalizeDomainWeights(next));
       }
       setWeightsLoaded(true);
     })();
@@ -268,7 +306,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
         body: JSON.stringify({
           intake: fullIntake,
           profileCard: profilePayload.profile,
-          xpDomainWeights: weights,
+          xpDomainWeights: normalizeDomainWeights(weights),
           mode: assessmentMode ? "assessment" : "initial",
         }),
       });
@@ -490,7 +528,8 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                   <p className="text-xs text-muted-foreground text-center">Calibrating…</p>
                 </div>
               ) : (
-                LIFE_DOMAINS.map((d) => {
+                <>
+                {LIFE_DOMAINS.map((d) => {
                   const barColor = DOMAIN_BAR_COLORS[d.id] ?? "bg-moss";
                   return (
                     <div key={d.id}>
@@ -501,21 +540,24 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                       <input
                         type="range"
                         min={1}
-                        max={40}
+                        max={100}
                         value={weights[d.id]}
                         onChange={(e) => setWeights((w) => ({ ...w, [d.id]: Number.parseInt(e.target.value, 10) }))}
                         className="w-full accent-moss"
-                        style={{ accentColor: undefined }}
                       />
                       <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-muted">
                         <div
                           className={`h-full rounded-full ${barColor} transition-all`}
-                          style={{ width: `${Math.min(100, (weights[d.id] / 40) * 100)}%` }}
+                          style={{ width: `${weights[d.id]}%` }}
                         />
                       </div>
                     </div>
                   );
-                })
+                })}
+                <p className={`text-center text-xs font-medium ${weightTotalTone(weightsTotal(weights))}`}>
+                  Total: {weightsTotal(weights)}%
+                </p>
+                </>
               )}
             </div>
           </div>
