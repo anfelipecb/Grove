@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { routedCompletion } from "@/lib/llm-router";
+import { resolveTierModel, routedCompletion } from "@/lib/llm-router";
+import { buildFindTimeFallbackPlan } from "@/lib/find-time-fallback";
 import { fetchCalendarEvents, busyBlocksFromEvents, getValidToken } from "@/lib/google-calendar";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { computeFreeWindows, type FreeWindow, type ScheduleProfileInput, type CalendarEventInput } from "@/lib/free-windows";
+
+function isPreviewEnv(): boolean {
+  return process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
+}
 
 type ScheduleProfile = {
   bedtime?: string;
@@ -216,12 +221,18 @@ export async function POST(req: Request) {
     }
   }
 
+  const calendarInputs = calendarBusy.map((b): CalendarEventInput => ({
+    start: b.start,
+    end: b.end,
+    title: b.title,
+  }));
+
   let windowsSummary = "";
   try {
     const freeWindows: FreeWindow[] = computeFreeWindows(
       weekDates,
       scheduleProfile as ScheduleProfileInput,
-      calendarBusy.map((b): CalendarEventInput => ({ start: b.start, end: b.end, title: b.title })),
+      calendarInputs,
     );
     windowsSummary = freeWindows
       .slice(0, 20)
@@ -231,26 +242,50 @@ export async function POST(req: Request) {
     // Non-fatal — AI will use schedule profile defaults
   }
 
+  const returnFallback = (reason: string, groqDetail?: string) => {
+    const fallbackPlan = buildFindTimeFallbackPlan({
+      weekDates,
+      tasks: activeTasks,
+      existingScheduled,
+      scheduleProfile: scheduleProfile as ScheduleProfileInput,
+      calendarBusy: calendarInputs,
+    });
+    console.error("[find-time] using fallback:", reason, groqDetail ?? "");
+    return NextResponse.json({
+      plan: fallbackPlan,
+      newTasks: [],
+      fallback: true,
+      ...(isPreviewEnv() && groqDetail ? { detail: groqDetail } : {}),
+    });
+  };
+
   const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, windowsSummary);
 
-  let raw: string | null;
+  let raw: string | null = null;
+  let groqError: string | undefined;
   try {
-    raw = await routedCompletion([{ role: "user", content: prompt }], "balanced", {
+    raw = await routedCompletion([{ role: "user", content: prompt }], "fast", {
       temperature: 0.4,
       max_tokens: 1200,
     });
-  } catch {
-    return NextResponse.json({ error: "AI unavailable — try again shortly." }, { status: 503 });
+  } catch (err) {
+    groqError =
+      err instanceof Error
+        ? `${resolveTierModel("fast")}: ${err.message}`
+        : `${resolveTierModel("fast")}: unknown error`;
+    return returnFallback("groq_throw", groqError);
   }
 
   if (!raw) {
-    return NextResponse.json({ error: "AI unavailable — check GROQ_API_KEY." }, { status: 503 });
+    return returnFallback("no_api_key", isPreviewEnv() ? "GROQ_API_KEY is not set" : undefined);
   }
 
   const parsed = parseJson<{ plan?: PlanItem[]; newTasks?: NewTask[] }>(raw);
   if (!parsed?.plan) {
-    // Return first 400 chars of raw response for debugging
-    return NextResponse.json({ error: "Could not parse AI response.", debug: raw?.slice(0, 400) }, { status: 500 });
+    return returnFallback(
+      "parse_failed",
+      isPreviewEnv() ? `Could not parse AI JSON: ${raw.slice(0, 200)}` : undefined,
+    );
   }
 
   // Resolve NEW_* ids: insert newTasks first, replace ids in plan

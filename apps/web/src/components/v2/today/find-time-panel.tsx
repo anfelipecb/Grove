@@ -34,19 +34,21 @@ export function FindTimePanel() {
   const [plan, setPlan] = useState<PlanItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [usedFallback, setUsedFallback] = useState(false);
 
   async function fetchPlan(regenerate = false) {
     setStatus("loading");
     setErrorMsg(null);
+    setUsedFallback(false);
     try {
       const res = await fetch("/api/ai/find-time", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ regenerate }),
       });
-      let data: { plan?: PlanItem[]; error?: string };
+      let data: { plan?: PlanItem[]; error?: string; fallback?: boolean };
       try {
-        data = (await res.json()) as { plan?: PlanItem[]; error?: string };
+        data = (await res.json()) as { plan?: PlanItem[]; error?: string; fallback?: boolean };
       } catch {
         setErrorMsg("Could not read server response.");
         setStatus("error");
@@ -63,6 +65,7 @@ export function FindTimePanel() {
         return;
       }
       setPlan(data.plan);
+      setUsedFallback(Boolean(data.fallback));
       setSelected(new Set(data.plan.map((_, i) => String(i))));
       setStatus("preview");
     } catch {
@@ -144,7 +147,7 @@ export function FindTimePanel() {
         </div>
         <p className="text-sm text-foreground">Your week is planned. Check the Calendar tab to see your schedule.</p>
         <button
-          onClick={() => { setStatus("idle"); setPlan([]); }}
+          onClick={() => { setStatus("idle"); setPlan([]); setUsedFallback(false); }}
           className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
         >
           Plan again
@@ -171,6 +174,12 @@ export function FindTimePanel() {
           <RefreshCw className="h-3 w-3" /> Regenerate
         </button>
       </div>
+
+      {usedFallback ? (
+        <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+          Used a simple schedule. Tap Regenerate to try AI again.
+        </p>
+      ) : null}
 
       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
         {grouped.map(({ date, items }) => (
@@ -218,7 +227,7 @@ export function FindTimePanel() {
           {status === "accepting" ? "Scheduling…" : `Accept plan (${selected.size})`}
         </button>
         <button
-          onClick={() => { setStatus("idle"); setPlan([]); }}
+          onClick={() => { setStatus("idle"); setPlan([]); setUsedFallback(false); }}
           disabled={status === "accepting"}
           className="rounded-xl border border-border px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
         >

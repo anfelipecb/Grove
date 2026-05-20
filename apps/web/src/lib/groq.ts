@@ -1,4 +1,5 @@
 import type { AiMessage } from "@grove/core";
+import { normalizeGroqModel } from "@/lib/groq-models";
 
 const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -10,7 +11,8 @@ export async function groqText(
   options?: { temperature?: number; model?: string; max_tokens?: number },
 ): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = options?.model ?? process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+  const rawModel = options?.model ?? process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+  const model = normalizeGroqModel(rawModel);
   if (!apiKey) {
     return "";
   }
@@ -29,7 +31,8 @@ export async function groqText(
     }),
   });
   if (!response.ok) {
-    throw new Error(`Groq error: ${response.status}`);
+    const body = await response.text().catch(() => "");
+    throw new Error(`Groq error: ${response.status}${body ? ` — ${body.slice(0, 280)}` : ""}`);
   }
   const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
   return payload.choices?.[0]?.message?.content?.trim() ?? "";

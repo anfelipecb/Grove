@@ -1,14 +1,9 @@
 import type { AiMessage } from "@grove/core";
+import { GROQ_TIER_MODELS, normalizeGroqModel } from "@/lib/groq-models";
 import { groqText } from "@/lib/groq";
 import { getOrFetch } from "@/lib/response-cache";
 
 export type LlmTier = "fast" | "balanced" | "deep";
-
-const DEFAULT_TIER_MODELS: Record<LlmTier, string> = {
-  fast: "llama-3.1-8b-instant",
-  balanced: "llama-3.1-70b-versatile",
-  deep: "llama-3.3-70b-versatile",
-};
 
 function firstNonWhitespace(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -16,7 +11,9 @@ function firstNonWhitespace(value: string | undefined): string | undefined {
 }
 
 export function resolveTierModel(tier: LlmTier): string {
-  return firstNonWhitespace(process.env.GROQ_MODEL) ?? DEFAULT_TIER_MODELS[tier];
+  const envModel = firstNonWhitespace(process.env.GROQ_MODEL);
+  const raw = envModel ?? GROQ_TIER_MODELS[tier];
+  return normalizeGroqModel(raw);
 }
 
 export async function routedCompletion(
