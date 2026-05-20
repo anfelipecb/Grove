@@ -16,7 +16,7 @@ type GoalsViewProps = {
   displayName: string;
   initialGoals: GoalCardData[];
   profileId: string;
-  completions30d: { task_id: string; completed_date: string }[];
+  completions30d: { task_id: string; completed_date: string; domain: string }[];
   monthlyXp: number;
   today: string;
 };
