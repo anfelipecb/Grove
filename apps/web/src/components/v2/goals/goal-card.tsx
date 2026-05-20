@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { DomainTag } from "@/components/v2/shared/domain-tag";
@@ -51,6 +51,55 @@ const FREQUENCY_LABELS: Record<GoalTask["frequency"], string> = {
   weekly: "Weekly",
   once: "One-off",
 };
+
+type TimeWindow = "morning" | "afternoon" | "evening";
+
+function currentTimeWindow(): TimeWindow {
+  const h = new Date().getHours();
+  if (h >= 5 && h <= 11) return "morning";
+  if (h >= 12 && h <= 16) return "afternoon";
+  return "evening";
+}
+
+function windowIndex(w: TimeWindow): number {
+  const order: TimeWindow[] = ["morning", "afternoon", "evening"];
+  return order.indexOf(w);
+}
+
+type TimeGroupKey = "now" | "upcoming" | "passed" | "flexible";
+
+function taskTimeGroup(task: GoalTask, now: TimeWindow): TimeGroupKey {
+  const pt = task.preferred_time;
+  if (!pt || pt === "flexible") return "flexible";
+  if (pt !== "morning" && pt !== "afternoon" && pt !== "evening") return "flexible";
+  const nowIdx = windowIndex(now);
+  const taskIdx = windowIndex(pt);
+  if (taskIdx === nowIdx) return "now";
+  if (taskIdx > nowIdx) return "upcoming";
+  return "passed";
+}
+
+function groupActiveTasksByTime(tasks: GoalTask[]) {
+  const now = currentTimeWindow();
+  const groups: Record<TimeGroupKey, GoalTask[]> = {
+    now: [],
+    upcoming: [],
+    passed: [],
+    flexible: [],
+  };
+  for (const task of tasks) {
+    if (task.completedToday) continue;
+    groups[taskTimeGroup(task, now)].push(task);
+  }
+  return groups;
+}
+
+const TIME_SECTIONS: { key: TimeGroupKey; label: string; showDot?: boolean; muted?: boolean }[] = [
+  { key: "now", label: "Good time now", showDot: true },
+  { key: "upcoming", label: "Coming up" },
+  { key: "passed", label: "Window passed today", muted: true },
+  { key: "flexible", label: "Any time" },
+];
 
 export type GoalTask = {
   id: string;
@@ -123,6 +172,71 @@ export function GoalCard({ goal, canQuickAddTask, onAddTask, onCompleteTask }: G
     soft: "bg-moss/10",
   };
   const completedThisWeekCount = goal.tasks.filter((task) => task.completedThisWeek).length;
+  const completedTodayTasks = useMemo(
+    () => goal.tasks.filter((task) => task.completedToday),
+    [goal.tasks],
+  );
+  const timeGroups = useMemo(
+    () => groupActiveTasksByTime(goal.tasks),
+    [goal.tasks],
+  );
+
+  function renderTaskRow(task: GoalTask, options?: { muted?: boolean; showPassedPill?: boolean }) {
+    const totalPoints = task.point_value + (task.is_community_task ? task.community_point_value : 0);
+    const busy = busyTaskId === task.id;
+
+    return (
+      <div
+        key={task.id}
+        className={twMerge(
+          "flex items-start gap-3 rounded-2xl border border-border bg-background/80 px-3 py-3 transition",
+          task.completedToday && "opacity-70",
+          options?.muted && "opacity-60",
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => void handleCompleteTask(task.id)}
+          disabled={task.completedToday || busy}
+          className={twMerge(
+            "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors",
+            task.completedToday ? "border-moss bg-moss text-white" : "border-border hover:border-moss",
+          )}
+          aria-label={task.completedToday ? `${task.title} completed today` : `Complete ${task.title}`}
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : task.completedToday ? <Check className="h-3.5 w-3.5" /> : null}
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={twMerge("text-sm font-medium text-foreground", task.completedToday && "line-through")}>
+              {task.title}
+            </p>
+            {options?.showPassedPill ? (
+              <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                passed
+              </span>
+            ) : null}
+            {task.completedThisWeek && !task.completedToday ? (
+              <span className="rounded-full bg-moss/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-moss">
+                Done this week
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="rounded-full border border-border px-2 py-0.5">{FREQUENCY_LABELS[task.frequency]}</span>
+            {task.is_required ? <span className="rounded-full border border-border px-2 py-0.5">Coach required</span> : null}
+            {task.preferred_time && task.preferred_time !== "flexible" ? (
+              <span className="rounded-full border border-border px-2 py-0.5 capitalize">{task.preferred_time}</span>
+            ) : null}
+          </div>
+        </div>
+
+        <span className="shrink-0 text-xs font-semibold text-moss">+{totalPoints}</span>
+      </div>
+    );
+  }
 
   async function handleCompleteTask(taskId: string) {
     if (busyTaskId) return;
@@ -204,56 +318,32 @@ export function GoalCard({ goal, canQuickAddTask, onAddTask, onCompleteTask }: G
                   No tasks yet. Add a first step below so this goal has something concrete to act on.
                 </div>
               ) : (
-                goal.tasks.map((task) => {
-                  const totalPoints = task.point_value + (task.is_community_task ? task.community_point_value : 0);
-                  const busy = busyTaskId === task.id;
-
-                  return (
-                    <div
-                      key={task.id}
-                      className={twMerge(
-                        "flex items-start gap-3 rounded-2xl border border-border bg-background/80 px-3 py-3 transition",
-                        task.completedToday && "opacity-70",
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => void handleCompleteTask(task.id)}
-                        disabled={task.completedToday || busy}
-                        className={twMerge(
-                          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors",
-                          task.completedToday ? "border-moss bg-moss text-white" : "border-border hover:border-moss",
+                <>
+                  {completedTodayTasks.map((task) => renderTaskRow(task))}
+                  {TIME_SECTIONS.map(({ key, label, showDot, muted }) => {
+                    const sectionTasks = timeGroups[key];
+                    if (sectionTasks.length === 0) return null;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <p
+                          className={twMerge(
+                            "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+                            showDot ? "text-moss" : "text-muted-foreground",
+                          )}
+                        >
+                          {showDot ? <span aria-hidden="true">●</span> : null}
+                          {label}
+                        </p>
+                        {sectionTasks.map((task) =>
+                          renderTaskRow(task, {
+                            muted: muted ?? false,
+                            showPassedPill: key === "passed",
+                          }),
                         )}
-                        aria-label={task.completedToday ? `${task.title} completed today` : `Complete ${task.title}`}
-                      >
-                        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : task.completedToday ? <Check className="h-3.5 w-3.5" /> : null}
-                      </button>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className={twMerge("text-sm font-medium text-foreground", task.completedToday && "line-through")}>
-                            {task.title}
-                          </p>
-                          {task.completedThisWeek && !task.completedToday ? (
-                            <span className="rounded-full bg-moss/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-moss">
-                              Done this week
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                          <span className="rounded-full border border-border px-2 py-0.5">{FREQUENCY_LABELS[task.frequency]}</span>
-                          {task.is_required ? <span className="rounded-full border border-border px-2 py-0.5">Coach required</span> : null}
-                          {task.preferred_time && task.preferred_time !== "flexible" ? (
-                            <span className="rounded-full border border-border px-2 py-0.5 capitalize">{task.preferred_time}</span>
-                          ) : null}
-                        </div>
                       </div>
-
-                      <span className="shrink-0 text-xs font-semibold text-moss">+{totalPoints}</span>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </>
               )}
             </div>
 
