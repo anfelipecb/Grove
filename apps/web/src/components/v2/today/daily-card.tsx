@@ -23,17 +23,21 @@ import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
 import { surfacePrimary } from "@/components/v2/today/surface-classes";
+import { DopamineMenu } from "@/components/v2/today/dopamine-menu";
+import type { DopamineMainTask } from "@/components/v2/today/today-tabs";
 
 type DailyCardProps = {
   initialTasks: TaskRowData[];
   profileId: string;
+  mainTask: DopamineMainTask | null;
 };
 
-export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
+export function DailyCard({ initialTasks, profileId, mainTask }: DailyCardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [error, setError] = useState<string | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
+  const [showDopamineMenu, setShowDopamineMenu] = useState(false);
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -126,19 +130,43 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
       )}
 
       <div className={`${surfacePrimary} mb-4 p-4`}>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
-        <button
-          onClick={() => {
-            setAddPrefill(null);
-            setShowTaskChat(true);
-          }}
-          className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add task
-        </button>
-      </div>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDopamineMenu((v) => !v)}
+              className="rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+            >
+              I&apos;m stuck
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAddPrefill(null);
+                setShowTaskChat(true);
+              }}
+              className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add task
+            </button>
+          </div>
+        </div>
+
+        {showDopamineMenu ? (
+          <DopamineMenu
+            mainTask={
+              mainTask
+                ? {
+                    ...mainTask,
+                    completed: tasks.find((t) => t.id === mainTask.id)?.completed ?? mainTask.completed,
+                  }
+                : null
+            }
+            onCompleteMain={handleComplete}
+          />
+        ) : null}
 
       {required.length > 0 && (
         <section className="mb-4">
