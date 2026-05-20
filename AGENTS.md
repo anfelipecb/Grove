@@ -112,6 +112,16 @@ XP should value effort, resistance, importance, urgency, and community contribut
 - **Stacked PRs:** Open follow-on work as a PR **into `master`** once its dependency has landed (or retarget/rebase onto `master` after the base PR merges). PRs opened into another **ticket branch** drift from trunk after squash merges.
 - When opening a PR from a worktree, include the ticket ID in the branch name and PR title so board state, branch state, and review state stay aligned.
 
+## UX Review Checklist (UI tickets)
+
+Before opening a PR on any ticket that touches the landing, Today, Coach, or Community surfaces, verify each point:
+
+1. **Copy count:** Did you add text strings that are not user data (task titles, names, dates)? If yes, justify each one — default is to remove, not add.
+2. **Task primacy on Today:** Is the task list still the visually heaviest element? If your eye goes to a widget before the task list, the hierarchy is wrong.
+3. **Progressive disclosure:** Are lists, reasons, or explanatory paragraphs showing by default that could be behind an expand / "Why?" link? Move them unless they are the user's primary next action.
+4. **CTA count:** More than one filled/primary button per column or region? Demote the secondary one to a text link or ghost button.
+5. **Landing H1 rule:** If you touch `landing-experience.tsx`, confirm exactly one primary benefit statement above the fold and one subhead. No second headline-tier block.
+
 ## Supabase + Clerk
 
 - Use Supabase's native third-party auth integration for Clerk.

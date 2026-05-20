@@ -18,18 +18,23 @@ Grove is an ADHD-aware AI accountability and community coordination platform. Th
 
 ## Routes (web `apps/web`)
 
+**v2 routes (primary UI — these are the live routes):**
+
 | Path | Purpose |
 |------|---------|
-| `/` | Marketing landing; signed-in users redirect to `/dashboard`. |
+| `/` | Marketing landing; signed-in users redirect to `/today`. |
 | `/sign-in`, `/sign-up` | Clerk hosted auth. |
-| `/onboarding` | Five-step wizard (intake → domain weights → save). Requires auth. |
-| `/dashboard` | Goals, XP, profile summary; requires auth + `onboarding_step >= 5`. Includes a reassessment CTA that reopens `/onboarding?mode=assess` for calibration rather than a fresh signup. |
-| `/calendar` | Month and agenda views for personal goal times (`due_at`) and community sessions (`starts_at`); dedicated planning surface (not the main dashboard). Requires auth + onboarding complete. |
-| `/communities` | Community list, feed, sessions, Mycelium side chat. |
-| `/mycelium` | Legacy Mycelium workbench (session summary tooling). |
+| `/today` | Daily task view + time-block calendar tab. Requires auth + onboarding complete. |
+| `/goals` | Dedicated goals page with progress rings and task breakdown. Requires auth. |
+| `/coach` | Coach dashboard (greeting, domain levels, rewards) + Mycelium chat panel. CoachWizard shown for first-run goal setup. Requires auth. |
+| `/community` | Community list, feed, sessions, Mycelium side chat. Requires auth. |
+| `/profile` | User profile and schedule settings. Requires auth. |
 
-**Onboarding:** `profiles.onboarding_step` is `0–5`. `5` means completed; middleware sends incomplete users to `/onboarding` when they hit `/dashboard`, `/calendar`, `/communities`, or `/mycelium`.
-**Assessment mode:** `/onboarding?mode=assess` is for recalibration. Preserve the current user row and avoid duplicate memberships/goal inserts when saving this mode; use Mycelium chat when the user needs help refining goals.
+**v1 / legacy routes (all redirect to v2):**
+`/dashboard` → `/today`, `/calendar` → `/today`, `/onboarding` → `/coach` (wizard), `/mycelium` → `/coach`, `/communities` → `/community`
+
+**Onboarding:** `profiles.onboarding_step` is `0–5`. `5` means complete. Middleware redirects incomplete users. The CoachWizard at `/coach` is the primary first-run experience.
+**Assessment mode:** `/coach?mode=assess` reopens the wizard for recalibration. Preserve existing profile/goals; avoid duplicate inserts.
 
 ## API routes (`apps/web/src/app/api`)
 
@@ -58,6 +63,17 @@ Grove is an ADHD-aware AI accountability and community coordination platform. Th
 - **Worker/jobs:** Railway
 - **Database/auth/storage:** Supabase + Clerk
 - **AI:** OpenAI-compatible Groq first, with provider abstraction for later swaps.
+
+## UX and Copy Principles
+
+These principles apply to all v2 surface work and are enforced at PR review:
+
+- **Less is more.** Every text element earns its place. An icon + tooltip beats an explanatory paragraph. If a label is redundant with context, cut it.
+- **Tasks are visually primary on Today.** No secondary widget (coach nudge, community pulse, find time, domain progress) should compete in visual weight with the task list. Primary = stronger contrast or elevated surface. Secondary = muted border, compact density.
+- **One benefit statement per section.** On the landing: one H1 + one subhead above the fold. No parallel headline-tier blocks. Emotional recognition goes in the subhead, not a competing H1.
+- **Progressive disclosure.** Show the minimum; reveal on demand. Reasons, explanations, and multi-item lists default to collapsed or hidden behind an expand / "Why?" affordance.
+- **ADHD tone.** Short sentences. Plain language. No em dashes in body copy. No generic AI-product phrasing. Specificity over inspiration.
+- **One primary CTA per region.** Secondary actions are text links or ghost buttons. Never two filled primary buttons competing in the same column.
 
 ## Privacy And Safety
 

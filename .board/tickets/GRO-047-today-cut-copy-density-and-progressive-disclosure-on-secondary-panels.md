@@ -58,3 +58,4 @@ Primary surfaces: `today-desktop.tsx`, `daily-card.tsx`, `community-pulse-card.t
 - Out of scope: removing Find Time, Community pulse, or unlocks from the product; this is **density and disclosure**, not feature deletion.
 - File collision: GRO-048 touches the same Today files for visual hierarchy; **claim GRO-047 before GRO-048**, or merge 048 after 047 lands.
 - Related done tickets: GRO-022 (layout), GRO-032 (pulse wiring), GRO-023 (partial UX clarity).
+- **Focus order:** Audit confirms `daily-card.tsx` is already lean (7 non-task text elements). Spend implementation effort on `community-pulse-card.tsx` (8–12 blocks when loaded — primary target) and `find-time-panel.tsx` (instructional paragraph "Let the coach plan your week…" is the main cut). Changes to `daily-card.tsx` should be limited to empty-state copy tightening only.
