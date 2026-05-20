@@ -1,6 +1,6 @@
 import type { LifeDomainId } from "@grove/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeXpConsistency } from "@/components/dashboard/xp-consistency";
+import { computeXpConsistency } from "@/lib/xp-consistency";
 
 export type CoachDashboardContext = {
   displayName: string;
