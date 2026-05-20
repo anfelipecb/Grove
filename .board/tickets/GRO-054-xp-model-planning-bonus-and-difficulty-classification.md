@@ -2,16 +2,16 @@
 id: "GRO-054"
 title: "XP model planning bonus and difficulty classification"
 slug: "xp-model-planning-bonus-and-difficulty-classification"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "scoring", "adhd"]
+owner: "cursor"
+branch: "ticket/gro-054-xp-model-planning-bonus-and-difficulty-classification"
+worktree: ".worktrees/gro-054-xp-model-planning-bonus-and-difficulty-classification"
+pr_url: "https://github.com/anfelipecb/Grove/pull/36"
+labels: []
 depends_on: []
 created_at: "2026-05-20T00:48:19.252Z"
-updated_at: "2026-05-20T00:48:19.252Z"
+updated_at: "2026-05-20T02:58:23.197Z"
 ---
 
 ## Context

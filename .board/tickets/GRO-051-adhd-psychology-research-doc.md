@@ -2,16 +2,16 @@
 id: "GRO-051"
 title: "ADHD psychology research doc"
 slug: "adhd-psychology-research-doc"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["docs", "research"]
+owner: "cursor"
+branch: "ticket/gro-051-adhd-psychology-research-doc"
+worktree: ".worktrees/gro-051-adhd-psychology-research-doc"
+pr_url: "https://github.com/anfelipecb/Grove/pull/35"
+labels: []
 depends_on: []
 created_at: "2026-05-20T00:48:19.252Z"
-updated_at: "2026-05-20T00:48:19.252Z"
+updated_at: "2026-05-20T02:58:22.905Z"
 ---
 
 ## Context

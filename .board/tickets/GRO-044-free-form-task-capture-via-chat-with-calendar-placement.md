@@ -2,16 +2,16 @@
 id: "GRO-044"
 title: "Free-form task capture via chat with calendar placement"
 slug: "free-form-task-capture-via-chat-with-calendar-placement"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "ai"]
-depends_on: ["GRO-037"]
+owner: "cursor"
+branch: "ticket/gro-044-free-form-task-capture-via-chat-with-calendar-placement"
+worktree: ".worktrees/gro-044-free-form-task-capture-via-chat-with-calendar-placement"
+pr_url: "https://github.com/anfelipecb/Grove/pull/38"
+labels: []
+depends_on: []
 created_at: "2026-05-19T23:01:23.210Z"
-updated_at: "2026-05-19T23:01:23.210Z"
+updated_at: "2026-05-20T02:58:23.753Z"
 ---
 
 ## Context

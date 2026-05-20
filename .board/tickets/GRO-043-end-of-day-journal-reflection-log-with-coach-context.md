@@ -2,16 +2,16 @@
 id: "GRO-043"
 title: "End-of-day journal — reflection log with coach context"
 slug: "end-of-day-journal-reflection-log-with-coach-context"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "coach", "db"]
-depends_on: ["GRO-040"]
+owner: "cursor"
+branch: "ticket/gro-043-end-of-day-journal-reflection-log-with-coach-context"
+worktree: ".worktrees/gro-043-end-of-day-journal-reflection-log-with-coach-context"
+pr_url: "https://github.com/anfelipecb/Grove/pull/37"
+labels: []
+depends_on: []
 created_at: "2026-05-19T23:01:22.923Z"
-updated_at: "2026-05-19T23:01:22.923Z"
+updated_at: "2026-05-20T02:58:23.474Z"
 ---
 
 ## Context
