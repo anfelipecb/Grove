@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HeartPulse, RefreshCw, Users } from "lucide-react";
 import { twMerge } from "tailwind-merge";
-import { LandingCoachDemo } from "@/components/landing-coach-demo";
+import { LandingGrowthDemo, type GrowthBeatId } from "@/components/landing-growth-demo";
 
-const beats = [
+const beats: { id: GrowthBeatId; icon: typeof HeartPulse; label: string; hint: string; accent: string }[] = [
   {
     id: "start",
     icon: HeartPulse,
@@ -27,11 +27,15 @@ const beats = [
     hint: "Not a separate tab you forget to open.",
     accent: "from-clay/15 to-moss/15",
   },
-] as const;
+];
 
 export function LandingGrowthSection() {
   const [active, setActive] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  const advanceBeat = useCallback(() => {
+    setActive((i) => (i + 1) % beats.length);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -41,11 +45,14 @@ export function LandingGrowthSection() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  /** Fallback rotation if a scenario stalls; demos also advance via onBeatComplete */
   useEffect(() => {
     if (reducedMotion) return;
-    const id = setInterval(() => setActive((i) => (i + 1) % beats.length), 4200);
+    const id = setInterval(advanceBeat, 28_000);
     return () => clearInterval(id);
-  }, [reducedMotion]);
+  }, [reducedMotion, advanceBeat]);
+
+  const activeBeat = beats[active];
 
   return (
     <section className="relative overflow-hidden rounded-[2rem] border border-white/45 bg-white/30 p-6 shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/40 dark:shadow-glass-dark sm:p-8 lg:p-10">
@@ -61,7 +68,8 @@ export function LandingGrowthSection() {
             One messy sentence becomes tasks you can start.
           </h2>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-700 dark:text-muted-foreground">
-            Coach listens in plain language, then shapes a goal and small steps. No blank dashboard.
+            Coach shapes goals and tasks. On rough days you re-enter without shame. Community buddy time keeps you
+            showing up.
           </p>
 
           <ul className="mt-8 space-y-3" role="tablist" aria-label="Why Grove">
@@ -116,7 +124,11 @@ export function LandingGrowthSection() {
           </ul>
         </div>
 
-        <LandingCoachDemo />
+        <LandingGrowthDemo
+          key={activeBeat.id}
+          activeBeat={activeBeat.id}
+          onBeatComplete={advanceBeat}
+        />
       </div>
     </section>
   );
