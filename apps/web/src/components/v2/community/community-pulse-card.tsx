@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, CalendarClock } from "lucide-react";
+import { Users, CalendarClock, ChevronDown } from "lucide-react";
 
 export type CommunityPulsePayload = {
   hasCommunity: boolean;
@@ -30,6 +30,7 @@ export function CommunityPulseCard({
   const [data, setData] = useState<CommunityPulsePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,71 +54,79 @@ export function CommunityPulseCard({
   }, [profileId]);
 
   const fb = fallbackPulse;
+  const extraCount =
+    data && data.hasCommunity
+      ? data.balanceTips.length + Math.max(0, data.socialNudges.length - 1)
+      : 0;
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center gap-2">
         <Users className="h-4 w-4 text-fern" />
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Community pulse
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Community pulse</p>
       </div>
 
       {loading ? (
         <div className="space-y-2 animate-pulse">
           <div className="h-4 w-2/3 rounded bg-muted" />
-          <div className="h-3 w-full rounded bg-muted" />
-          {fb?.communityName ? (
-            <p className="text-xs text-muted-foreground pt-1">
-              {fb.communityName} · {fb.memberCount} member{fb.memberCount !== 1 ? "s" : ""}
-              {fb.nextSessionTitle ? (
-                <span className="mt-1 flex items-center gap-1">
-                  <CalendarClock className="inline h-3 w-3" /> Next: {fb.nextSessionTitle}
-                </span>
-              ) : null}
-            </p>
+          {fb?.nextSessionTitle ? (
+            <p className="truncate text-xs text-muted-foreground pt-1">Next: {fb.nextSessionTitle}</p>
           ) : null}
         </div>
       ) : failed ? (
-        <p className="text-sm text-muted-foreground">
-          Pulse unavailable right now.{" "}
-          <Link href="/community" className="text-moss underline underline-offset-2">
-            Open Community
-          </Link>
-        </p>
+        <Link href="/community" className="text-sm text-moss underline underline-offset-2">
+          Open Community
+        </Link>
       ) : data && !data.hasCommunity ? (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-foreground">{data.headline}</p>
-          <p className="text-xs text-muted-foreground">{data.socialNudges[0] ?? "Join when you’re ready."}</p>
-          <Link
-            href="/community"
-            className="inline-flex text-xs font-semibold text-moss underline underline-offset-2"
-          >
+          <p className="text-sm font-medium text-foreground line-clamp-2">{data.headline}</p>
+          <Link href="/community" className="text-xs font-semibold text-moss underline underline-offset-2">
             Go to Community →
           </Link>
         </div>
       ) : data ? (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">{data.headline}</p>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground line-clamp-2">{data.headline}</p>
 
-          {data.balanceTips.length > 0 && (
-            <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-              {data.balanceTips.map((tip, i) => (
-                <li key={`tip-${i}`}>{tip}</li>
-              ))}
-            </ul>
-          )}
+          {!expanded && data.socialNudges[0] && extraCount === 0 ? (
+            <p className="flex gap-1.5 text-xs text-muted-foreground line-clamp-1">
+              <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />
+              <span>{data.socialNudges[0]}</span>
+            </p>
+          ) : null}
 
-          {data.socialNudges.length > 0 && (
-            <div className="space-y-1">
-              {data.socialNudges.map((line, i) => (
-                <p key={`soc-${i}`} className="flex gap-1.5 text-xs text-muted-foreground">
-                  <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />
-                  <span>{line}</span>
-                </p>
-              ))}
-            </div>
-          )}
+          {extraCount > 0 || (data.balanceTips.length > 0 && expanded) || data.socialNudges.length > 1 ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ChevronDown className={`h-3 w-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+              {expanded ? "Less" : extraCount > 0 ? `More (${extraCount})` : "More"}
+            </button>
+          ) : null}
+
+          {expanded ? (
+            <>
+              {data.balanceTips.length > 0 && (
+                <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+                  {data.balanceTips.map((tip, i) => (
+                    <li key={`tip-${i}`}>{tip}</li>
+                  ))}
+                </ul>
+              )}
+              {data.socialNudges.length > 0 && (
+                <div className="space-y-1">
+                  {data.socialNudges.map((line, i) => (
+                    <p key={`soc-${i}`} className="flex gap-1.5 text-xs text-muted-foreground">
+                      <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />
+                      <span>{line}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : null}
 
           {data.suggestedMicroTasks[0] && onAddSuggested ? (
             <button
@@ -127,7 +136,7 @@ export function CommunityPulseCard({
               }
               className="w-full rounded-lg border border-moss/40 bg-moss/5 px-3 py-2 text-left text-xs font-medium text-moss transition-colors hover:bg-moss/10"
             >
-              Add suggested task: {data.suggestedMicroTasks[0].title}
+              {data.suggestedMicroTasks[0].title}
             </button>
           ) : null}
         </div>

@@ -145,24 +145,16 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
 
       {required.length === 0 && goal.length === 0 && (
         <div className="py-6 text-center">
-          <p className="text-sm font-medium text-foreground">No tasks yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Add a task above, or let Coach set up your goals.
-          </p>
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <button
-              onClick={() => {
-                setAddPrefill(null);
-                setShowAddSheet(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-moss px-4 py-2 text-sm font-semibold text-moss transition-colors hover:bg-moss/10"
-            >
-              <Plus className="h-4 w-4" /> Add your first task
-            </button>
-            <a href="/coach" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
-              Or start with Coach →
-            </a>
-          </div>
+          <p className="text-sm text-muted-foreground">No tasks yet.</p>
+          <button
+            onClick={() => {
+              setAddPrefill(null);
+              setShowAddSheet(true);
+            }}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
+          >
+            <Plus className="h-4 w-4" /> Add task
+          </button>
         </div>
       )}
 

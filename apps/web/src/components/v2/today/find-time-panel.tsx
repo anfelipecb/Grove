@@ -96,9 +96,6 @@ export function FindTimePanel() {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find Time</p>
         </div>
         {errorMsg && <p className="mb-2 text-xs text-destructive">{errorMsg}</p>}
-        <p className="mb-3 text-xs text-muted-foreground">
-          Let the coach plan your week based on your goals and available time.
-        </p>
         <button
           onClick={() => void fetchPlan()}
           className="w-full rounded-xl bg-moss py-2.5 text-sm font-semibold text-white transition-colors hover:bg-moss/90"

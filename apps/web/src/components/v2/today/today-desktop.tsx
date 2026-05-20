@@ -66,6 +66,8 @@ export function TodayDesktop({
 
   const [nudge, setNudge] = useState<CoachSuggestion | null>(null);
   const [nudgeLoading, setNudgeLoading] = useState(true);
+  const [nudgeWhyOpen, setNudgeWhyOpen] = useState(false);
+  const [unlocksOpen, setUnlocksOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/ai/coach-suggestions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId }) })
@@ -160,22 +162,16 @@ export function TodayDesktop({
 
           {required.length === 0 && goal.length === 0 && (
             <div className="py-4 text-center">
-              <p className="text-sm font-medium text-foreground">No tasks yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">Add a task above, or let Coach set up your goals.</p>
-              <div className="mt-3 flex flex-col items-center gap-2">
-                <button
-                  onClick={() => {
-                    setAddPrefill(null);
-                    setShowAddSheet(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-moss px-4 py-2 text-sm font-semibold text-moss transition-colors hover:bg-moss/10"
-                >
-                  <Plus className="h-4 w-4" /> Add your first task
-                </button>
-                <a href="/coach" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
-                  Or start with Coach →
-                </a>
-              </div>
+              <p className="text-sm text-muted-foreground">No tasks yet.</p>
+              <button
+                onClick={() => {
+                  setAddPrefill(null);
+                  setShowAddSheet(true);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-moss px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
+              >
+                <Plus className="h-4 w-4" /> Add task
+              </button>
             </div>
           )}
         </div>
@@ -211,14 +207,23 @@ export function TodayDesktop({
             </div>
           ) : nudge ? (
             <div>
-              <p className="text-sm font-medium text-foreground">{nudge.title}</p>
-              {nudge.reason && (
-                <p className="mt-1 text-xs text-muted-foreground">{nudge.reason}</p>
-              )}
+              <p className="text-sm font-medium text-foreground line-clamp-2">{nudge.title}</p>
+              {nudge.reason ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setNudgeWhyOpen((v) => !v)}
+                    className="mt-1 text-[11px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    {nudgeWhyOpen ? "Hide" : "Why?"}
+                  </button>
+                  {nudgeWhyOpen ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{nudge.reason}</p>
+                  ) : null}
+                </>
+              ) : null}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Keep going — you&apos;re making progress.</p>
-          )}
+          ) : null}
         </div>
 
         <CommunityPulseCard
@@ -232,36 +237,45 @@ export function TodayDesktop({
 
         <FindTimePanel />
 
-        {/* Next unlocks */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Gift className="h-4 w-4 text-marigold" />
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Next Unlocks
-            </p>
+        {nextUnlocks.length > 0 ? (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <button
+              type="button"
+              onClick={() => setUnlocksOpen((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 text-left"
+            >
+              <span className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-marigold" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {nextUnlocks.length === 1
+                    ? "Next unlock"
+                    : `${nextUnlocks.length} unlocks in progress`}
+                </span>
+              </span>
+              <span className="text-[11px] text-muted-foreground">{unlocksOpen ? "Hide" : "Show"}</span>
+            </button>
+            {unlocksOpen ? (
+              <div className="mt-3 space-y-3">
+                {nextUnlocks.map((unlock) => (
+                  <div key={unlock.id}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-medium text-foreground">{unlock.label}</span>
+                      <span className="text-[11px] text-muted-foreground">{unlock.progressPercent}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-marigold transition-all"
+                        style={{ width: `${unlock.progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 truncate text-xs text-muted-foreground">{nextUnlocks[0].label}</p>
+            )}
           </div>
-          {nextUnlocks.length > 0 ? (
-            <div className="space-y-3">
-              {nextUnlocks.map((unlock) => (
-                <div key={unlock.id}>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium text-foreground">{unlock.label}</span>
-                    <span className="text-[11px] text-muted-foreground">{unlock.progressPercent}%</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-marigold transition-all"
-                      style={{ width: `${unlock.progressPercent}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{unlock.remainingLabel}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">All current unlocks achieved!</p>
-          )}
-        </div>
+        ) : null}
       </div>
     </div>
   );
