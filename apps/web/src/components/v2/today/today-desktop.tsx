@@ -11,6 +11,7 @@ import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
 import { DomainProgressBars } from "@/components/v2/today/domain-progress-bars";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
+import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
 
 type CommunityPulse = {
   communityName: string | null;
@@ -124,15 +125,15 @@ export function TodayDesktop({
       <div className="space-y-4">
         <TodayStatsRow doneTodayCount={doneTodayCount} pointsToday={pointsToday} streak={streak} />
 
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className={`${surfacePrimary} p-4`}>
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
             <button
               onClick={() => {
                 setAddPrefill(null);
                 setShowAddSheet(true);
               }}
-              className="flex items-center gap-1 rounded-lg border border-moss/40 px-2.5 py-1 text-xs font-medium text-moss transition-colors hover:bg-moss/10"
+              className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
             >
               <Plus className="h-3.5 w-3.5" /> Add task
             </button>
@@ -181,7 +182,7 @@ export function TodayDesktop({
 
       {/* CENTER COLUMN */}
       <div className="space-y-4">
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className={`${surfaceSecondary} p-4`}>
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Today&apos;s Log
           </p>
@@ -193,8 +194,8 @@ export function TodayDesktop({
       {/* RIGHT COLUMN */}
       <div className="space-y-4">
         {/* Coach nudge */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-3 flex items-center gap-2">
+        <div className={`${surfaceSecondary} p-3`}>
+          <div className="mb-2 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-moss" />
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Coach Nudge
@@ -238,7 +239,7 @@ export function TodayDesktop({
         <FindTimePanel />
 
         {nextUnlocks.length > 0 ? (
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className={`${surfaceSecondary} p-3`}>
             <button
               type="button"
               onClick={() => setUnlocksOpen((v) => !v)}

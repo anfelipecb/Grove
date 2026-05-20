@@ -16,7 +16,7 @@ export function TodayStatsRow({ doneTodayCount, pointsToday, streak }: TodayStat
   ] as const;
 
   return (
-    <div className="grid grid-cols-3 gap-3 rounded-xl border border-border bg-card p-4">
+    <div className="grid grid-cols-3 gap-3 rounded-lg border border-border/70 bg-muted/15 p-3">
       {stats.map(({ icon: Icon, value, label, color }) => (
         <div key={label} className="flex flex-col items-center gap-1">
           <Icon className={`h-5 w-5 ${color}`} />

@@ -21,6 +21,7 @@ import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
+import { surfacePrimary } from "@/components/v2/today/surface-classes";
 
 type DailyCardProps = {
   initialTasks: TaskRowData[];
@@ -107,14 +108,15 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
         <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
       )}
 
+      <div className={`${surfacePrimary} mb-4 p-4`}>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
         <button
           onClick={() => {
             setAddPrefill(null);
             setShowAddSheet(true);
           }}
-          className="flex items-center gap-1 rounded-lg border border-moss/40 px-2.5 py-1 text-xs font-medium text-moss transition-colors hover:bg-moss/10"
+          className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90"
         >
           <Plus className="h-3.5 w-3.5" />
           Add task
@@ -157,6 +159,7 @@ export function DailyCard({ initialTasks, profileId }: DailyCardProps) {
           </button>
         </div>
       )}
+      </div>
 
       <LogSessionForm onLog={handleLog} />
 

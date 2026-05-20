@@ -60,7 +60,7 @@ export function CommunityPulseCard({
       : 0;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 dark:bg-muted/10">
       <div className="mb-3 flex items-center gap-2">
         <Users className="h-4 w-4 text-fern" />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Community pulse</p>
