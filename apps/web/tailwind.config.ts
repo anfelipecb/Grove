@@ -61,6 +61,39 @@ const config: Config = {
           "0%, 100%": { transform: "scale(1)", opacity: "1" },
           "50%": { transform: "scale(1.04)", opacity: "0.92" },
         },
+        "landing-plant-soil": {
+          "0%": { opacity: "0", transform: "scaleX(0.6)" },
+          "8%, 100%": { opacity: "1", transform: "scaleX(1)" },
+        },
+        "landing-plant-root": {
+          "0%, 6%": { opacity: "0", transform: "scale(0.7)" },
+          "14%, 100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "landing-plant-stem": {
+          "0%, 12%": { opacity: "0", transform: "scaleY(0)" },
+          "22%, 100%": { opacity: "1", transform: "scaleY(1)" },
+        },
+        "landing-plant-leaf-left": {
+          "0%, 20%": { opacity: "0", transform: "scale(0.5) rotate(-8deg)" },
+          "30%, 100%": { opacity: "1", transform: "scale(1) rotate(0deg)" },
+        },
+        "landing-plant-branch": {
+          "0%, 28%": { opacity: "0", transform: "scaleX(0)" },
+          "38%, 100%": { opacity: "1", transform: "scaleX(1)" },
+        },
+        "landing-plant-leaf-top": {
+          "0%, 34%": { opacity: "0", transform: "scale(0.6)" },
+          "44%, 100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "landing-plant-node": {
+          "0%, 42%": { opacity: "0", transform: "scale(0)" },
+          "52%, 88%": { opacity: "1", transform: "scale(1)" },
+          "94%, 100%": { opacity: "0.85", transform: "scale(0.96)" },
+        },
+        "landing-plant-sway": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "50%": { transform: "rotate(1.5deg)" },
+        },
       },
       animation: {
         "landing-float": "landing-float 14s ease-in-out infinite",
@@ -70,6 +103,14 @@ const config: Config = {
         "landing-ring-spin": "landing-ring-spin 5s linear infinite",
         "landing-dot": "landing-dot 1s ease-in-out infinite",
         "landing-grow-badge": "landing-grow-badge 2.4s ease-in-out infinite",
+        "landing-plant-soil": "landing-plant-soil 16s ease-out infinite",
+        "landing-plant-root": "landing-plant-root 16s ease-out infinite",
+        "landing-plant-stem": "landing-plant-stem 16s ease-out infinite",
+        "landing-plant-leaf-left": "landing-plant-leaf-left 16s ease-out infinite",
+        "landing-plant-branch": "landing-plant-branch 16s ease-out infinite",
+        "landing-plant-leaf-top": "landing-plant-leaf-top 16s ease-out infinite",
+        "landing-plant-node": "landing-plant-node 16s ease-in-out infinite",
+        "landing-plant-sway": "landing-plant-sway 5s ease-in-out infinite",
         fadeIn: "fadeIn 0.35s ease-out forwards",
       },
     },

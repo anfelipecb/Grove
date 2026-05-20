@@ -1,5 +1,6 @@
 import { ArrowRight, Leaf, Sparkles, Users, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { LandingCommunityGrowth } from "@/components/landing-community-growth";
 import { LandingGrowthSection } from "@/components/landing-growth-section";
 
 const productScenes = [
@@ -273,34 +274,7 @@ export function LandingExperience({
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-white/45 bg-gradient-to-r from-bark via-bark to-moss p-7 text-white shadow-panel dark:shadow-panel-dark sm:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Why community matters</p>
-              <h2 className="mt-3 text-3xl font-semibold leading-tight">Grove is not solo productivity with a community tab.</h2>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
-                Personal follow-through and community participation strengthen each other. When your own system feels alive, you show up for other people more easily. When other people are visible, it is easier to return to your own work.
-              </p>
-            </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-sm font-semibold text-white">The promise of Grove</p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-white/80">
-                <li className="flex gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
-                  <span>You should understand the app before you finish the first screen.</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
-                  <span>You should leave onboarding with real goals and tasks, not a blank dashboard.</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-marigold" />
-                  <span>You should be able to come back after a rough day without feeling like you failed the app.</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
+        <LandingCommunityGrowth />
 
         <footer className="rounded-[1.75rem] border border-white/40 bg-white/30 px-6 py-8 text-center shadow-glass backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/45 dark:shadow-glass-dark">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">Start here</p>
