@@ -2,16 +2,16 @@
 id: "GRO-041"
 title: "Onboarding v2 — calendar-aware task scheduling and balance advocate"
 slug: "onboarding-v2-calendar-aware-task-scheduling-and-balance-advocate"
-status: "ready"
+status: "in_review"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "scheduling"]
-depends_on: ["GRO-038"]
+owner: "cursor"
+branch: "ticket/gro-041-onboarding-v2-calendar-aware-task-scheduling-and-balance-advocate"
+worktree: ".worktrees/gro-041-onboarding-v2-calendar-aware-task-scheduling-and-balance-advocate"
+pr_url: "https://github.com/anfelipecb/Grove/pull/29"
+labels: []
+depends_on: []
 created_at: "2026-05-19T23:01:22.345Z"
-updated_at: "2026-05-19T23:01:22.345Z"
+updated_at: "2026-05-20T00:26:01.419Z"
 ---
 
 ## Context

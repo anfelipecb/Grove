@@ -2,12 +2,12 @@
 id: "GRO-047"
 title: "Today: cut copy density and progressive disclosure on secondary panels"
 slug: "today-cut-copy-density-and-progressive-disclosure-on-secondary-panels"
-status: "ready"
+status: "in_review"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
+owner: "cursor"
+branch: "ticket/gro-047-today-cut-copy-density-and-progressive-disclosure-on-secondary-panels"
+worktree: ".worktrees/gro-047-today-cut-copy-density-and-progressive-disclosure-on-secondary-panels"
+pr_url: "https://github.com/anfelipecb/Grove/pull/28"
 labels:
   - "v2"
   - "today"
@@ -15,7 +15,7 @@ labels:
   - "ux"
 depends_on: []
 created_at: "2026-05-19T23:59:06.878Z"
-updated_at: "2026-05-19T23:59:06.878Z"
+updated_at: "2026-05-20T00:26:01.116Z"
 ---
 
 ## Context

@@ -2,16 +2,16 @@
 id: "GRO-045"
 title: "Week calendar goal labels and goal progress sidebar"
 slug: "week-calendar-goal-labels-and-goal-progress-sidebar"
-status: "ready"
+status: "in_review"
 priority: "p3"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "calendar", "goals"]
-depends_on: ["GRO-039"]
+owner: "cursor"
+branch: "ticket/gro-045-week-calendar-goal-labels-and-goal-progress-sidebar"
+worktree: ".worktrees/gro-045-week-calendar-goal-labels-and-goal-progress-sidebar"
+pr_url: "https://github.com/anfelipecb/Grove/pull/30"
+labels: []
+depends_on: []
 created_at: "2026-05-19T23:01:23.502Z"
-updated_at: "2026-05-19T23:01:23.502Z"
+updated_at: "2026-05-20T00:26:01.723Z"
 ---
 
 ## Context
