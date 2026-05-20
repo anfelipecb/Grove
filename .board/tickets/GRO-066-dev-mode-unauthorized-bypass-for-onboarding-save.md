@@ -2,16 +2,16 @@
 id: "GRO-066"
 title: "Dev mode Unauthorized bypass for onboarding save"
 slug: "dev-mode-unauthorized-bypass-for-onboarding-save"
-status: "ready"
+status: "done"
 priority: "p0"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "dev", "bug"]
-depends_on: ["GRO-065"]
+owner: "cursor"
+branch: "ticket/gro-066-dev-mode-unauthorized-bypass-for-onboarding-save"
+worktree: ".worktrees/gro-066-dev-mode-unauthorized-bypass-for-onboarding-save"
+pr_url: "https://github.com/anfelipecb/Grove/pull/52"
+labels: []
+depends_on: []
 created_at: "2026-05-20T16:00:00.000Z"
-updated_at: "2026-05-20T16:00:00.000Z"
+updated_at: "2026-05-20T16:17:42.696Z"
 ---
 
 ## Context

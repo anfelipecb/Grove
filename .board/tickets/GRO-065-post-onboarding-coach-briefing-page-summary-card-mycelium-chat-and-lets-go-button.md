@@ -2,16 +2,16 @@
 id: "GRO-065"
 title: "Post-onboarding coach briefing page — summary card Mycelium chat and Lets go button"
 slug: "post-onboarding-coach-briefing-page-summary-card-mycelium-chat-and-lets-go-button"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "coach", "ux"]
+owner: "cursor"
+branch: "ticket/gro-065-post-onboarding-coach-briefing-page-summary-card-mycelium-chat-and-lets-go-button"
+worktree: ".worktrees/gro-065-post-onboarding-coach-briefing-page-summary-card-mycelium-chat-and-lets-go-button"
+pr_url: "https://github.com/anfelipecb/Grove/pull/51"
+labels: []
 depends_on: []
 created_at: "2026-05-20T16:00:00.000Z"
-updated_at: "2026-05-20T16:00:00.000Z"
+updated_at: "2026-05-20T16:17:42.392Z"
 ---
 
 ## Context

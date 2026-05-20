@@ -2,16 +2,16 @@
 id: "GRO-064"
 title: "Onboarding wizard UX overhaul — white bg stacked domain bar multi-goal clarity step 5 copy"
 slug: "onboarding-wizard-ux-overhaul-white-bg-stacked-domain-bar-multi-goal-clarity-step-5-copy"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "design", "ux"]
+owner: "cursor"
+branch: "ticket/gro-064-onboarding-wizard-ux-overhaul-white-bg-stacked-domain-bar-multi-goal-clarity-step-5-copy"
+worktree: ".worktrees/gro-064-onboarding-wizard-ux-overhaul-white-bg-stacked-domain-bar-multi-goal-clarity-step-5-copy"
+pr_url: "https://github.com/anfelipecb/Grove/pull/50"
+labels: []
 depends_on: []
 created_at: "2026-05-20T16:00:00.000Z"
-updated_at: "2026-05-20T16:00:00.000Z"
+updated_at: "2026-05-20T16:17:42.092Z"
 ---
 
 ## Context
