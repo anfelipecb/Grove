@@ -34,7 +34,12 @@ function coerceDomain(raw: string | null | undefined): LifeDomainId {
   return "learning";
 }
 
-export default async function CoachPage() {
+export default async function CoachPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ debrief?: string; planned?: string }>;
+}) {
+  const params = await searchParams;
   const userId = await getServerUserId();
 
   if (!userId) {
@@ -148,6 +153,13 @@ export default async function CoachPage() {
     }));
   }
 
+  const plannedCount =
+    params.debrief === "1" ? Math.max(0, Number.parseInt(params.planned ?? "0", 10) || 0) : 0;
+  const initialAssistantMessage =
+    params.debrief === "1"
+      ? `Welcome back. Yesterday you had ${plannedCount} task${plannedCount === 1 ? "" : "s"} planned — how did it go?`
+      : undefined;
+
   const chatContext = {
     today: new Date().toISOString().slice(0, 10),
     topGoalTitle: activeGoals[0]?.title ?? null,
@@ -173,6 +185,7 @@ export default async function CoachPage() {
           hasTasks={todayTasks.length > 0}
           profileId={profileId}
           spendablePoints={spendablePoints}
+          initialAssistantMessage={initialAssistantMessage}
         />
       ) : (
         <CoachWizard demoMode={demo} initialDisplayName={displayName} profileId={null} />
