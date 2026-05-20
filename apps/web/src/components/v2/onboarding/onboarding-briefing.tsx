@@ -109,7 +109,13 @@ export function OnboardingBriefing({ name, goals, style, topDomains, devPreview 
       <footer className="border-t border-border px-4 py-4 sm:px-6">
         <button
           type="button"
-          onClick={() => router.push("/today")}
+          onClick={() => {
+            if (devPreview) {
+              window.location.assign("/api/dev/set-demo-cookie");
+            } else {
+              router.push("/today");
+            }
+          }}
           className="mx-auto block w-full max-w-5xl rounded-xl bg-moss py-3.5 text-sm font-semibold text-white transition-colors hover:bg-moss/90"
         >
           Let&apos;s go →
