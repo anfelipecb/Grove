@@ -155,7 +155,7 @@ export default async function GoalsPage() {
       : Promise.resolve({ data: [] as { task_id: string; completed_date: string }[], error: null }),
     supabase
       .from("task_completions")
-      .select("task_id, completed_date")
+      .select("task_id, completed_date, tasks!inner(domain)")
       .eq("profile_id", profile.id)
       .gte("completed_date", thirtyDaysAgoStr),
     supabase
@@ -224,13 +224,24 @@ export default async function GoalsPage() {
     tasks: tasksByGoal.get(goal.id) ?? [],
   }));
 
+  const completionsWithDomain = (completions30d ?? []).map((row) => {
+    const join = row.tasks as { domain?: string | null } | null;
+    const raw = join?.domain ?? "";
+    const domain = knownDomains.has(raw) ? raw : "learning";
+    return {
+      task_id: row.task_id as string,
+      completed_date: row.completed_date as string,
+      domain,
+    };
+  });
+
   return (
     <GoalsView
       demoMode={demo}
       displayName={(profile.display_name as string | null | undefined) ?? "Member"}
       initialGoals={initialGoals}
       profileId={profile.id as string}
-      completions30d={(completions30d ?? []) as { task_id: string; completed_date: string }[]}
+      completions30d={completionsWithDomain}
       monthlyXp={monthlyXp}
       today={today}
     />
