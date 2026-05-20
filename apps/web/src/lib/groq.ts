@@ -7,7 +7,7 @@ const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
  */
 export async function groqText(
   messages: AiMessage[],
-  options?: { temperature?: number; model?: string },
+  options?: { temperature?: number; model?: string; max_tokens?: number },
 ): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   const model = options?.model ?? process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
@@ -25,6 +25,7 @@ export async function groqText(
       model,
       messages,
       temperature,
+      ...(options?.max_tokens != null ? { max_tokens: options.max_tokens } : {}),
     }),
   });
   if (!response.ok) {

@@ -233,7 +233,15 @@ export async function POST(req: Request) {
 
   const prompt = buildSystemPrompt(activeTasks, scheduleProfile, existingScheduled, weekDates, today, regenerate, windowsSummary);
 
-  const raw = await routedCompletion([{ role: "user", content: prompt }], "balanced", { temperature: 0.4 });
+  let raw: string | null;
+  try {
+    raw = await routedCompletion([{ role: "user", content: prompt }], "balanced", {
+      temperature: 0.4,
+      max_tokens: 1200,
+    });
+  } catch {
+    return NextResponse.json({ error: "AI unavailable — try again shortly." }, { status: 503 });
+  }
 
   if (!raw) {
     return NextResponse.json({ error: "AI unavailable — check GROQ_API_KEY." }, { status: 503 });

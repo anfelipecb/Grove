@@ -22,11 +22,12 @@ export function resolveTierModel(tier: LlmTier): string {
 export async function routedCompletion(
   messages: AiMessage[],
   tier: LlmTier,
-  options?: { temperature?: number; cacheKey?: string; cacheTtlSeconds?: number },
+  options?: { temperature?: number; max_tokens?: number; cacheKey?: string; cacheTtlSeconds?: number },
 ): Promise<string> {
   const call = () =>
     groqText(messages, {
       temperature: options?.temperature,
+      max_tokens: options?.max_tokens,
       model: resolveTierModel(tier),
     });
 
