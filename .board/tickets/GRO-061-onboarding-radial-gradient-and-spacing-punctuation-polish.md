@@ -2,16 +2,16 @@
 id: "GRO-061"
 title: "Onboarding radial gradient and spacing punctuation polish"
 slug: "onboarding-radial-gradient-and-spacing-punctuation-polish"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "design", "bug"]
-depends_on: ["GRO-058"]
+owner: "cursor"
+branch: "ticket/gro-061-onboarding-radial-gradient-and-spacing-punctuation-polish"
+worktree: ".worktrees/gro-061-onboarding-radial-gradient-and-spacing-punctuation-polish"
+pr_url: "https://github.com/anfelipecb/Grove/pull/49"
+labels: []
+depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:15:39.491Z"
 ---
 
 ## Context

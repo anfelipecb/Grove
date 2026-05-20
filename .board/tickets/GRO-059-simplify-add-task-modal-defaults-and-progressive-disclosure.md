@@ -2,16 +2,16 @@
 id: "GRO-059"
 title: "Simplify Add task modal — defaults and progressive disclosure"
 slug: "simplify-add-task-modal-defaults-and-progressive-disclosure"
-status: "ready"
+status: "done"
 priority: "p2"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "today", "ux"]
+owner: "cursor"
+branch: "ticket/gro-059-simplify-add-task-modal-defaults-and-progressive-disclosure"
+worktree: ".worktrees/gro-059-simplify-add-task-modal-defaults-and-progressive-disclosure"
+pr_url: "https://github.com/anfelipecb/Grove/pull/48"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:14:38.579Z"
 ---
 
 ## Context

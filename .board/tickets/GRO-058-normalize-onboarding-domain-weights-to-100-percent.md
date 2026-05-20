@@ -2,16 +2,16 @@
 id: "GRO-058"
 title: "Normalize onboarding domain weights to 100 percent"
 slug: "normalize-onboarding-domain-weights-to-100-percent"
-status: "ready"
+status: "done"
 priority: "p1"
-owner: ""
-branch: ""
-worktree: ""
-pr_url: ""
-labels: ["v2", "onboarding", "bug"]
+owner: "cursor"
+branch: "ticket/gro-058-normalize-onboarding-domain-weights-to-100-percent"
+worktree: ".worktrees/gro-058-normalize-onboarding-domain-weights-to-100-percent"
+pr_url: "https://github.com/anfelipecb/Grove/pull/47"
+labels: []
 depends_on: []
 created_at: "2026-05-20T05:00:00.000Z"
-updated_at: "2026-05-20T05:00:00.000Z"
+updated_at: "2026-05-20T05:14:38.284Z"
 ---
 
 ## Context
