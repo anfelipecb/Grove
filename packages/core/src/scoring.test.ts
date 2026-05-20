@@ -9,10 +9,18 @@ import {
   getSeniorityTier,
   getSurpriseUnlocks,
   hasCommunityAccess,
+  HYPERFIXATION_BONUS_XP,
+  PLANNING_BONUS_XP,
   suggestXp,
 } from "./scoring";
 
 describe("suggestXp", () => {
+  const baseInput = {
+    effort: "small" as const,
+    resistance: "low" as const,
+    value: "important" as const,
+  };
+
   it("rewards higher resistance and community contribution", () => {
     const baseline = suggestXp({
       effort: "small",
@@ -28,6 +36,34 @@ describe("suggestXp", () => {
 
     assert.ok(community.xp > baseline.xp);
     assert.ok(community.spendablePoints > baseline.spendablePoints);
+  });
+
+  it("adds planning bonus when planning flag is set", () => {
+    const baseline = suggestXp(baseInput);
+    const withPlanning = suggestXp({ ...baseInput, planning: true });
+    assert.equal(withPlanning.xp - baseline.xp, PLANNING_BONUS_XP);
+  });
+
+  it("adds hyperfixation bonus when flag is set", () => {
+    const baseline = suggestXp(baseInput);
+    const withHyper = suggestXp({ ...baseInput, isHyperfixationGoal: true });
+    assert.equal(withHyper.xp - baseline.xp, HYPERFIXATION_BONUS_XP);
+  });
+
+  it("stacks planning and hyperfixation bonuses", () => {
+    const baseline = suggestXp(baseInput);
+    const stacked = suggestXp({
+      ...baseInput,
+      planning: true,
+      isHyperfixationGoal: true,
+    });
+    assert.equal(stacked.xp - baseline.xp, PLANNING_BONUS_XP + HYPERFIXATION_BONUS_XP);
+  });
+
+  it("does not add bonuses when flags are absent", () => {
+    const once = suggestXp(baseInput);
+    const again = suggestXp(baseInput);
+    assert.equal(once.xp, again.xp);
   });
 });
 
