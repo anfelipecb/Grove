@@ -43,6 +43,7 @@ export default async function TodayPage() {
 
   const [
     { data: tasks },
+    { data: topGoal },
     { data: completions },
     { data: recentCompletions },
     { data: domainCompletions },
@@ -51,10 +52,18 @@ export default async function TodayPage() {
   ] = await Promise.all([
     supabase
       .from("tasks")
-      .select("id, title, domain, is_required, is_community_task, point_value, community_point_value")
+      .select("id, title, domain, goal_id, is_required, is_community_task, point_value, community_point_value")
       .eq("profile_id", profile.id)
       .eq("status", "active")
       .in("frequency", ["daily", "weekly"]),
+    supabase
+      .from("goals")
+      .select("id, title")
+      .eq("profile_id", profile.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from("task_completions")
       .select("task_id, points_earned")
@@ -100,6 +109,19 @@ export default async function TodayPage() {
     community_point_value: t.community_point_value,
     completed: completedToday.has(t.id),
   }));
+
+  const topGoalId = (topGoal as { id: string } | null)?.id ?? null;
+  const mainTaskCandidate =
+    topGoalId != null
+      ? (tasks ?? []).find((t) => t.goal_id === topGoalId && !completedToday.has(t.id))
+      : (tasks ?? []).find((t) => !t.is_required && !completedToday.has(t.id));
+  const mainTask = mainTaskCandidate
+    ? {
+        id: mainTaskCandidate.id as string,
+        title: mainTaskCandidate.title as string,
+        completed: completedToday.has(mainTaskCandidate.id as string),
+      }
+    : null;
 
   const streak = computeStreak(recentCompletions ?? [], today);
 
@@ -163,7 +185,13 @@ export default async function TodayPage() {
           totalPoints={profile.spendable_points}
           streak={streak}
         />
-        <TodayTabs tasks={taskRows} activeTasks={activeTasks} profileId={profile.id} googleCalendarConnected={!!profile.google_calendar_token} />
+        <TodayTabs
+          tasks={taskRows}
+          activeTasks={activeTasks}
+          profileId={profile.id}
+          mainTask={mainTask}
+          googleCalendarConnected={!!profile.google_calendar_token}
+        />
       </div>
 
       {/* Desktop: full-width 3-column layout */}
