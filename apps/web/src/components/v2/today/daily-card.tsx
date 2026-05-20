@@ -30,9 +30,10 @@ type DailyCardProps = {
   initialTasks: TaskRowData[];
   profileId: string;
   mainTask: DopamineMainTask | null;
+  onStartFocusSession?: () => void;
 };
 
-export function DailyCard({ initialTasks, profileId, mainTask }: DailyCardProps) {
+export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSession }: DailyCardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [error, setError] = useState<string | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -133,6 +134,15 @@ export function DailyCard({ initialTasks, profileId, mainTask }: DailyCardProps)
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Today</p>
           <div className="flex items-center gap-2">
+            {onStartFocusSession ? (
+              <button
+                type="button"
+                onClick={onStartFocusSession}
+                className="rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+              >
+                Start focus session
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setShowDopamineMenu((v) => !v)}

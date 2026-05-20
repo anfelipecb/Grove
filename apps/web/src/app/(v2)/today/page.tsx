@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { PointsHeader } from "@/components/v2/shared/points-header";
-import { TodayTabs } from "@/components/v2/today/today-tabs";
+import { TodayMobileShell } from "@/components/v2/today/today-mobile-shell";
 import { TodayDesktop } from "@/components/v2/today/today-desktop";
 import { TodayDebriefRedirect } from "@/components/v2/today/today-debrief-redirect";
 import type { TaskRowData } from "@/components/v2/today/task-row";
@@ -185,7 +185,7 @@ export default async function TodayPage() {
           totalPoints={profile.spendable_points}
           streak={streak}
         />
-        <TodayTabs
+        <TodayMobileShell
           tasks={taskRows}
           activeTasks={activeTasks}
           profileId={profile.id}
