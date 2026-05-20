@@ -6,6 +6,7 @@ import { CheckCheck, ListTodo, Plus, Target } from "lucide-react";
 import { CoachWizard } from "@/components/v2/coach/coach-wizard";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { GoalCard, type GoalCardData, type GoalTask } from "@/components/v2/goals/goal-card";
+import { GoalsProgressSection } from "@/components/v2/goals/goals-progress-section";
 
 const QUICK_TASK_POINT_VALUE = 14;
 
@@ -14,6 +15,9 @@ type GoalsViewProps = {
   displayName: string;
   initialGoals: GoalCardData[];
   profileId: string;
+  completions30d: { task_id: string; completed_date: string }[];
+  monthlyXp: number;
+  today: string;
 };
 
 type InsertedTaskRow = {
@@ -44,7 +48,15 @@ function normalizeInsertedTask(task: InsertedTaskRow): GoalTask {
   };
 }
 
-export function GoalsView({ demoMode, displayName, initialGoals, profileId }: GoalsViewProps) {
+export function GoalsView({
+  demoMode,
+  displayName,
+  initialGoals,
+  profileId,
+  completions30d,
+  monthlyXp,
+  today,
+}: GoalsViewProps) {
   const { getToken } = useAuth();
   const supabase = useMemo(
     () => (demoMode ? null : createBrowserSupabaseClient(() => getToken() ?? Promise.resolve(null))),
@@ -242,6 +254,8 @@ export function GoalsView({ demoMode, displayName, initialGoals, profileId }: Go
           ))}
         </div>
       )}
+
+      <GoalsProgressSection completions30d={completions30d} monthlyXp={monthlyXp} today={today} />
     </section>
   );
 }
