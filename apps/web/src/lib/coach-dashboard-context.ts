@@ -55,7 +55,8 @@ export function staticCoachGreeting(ctx: CoachDashboardContext): { greeting: str
   const h = new Date().getHours();
   const tod = h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
   const firstGoal = ctx.activeGoals[0]?.title;
-  let greeting = `Good ${tod}, ${ctx.displayName}.`;
+  const name = ctx.displayName.trim();
+  let greeting = `Good ${tod}, ${name}.`;
   if (firstGoal) {
     greeting += ` Your next queued target: ${firstGoal}.`;
   } else {
@@ -137,7 +138,7 @@ export async function loadCoachDashboardContext(
   const { message: consistencySummary } = computeXpConsistency(xpEvents);
 
   return {
-    displayName: profile.display_name,
+    displayName: profile.display_name.trim(),
     focusNotesRaw: profile.private_focus_notes,
     activeGoals,
     lastCompletedGoalTitle,

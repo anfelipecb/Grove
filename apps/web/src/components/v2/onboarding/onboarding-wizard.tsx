@@ -99,6 +99,12 @@ function parseJson<T>(raw: string): T | null {
   try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
+function formatChipLabel(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StepDots({ current, total }: { current: number; total: number }) {
@@ -217,7 +223,9 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
         if (ac.signal.aborted) return;
         if (result?.safety) { setSafetyMessage(result.message ?? ""); setSuggestedGoalChips([]); return; }
         setSafetyMessage(null);
-        setSuggestedGoalChips(filterSuggestionsAgainstStatic(result?.profile?.firstTargets ?? [], GOAL_CHIPS));
+        setSuggestedGoalChips(
+          filterSuggestionsAgainstStatic(result?.profile?.firstTargets ?? [], GOAL_CHIPS).map(formatChipLabel),
+        );
       } catch { if (!ac.signal.aborted) setSuggestedGoalChips([]); }
       finally { if (!ac.signal.aborted) setSuggestedGoalLoading(false); }
     })();
@@ -240,7 +248,9 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
         if (ac.signal.aborted) return;
         if (result?.safety) { setSafetyMessage(result.message ?? ""); setSuggestedFrictionChips([]); return; }
         setSafetyMessage(null);
-        setSuggestedFrictionChips(filterSuggestionsAgainstStatic(result?.profile?.likelyFriction ?? [], FRICTION_CHIPS));
+        setSuggestedFrictionChips(
+          filterSuggestionsAgainstStatic(result?.profile?.likelyFriction ?? [], FRICTION_CHIPS).map(formatChipLabel),
+        );
       } catch { if (!ac.signal.aborted) setSuggestedFrictionChips([]); }
       finally { if (!ac.signal.aborted) setSuggestedFrictionLoading(false); }
     })();
@@ -286,7 +296,12 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
     try {
       const goalsText = mergeLinesHelper(goalChips, intake.goals);
       const frictionText = mergeLinesHelper(frictionChips, intake.friction);
-      const fullIntake: IntakeDraft = { ...intake, goals: goalsText, friction: frictionText };
+      const fullIntake: IntakeDraft = {
+        ...intake,
+        name: (intake.name ?? "").trim(),
+        goals: goalsText,
+        friction: frictionText,
+      };
 
       const profileRes = await fetch("/api/ai/profile", {
         method: "POST",
@@ -341,7 +356,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-moss/10 to-background px-4 pt-12 pb-24">
+    <div className="flex min-h-screen flex-col items-center justify-start bg-[radial-gradient(ellipse_at_top,_hsl(138_24%_39%/0.12)_0%,_transparent_60%)] px-4 pt-12 pb-24">
       {/* Logo */}
       <div className="mb-8 flex items-center gap-2">
         <span className="text-xl font-bold text-moss">Grove</span>
@@ -528,7 +543,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                   <p className="text-xs text-muted-foreground text-center">Calibrating…</p>
                 </div>
               ) : (
-                <>
+                <div className="space-y-4 pt-3 scroll-pt-3">
                 {LIFE_DOMAINS.map((d) => {
                   const barColor = DOMAIN_BAR_COLORS[d.id] ?? "bg-moss";
                   return (
@@ -557,7 +572,7 @@ export function OnboardingWizard({ assessmentMode = false }: { assessmentMode?: 
                 <p className={`text-center text-xs font-medium ${weightTotalTone(weightsTotal(weights))}`}>
                   Total: {weightsTotal(weights)}%
                 </p>
-                </>
+                </div>
               )}
             </div>
           </div>
