@@ -74,7 +74,7 @@ export function DomainLevels() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-foreground">{row.label}</span>
-                  <DomainTag domain={row.id} />
+                  <DomainTag domain={row.id} showInfo />
                 </div>
                 <span className="text-sm text-muted-foreground">
                   Level <span className="font-semibold text-foreground">{row.level}</span>

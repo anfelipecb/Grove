@@ -9,37 +9,40 @@ const DOMAIN_ACCENTS: Record<string, { bar: string; ring: string; soft: string }
   wellbeing: {
     bar: "bg-emerald-500",
     ring: "text-emerald-500",
-    soft: "bg-emerald-500/10",
+    soft:
+      "bg-emerald-500/10 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-700/40",
   },
   learning: {
     bar: "bg-blue-500",
     ring: "text-blue-500",
-    soft: "bg-blue-500/10",
+    soft: "bg-blue-500/10 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-700/40",
   },
   work_build: {
     bar: "bg-orange-500",
     ring: "text-orange-500",
-    soft: "bg-orange-500/10",
+    soft:
+      "bg-orange-500/10 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-700/40",
   },
   relationships: {
     bar: "bg-pink-500",
     ring: "text-pink-500",
-    soft: "bg-pink-500/10",
+    soft: "bg-pink-500/10 dark:bg-pink-950/40 dark:text-pink-400 dark:border-pink-700/40",
   },
   community: {
     bar: "bg-violet-500",
     ring: "text-violet-500",
-    soft: "bg-violet-500/10",
+    soft:
+      "bg-violet-500/10 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-700/40",
   },
   life_admin: {
     bar: "bg-slate-500",
     ring: "text-slate-500",
-    soft: "bg-slate-500/10",
+    soft: "bg-slate-500/10 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-700/40",
   },
   rest_play: {
     bar: "bg-amber-500",
     ring: "text-amber-500",
-    soft: "bg-amber-500/10",
+    soft: "bg-amber-500/10 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-700/40",
   },
 };
 
@@ -164,7 +167,11 @@ export function GoalCard({ goal, canQuickAddTask, onAddTask, onCompleteTask }: G
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <DomainTag domain={goal.domain} className={twMerge("rounded-full px-2.5 py-1", accents.soft)} />
+              <DomainTag
+                domain={goal.domain}
+                showInfo
+                className={twMerge("rounded-full px-2.5 py-1", accents.soft)}
+              />
               <span className="text-xs font-medium text-muted-foreground">
                 {goal.tasks.length} active task{goal.tasks.length === 1 ? "" : "s"}
               </span>
