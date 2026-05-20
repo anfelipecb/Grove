@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Sparkles, Gift, Plus } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { FindTimePanel } from "@/components/v2/today/find-time-panel";
 import { CalendarTab } from "@/components/v2/today/calendar-tab";
 import { twMerge } from "tailwind-merge";
 import { getSurpriseUnlocks, type ProgressionSnapshot } from "@grove/core";
-import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
+import type { TaskRowData } from "@/components/v2/today/task-row";
+import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
 import { DayLog } from "@/components/v2/today/day-log";
 import { PlanTomorrow } from "@/components/v2/today/plan-tomorrow";
 import { TodayStatsRow } from "@/components/v2/today/today-stats-row";
@@ -18,6 +28,9 @@ import { FocusSessionOverlay } from "@/components/v2/today/focus-session-overlay
 import { TaskChatOverlay } from "@/components/v2/today/task-chat-overlay";
 import { useFocusSession } from "@/hooks/use-focus-session";
 import { CommunityPulseCard } from "@/components/v2/community/community-pulse-card";
+import { DopamineMenu } from "@/components/v2/today/dopamine-menu";
+import { TOMORROW_DROP_ID } from "@/components/v2/today/today-dnd-ids";
+import type { DopamineMainTask } from "@/components/v2/today/today-tabs";
 import { surfacePrimary, surfaceSecondary } from "@/components/v2/today/surface-classes";
 
 type CommunityPulse = {
@@ -36,6 +49,7 @@ export type TodayDesktopProps = {
   communityPulse: CommunityPulse;
   unlockedSurpriseIds: string[];
   profileId: string;
+  mainTask: DopamineMainTask | null;
   googleCalendarConnected?: boolean;
 };
 
@@ -59,6 +73,7 @@ export function TodayDesktop({
   communityPulse,
   unlockedSurpriseIds,
   profileId,
+  mainTask,
   googleCalendarConnected = false,
 }: TodayDesktopProps) {
   const [activeView, setActiveView] = useState<"today" | "calendar">("today");
@@ -74,7 +89,12 @@ export function TodayDesktop({
   const [addPrefill, setAddPrefill] = useState<{ title: string; domain: string } | null>(null);
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
   const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
+  const [showDopamineMenu, setShowDopamineMenu] = useState(false);
+  const [planRefreshKey, setPlanRefreshKey] = useState(0);
   const session = useFocusSession();
+  const { openTaskSelect, startWithTasks } = session;
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const startTask = startTaskId ? localTasks.find((t) => t.id === startTaskId) : null;
 
@@ -116,7 +136,33 @@ export function TodayDesktop({
 
   const handleMoveToTomorrow = async (taskId: string) => {
     await scheduleForDate(taskId, tomorrow);
+    setPlanRefreshKey((k) => k + 1);
   };
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over) return;
+
+      if (over.id === TOMORROW_DROP_ID) {
+        await scheduleForDate(String(active.id), tomorrow);
+        setPlanRefreshKey((k) => k + 1);
+        return;
+      }
+
+      if (active.id === over.id) return;
+
+      setLocalTasks((prev) => {
+        const goalTasks = prev.filter((t) => !t.is_required);
+        const requiredTasks = prev.filter((t) => t.is_required);
+        const oldIndex = goalTasks.findIndex((t) => t.id === active.id);
+        const newIndex = goalTasks.findIndex((t) => t.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return prev;
+        return [...requiredTasks, ...arrayMove(goalTasks, oldIndex, newIndex)];
+      });
+    },
+    [tomorrow],
+  );
 
   const incompleteCount = localTasks.filter((t) => !t.completed).length;
 
@@ -175,6 +221,7 @@ export function TodayDesktop({
       {activeView === "calendar" ? (
         <CalendarTab activeTasks={activeTasks} googleCalendarConnected={googleCalendarConnected} />
       ) : (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {showTaskChat && (
         <TaskChatOverlay
@@ -203,7 +250,7 @@ export function TodayDesktop({
           onScheduleAndFocus={(id, label) => {
             setStartedTasks((prev) => ({ ...prev, [id]: label }));
             setStartTaskId(null);
-            session.startWithTasks([{ id: startTask.id, title: startTask.title }]);
+            startWithTasks([{ id: startTask.id, title: startTask.title }]);
           }}
         />
       ) : null}
@@ -233,19 +280,50 @@ export function TodayDesktop({
                 Daily tasks reset each day. Plan tomorrow in the log column.
               </p>
             </div>
-            {hasTasks ? (
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               <button
                 type="button"
-                onClick={() => {
-                  setAddPrefill(null);
-                  setShowTaskChat(true);
-                }}
-                className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
+                onClick={() => openTaskSelect()}
+                className="rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
               >
-                <Plus className="h-3.5 w-3.5" /> Add task
+                Start focus session
               </button>
-            ) : null}
+              <button
+                type="button"
+                onClick={() => setShowDopamineMenu((v) => !v)}
+                className="rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+              >
+                I&apos;m stuck
+              </button>
+              {hasTasks ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddPrefill(null);
+                    setShowTaskChat(true);
+                  }}
+                  className="flex items-center gap-1 rounded-lg bg-moss px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-moss/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss focus-visible:ring-offset-2"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add task
+                </button>
+              ) : null}
+            </div>
           </div>
+
+          {showDopamineMenu ? (
+            <DopamineMenu
+              mainTask={
+                mainTask
+                  ? {
+                      ...mainTask,
+                      completed:
+                        localTasks.find((t) => t.id === mainTask.id)?.completed ?? mainTask.completed,
+                    }
+                  : null
+              }
+              onCompleteMain={handleComplete}
+            />
+          ) : null}
 
           {required.length > 0 && (
             <section className="mb-4">
@@ -253,9 +331,10 @@ export function TodayDesktop({
                 Required by coach
               </p>
               {required.map((t) => (
-                <TaskRow
+                <DraggableTaskRow
                   key={t.id}
                   task={t}
+                  sortable={false}
                   onComplete={handleComplete}
                   onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
                   scheduledTime={startedTasks[t.id] ?? null}
@@ -270,16 +349,18 @@ export function TodayDesktop({
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Your goals
               </p>
-              {goal.map((t) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  onComplete={handleComplete}
-                  onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
-                  scheduledTime={startedTasks[t.id] ?? null}
-                  onMoveToTomorrow={t.completed ? undefined : handleMoveToTomorrow}
-                />
-              ))}
+              <SortableContext items={goal.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                {goal.map((t) => (
+                  <DraggableTaskRow
+                    key={t.id}
+                    task={t}
+                    onComplete={handleComplete}
+                    onStart={t.completed ? undefined : () => setStartTaskId(t.id)}
+                    scheduledTime={startedTasks[t.id] ?? null}
+                    onMoveToTomorrow={t.completed ? undefined : handleMoveToTomorrow}
+                  />
+                ))}
+              </SortableContext>
             </section>
           )}
 
@@ -316,13 +397,21 @@ export function TodayDesktop({
       </div>
 
       {/* CENTER COLUMN */}
-      <div className="space-y-4">
-        <div className={`${surfaceSecondary} p-4`}>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="flex min-h-0 flex-col gap-4 lg:max-h-[calc(100vh-12rem)]">
+        <div className={`${surfaceSecondary} flex min-h-0 flex-col p-4`}>
+          <p className="mb-3 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Today&apos;s Log
           </p>
-          <DayLog date={today} />
-          <PlanTomorrow tomorrow={tomorrow} activeTasks={activeTasks} />
+          <div className="min-h-0 max-h-[min(200px,28vh)] overflow-y-auto">
+            <DayLog date={today} />
+          </div>
+        </div>
+        <div className={`${surfaceSecondary} flex min-h-0 flex-1 flex-col p-4`}>
+          <PlanTomorrow
+            tomorrow={tomorrow}
+            activeTasks={activeTasks}
+            refreshKey={planRefreshKey}
+          />
         </div>
       </div>
 
@@ -417,6 +506,7 @@ export function TodayDesktop({
         ) : null}
       </div>
     </div>
+    </DndContext>
       )}
     </div>
   );

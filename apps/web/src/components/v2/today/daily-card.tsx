@@ -17,6 +17,8 @@ import {
 } from "@dnd-kit/sortable";
 import { TaskRow, type TaskRowData } from "@/components/v2/today/task-row";
 import { DraggableTaskRow } from "@/components/v2/today/draggable-task-row";
+import { TomorrowDropZone } from "@/components/v2/today/tomorrow-drop-zone";
+import { TOMORROW_DROP_ID } from "@/components/v2/today/today-dnd-ids";
 import { LogSessionForm } from "@/components/v2/today/log-session-form";
 import { AddTaskSheet } from "@/components/v2/today/add-task-sheet";
 import { StartTaskSheet } from "@/components/v2/today/start-task-sheet";
@@ -53,20 +55,42 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
   const goal = tasks.filter((t) => !t.is_required);
   const hasTasks = required.length > 0 || goal.length > 0;
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().slice(0, 10);
 
-    setTasks((prev) => {
-      const goalTasks = prev.filter((t) => !t.is_required);
-      const requiredTasks = prev.filter((t) => t.is_required);
-      const oldIndex = goalTasks.findIndex((t) => t.id === active.id);
-      const newIndex = goalTasks.findIndex((t) => t.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return prev;
-      const reordered = arrayMove(goalTasks, oldIndex, newIndex);
-      return [...requiredTasks, ...reordered];
+  const scheduleForTomorrow = useCallback(async (taskId: string) => {
+    await fetch("/api/v2/calendar/schedule", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ task_id: taskId, date: tomorrow }),
     });
-  }, []);
+  }, [tomorrow]);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over) return;
+
+      if (over.id === TOMORROW_DROP_ID) {
+        await scheduleForTomorrow(String(active.id));
+        return;
+      }
+
+      if (active.id === over.id) return;
+
+      setTasks((prev) => {
+        const goalTasks = prev.filter((t) => !t.is_required);
+        const requiredTasks = prev.filter((t) => t.is_required);
+        const oldIndex = goalTasks.findIndex((t) => t.id === active.id);
+        const newIndex = goalTasks.findIndex((t) => t.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return prev;
+        const reordered = arrayMove(goalTasks, oldIndex, newIndex);
+        return [...requiredTasks, ...reordered];
+      });
+    },
+    [scheduleForTomorrow],
+  );
 
   const handleComplete = useCallback(async (id: string) => {
     // Optimistic update
@@ -240,6 +264,7 @@ export function DailyCard({ initialTasks, profileId, mainTask, onStartFocusSessi
                 />
               ))}
             </SortableContext>
+            <TomorrowDropZone className="mt-3" compact />
           </DndContext>
         </section>
       )}

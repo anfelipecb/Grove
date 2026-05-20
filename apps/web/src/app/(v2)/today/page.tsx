@@ -213,6 +213,7 @@ export default async function TodayPage() {
           communityPulse={communityPulse}
           unlockedSurpriseIds={unlockedSurpriseIds}
           profileId={profile.id}
+          mainTask={mainTask}
           googleCalendarConnected={!!profile.google_calendar_token}
         />
       </div>

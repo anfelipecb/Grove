@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, X } from "lucide-react";
 import { DomainTag } from "@/components/v2/shared/domain-tag";
+import { TomorrowDropZone } from "@/components/v2/today/tomorrow-drop-zone";
 
 type ActiveTask = { id: string; title: string; domain: string };
 
 type PlanTomorrowProps = {
   tomorrow: string;
   activeTasks: ActiveTask[];
+  /** Bump to refetch scheduled list after external schedule (e.g. drag-drop). */
+  refreshKey?: number;
+  showDropHint?: boolean;
 };
 
 type ScheduledEntry = {
@@ -17,18 +21,28 @@ type ScheduledEntry = {
   tasks: { title: string; domain: string } | null;
 };
 
-export function PlanTomorrow({ tomorrow, activeTasks }: PlanTomorrowProps) {
+export function PlanTomorrow({
+  tomorrow,
+  activeTasks,
+  refreshKey = 0,
+  showDropHint = true,
+}: PlanTomorrowProps) {
   const [scheduled, setScheduled] = useState<ScheduledEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("");
 
-  useEffect(() => {
+  const loadScheduled = useCallback(() => {
+    setLoading(true);
     fetch(`/api/v2/calendar/${tomorrow}`)
       .then((r) => r.json())
       .then((d: { scheduled: ScheduledEntry[] }) => setScheduled(d.scheduled ?? []))
       .finally(() => setLoading(false));
   }, [tomorrow]);
+
+  useEffect(() => {
+    loadScheduled();
+  }, [loadScheduled, refreshKey]);
 
   const scheduledIds = new Set(scheduled.map((s) => s.task_id));
   const available = activeTasks.filter((t) => !scheduledIds.has(t.id));
@@ -84,85 +98,99 @@ export function PlanTomorrow({ tomorrow, activeTasks }: PlanTomorrowProps) {
   });
 
   return (
-    <div className="mt-4">
+    <div className="flex min-h-0 flex-col">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Plan for tomorrow</p>
       <p className="mb-2 text-sm font-medium text-foreground">{label}</p>
+      {showDropHint ? <TomorrowDropZone className="mb-3" /> : null}
       <details className="mb-2">
         <summary className="cursor-pointer text-[11px] font-medium text-muted-foreground">?</summary>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-          Tasks here are not for today. They stay on your list until you start them or move them back.
+          Tasks here are not for today. Drag from Today or use Tomorrow on a task row.
         </p>
       </details>
-      {loading ? (
-        <p className="py-2 text-xs text-muted-foreground animate-pulse">Loading…</p>
-      ) : (
-        <div className="space-y-1">
-          {scheduled.map((s) => (
-            <div key={s.id} className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">{s.tasks?.title ?? "—"}</p>
-                {s.tasks?.domain && (
-                  <div className="mt-0.5">
-                    <DomainTag domain={s.tasks.domain} />
-                  </div>
-                )}
+      <div className="min-h-0 max-h-[min(240px,40vh)] overflow-y-auto">
+        {loading ? (
+          <p className="py-2 text-xs text-muted-foreground animate-pulse">Loading…</p>
+        ) : (
+          <div className="space-y-1">
+            {scheduled.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-foreground">{s.tasks?.title ?? "—"}</p>
+                  {s.tasks?.domain && (
+                    <div className="mt-0.5">
+                      <DomainTag domain={s.tasks.domain} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleStartToday(s)}
+                    className="text-xs font-medium text-moss hover:text-moss/80"
+                  >
+                    Start today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(s)}
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label="Remove from plan"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+            ))}
+
+            {adding ? (
+              <div className="flex gap-2 pt-1">
+                <select
+                  className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-moss"
+                  value={selectedId}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                >
+                  <option value="">Pick a task…</option>
+                  {available.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
-                  onClick={() => void handleStartToday(s)}
-                  className="text-xs font-medium text-moss hover:text-moss/80"
+                  onClick={handleAdd}
+                  disabled={!selectedId}
+                  className="rounded-md bg-moss px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
                 >
-                  Start today
+                  Add
                 </button>
                 <button
-                  onClick={() => handleRemove(s)}
-                  className="text-muted-foreground hover:text-destructive"
-                  aria-label="Remove from plan"
+                  type="button"
+                  onClick={() => {
+                    setAdding(false);
+                    setSelectedId("");
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-            </div>
-          ))}
-
-          {adding ? (
-            <div className="flex gap-2 pt-1">
-              <select
-                className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-moss"
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-              >
-                <option value="">Pick a task…</option>
-                {available.map((t) => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
+            ) : available.length > 0 ? (
               <button
-                onClick={handleAdd}
-                disabled={!selectedId}
-                className="rounded-md bg-moss px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                type="button"
+                onClick={() => setAdding(true)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-moss/40 py-2 text-xs text-moss transition hover:border-moss hover:bg-moss/5"
               >
-                Add
+                <Plus className="h-3.5 w-3.5" />
+                Add task for {label}
               </button>
-              <button
-                onClick={() => { setAdding(false); setSelectedId(""); }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : available.length > 0 ? (
-            <button
-              onClick={() => setAdding(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-moss/40 py-2 text-xs text-moss hover:border-moss hover:bg-moss/5 transition"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add task for {label}
-            </button>
-          ) : null}
-        </div>
-      )}
+            ) : scheduled.length === 0 ? (
+              <p className="py-2 text-center text-xs text-muted-foreground">Nothing planned yet.</p>
+            ) : null}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
