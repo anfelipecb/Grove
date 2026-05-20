@@ -1,5 +1,5 @@
 import { Flame } from "lucide-react";
-import { getSeniorityProgress } from "@grove/core";
+import { formatGlobalLevelLabel, getGlobalLevel, getSeniorityProgress } from "@grove/core";
 
 type PointsHeaderProps = {
   displayName: string;
@@ -11,6 +11,8 @@ export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderP
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const { currentTier, nextTier, progressPercent } = getSeniorityProgress(totalPoints);
+  const levelLabel = formatGlobalLevelLabel(totalPoints);
+  const { xpIntoLevel, xpForLevel } = getGlobalLevel(totalPoints);
 
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-3">
@@ -22,7 +24,7 @@ export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderP
           </p>
           <div className="mt-1 flex items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-moss/15 px-2 py-0.5 text-xs font-semibold text-moss">
-              {currentTier.label}
+              {levelLabel}
             </span>
             <span className="text-xs text-muted-foreground">
               {totalPoints.toLocaleString()} XP
@@ -46,8 +48,8 @@ export function PointsHeader({ displayName, totalPoints, streak }: PointsHeaderP
         </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
           {nextTier
-            ? `${nextTier.label} at ${nextTier.minXp.toLocaleString()} XP`
-            : "Max tier reached — Elder 🌳"}
+            ? `${xpIntoLevel} / ${xpForLevel} XP this level · ${nextTier.label} at ${nextTier.minXp.toLocaleString()} XP`
+            : `${xpIntoLevel} / ${xpForLevel} XP this level`}
         </p>
       </div>
     </div>

@@ -49,6 +49,45 @@ export const SENIORITY_TIERS = [
 
 export type SeniorityTier = (typeof SENIORITY_TIERS)[number];
 
+/** Global level 11 = Sprout L1 — community unlocks here. */
+export const COMMUNITY_UNLOCK_GLOBAL_LEVEL = 11;
+
+const XP_PER_TIER_LEVEL = [25, 50, 85, 140, 300] as const;
+
+export function getGlobalLevel(totalXp: number): {
+  tier: SeniorityTier;
+  tierLevel: number;
+  globalLevel: number;
+  xpIntoLevel: number;
+  xpForLevel: number;
+} {
+  const safeXp = Math.max(0, Math.floor(totalXp));
+  const tier = getSeniorityTier(safeXp);
+  const tierIndex = SENIORITY_TIERS.findIndex((entry) => entry.id === tier.id);
+  const xpPerLevel = XP_PER_TIER_LEVEL[tierIndex] ?? XP_PER_TIER_LEVEL[0];
+  const xpIntoTier = safeXp - tier.minXp;
+  const tierLevel = Math.min(10, Math.floor(xpIntoTier / xpPerLevel) + 1);
+  const xpIntoLevel = xpIntoTier - (tierLevel - 1) * xpPerLevel;
+  const globalLevel = tierIndex * 10 + tierLevel;
+
+  return {
+    tier,
+    tierLevel,
+    globalLevel,
+    xpIntoLevel: Math.max(0, xpIntoLevel),
+    xpForLevel: xpPerLevel,
+  };
+}
+
+export function hasCommunityAccess(totalXp: number): boolean {
+  return getGlobalLevel(totalXp).globalLevel >= COMMUNITY_UNLOCK_GLOBAL_LEVEL;
+}
+
+export function formatGlobalLevelLabel(totalXp: number): string {
+  const { tier, tierLevel } = getGlobalLevel(totalXp);
+  return `${tier.label} · L${tierLevel}`;
+}
+
 export function suggestXp(input: XpInput): XpSuggestion {
   const urgencyBonus = input.urgent ? 12 : 0;
   const communityBonus = input.communityContribution ? 20 : 0;

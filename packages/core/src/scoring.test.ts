@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  COMMUNITY_UNLOCK_GLOBAL_LEVEL,
   getClosestSurpriseUnlock,
+  getGlobalLevel,
   getNextSeniorityTier,
   getSeniorityProgress,
   getSeniorityTier,
   getSurpriseUnlocks,
+  hasCommunityAccess,
   suggestXp,
 } from "./scoring";
 
@@ -41,6 +44,39 @@ describe("seniority tiers", () => {
     assert.equal(progress.nextTier?.label, "Steward");
     assert.equal(progress.xpToNext, 800);
     assert.equal(progress.progressPercent, 6);
+  });
+});
+
+describe("global levels", () => {
+  it("maps XP to tier sub-levels and global level", () => {
+    assert.equal(COMMUNITY_UNLOCK_GLOBAL_LEVEL, 11);
+
+    const seedStart = getGlobalLevel(0);
+    assert.equal(seedStart.tier.label, "Seed");
+    assert.equal(seedStart.tierLevel, 1);
+    assert.equal(seedStart.globalLevel, 1);
+
+    const seedEnd = getGlobalLevel(249);
+    assert.equal(seedEnd.tier.label, "Seed");
+    assert.equal(seedEnd.tierLevel, 10);
+    assert.equal(seedEnd.globalLevel, 10);
+    assert.equal(hasCommunityAccess(249), false);
+
+    const sproutStart = getGlobalLevel(250);
+    assert.equal(sproutStart.tier.label, "Sprout");
+    assert.equal(sproutStart.tierLevel, 1);
+    assert.equal(sproutStart.globalLevel, 11);
+    assert.equal(hasCommunityAccess(250), true);
+
+    const sproutEnd = getGlobalLevel(749);
+    assert.equal(sproutEnd.tier.label, "Sprout");
+    assert.equal(sproutEnd.tierLevel, 10);
+    assert.equal(sproutEnd.globalLevel, 20);
+
+    const elderStart = getGlobalLevel(3000);
+    assert.equal(elderStart.tier.label, "Elder");
+    assert.equal(elderStart.tierLevel, 1);
+    assert.equal(elderStart.globalLevel, 41);
   });
 });
 
