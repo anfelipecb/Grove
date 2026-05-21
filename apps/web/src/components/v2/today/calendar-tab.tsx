@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { ChevronDown } from "lucide-react";
 import { WeekCalendar } from "@/components/v2/today/week-calendar";
+import { localDateString } from "@/lib/local-date";
 
 type CalendarTabProps = {
   activeTasks: { id: string; title: string; domain: string }[];
   googleCalendarConnected: boolean;
+  calendarRefreshKey?: number;
 };
 
 type GoalProgress = { id: string; title: string; completed: number; total: number };
@@ -16,7 +18,7 @@ const VIEWS = ["Time Blocks", "Month"] as const;
 type View = (typeof VIEWS)[number];
 
 function toDateStr(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return localDateString(d);
 }
 
 function addDays(date: Date, n: number) {
@@ -29,7 +31,11 @@ function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-export function CalendarTab({ activeTasks: _activeTasks, googleCalendarConnected }: CalendarTabProps) {
+export function CalendarTab({
+  activeTasks: _activeTasks,
+  googleCalendarConnected,
+  calendarRefreshKey = 0,
+}: CalendarTabProps) {
   const todayDate = new Date();
   const today = toDateStr(todayDate);
 
@@ -127,7 +133,11 @@ export function CalendarTab({ activeTasks: _activeTasks, googleCalendarConnected
 
       {view === "Time Blocks" && (
         <div onClick={(e) => e.stopPropagation()}>
-          <WeekCalendar googleCalendarConnected={googleCalendarConnected} filterGoalId={filterGoalId} />
+          <WeekCalendar
+            googleCalendarConnected={googleCalendarConnected}
+            filterGoalId={filterGoalId}
+            refreshKey={calendarRefreshKey}
+          />
         </div>
       )}
 

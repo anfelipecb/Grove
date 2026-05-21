@@ -21,6 +21,7 @@ type TodayTabsProps = {
   profileId: string;
   mainTask: DopamineMainTask | null;
   googleCalendarConnected: boolean;
+  calendarRefreshKey?: number;
   onStartFocusSession?: (task?: FocusTask) => void;
 };
 
@@ -33,6 +34,7 @@ export function TodayTabs({
   profileId,
   mainTask,
   googleCalendarConnected,
+  calendarRefreshKey = 0,
   onStartFocusSession,
 }: TodayTabsProps) {
   const [active, setActive] = useState<Tab>("Daily Card");
@@ -64,7 +66,13 @@ export function TodayTabs({
           onStartFocusSession={onStartFocusSession}
         />
       )}
-      {active === "Calendar" && <CalendarTab activeTasks={activeTasks} googleCalendarConnected={googleCalendarConnected} />}
+      {active === "Calendar" && (
+        <CalendarTab
+          activeTasks={activeTasks}
+          googleCalendarConnected={googleCalendarConnected}
+          calendarRefreshKey={calendarRefreshKey}
+        />
+      )}
     </div>
   );
 }

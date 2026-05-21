@@ -92,6 +92,7 @@ export function TodayDesktop({
   const [startedTasks, setStartedTasks] = useState<Record<string, string>>({});
   const [showDopamineMenu, setShowDopamineMenu] = useState(false);
   const [planRefreshKey, setPlanRefreshKey] = useState(0);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const session = useFocusSession();
   const { openTaskSelect, startWithTasks } = session;
 
@@ -223,7 +224,11 @@ export function TodayDesktop({
       </div>
 
       {activeView === "calendar" ? (
-        <CalendarTab activeTasks={activeTasks} googleCalendarConnected={googleCalendarConnected} />
+        <CalendarTab
+          activeTasks={activeTasks}
+          googleCalendarConnected={googleCalendarConnected}
+          calendarRefreshKey={calendarRefreshKey}
+        />
       ) : (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -470,7 +475,7 @@ export function TodayDesktop({
                 setShowAddSheet(true);
               }}
             />
-            <FindTimePanel />
+            <FindTimePanel onPlanAccepted={() => setCalendarRefreshKey((k) => k + 1)} />
           </>
         ) : null}
 

@@ -18,6 +18,7 @@ type GoalsViewProps = {
   initialGoals: GoalCardData[];
   profileId: string;
   completions30d: { task_id: string; completed_date: string; domain: string }[];
+  completionsYear: { task_id: string; completed_date: string; domain: string }[];
   monthlyXp: number;
   today: string;
 };
@@ -56,6 +57,7 @@ export function GoalsView({
   initialGoals,
   profileId,
   completions30d,
+  completionsYear,
   monthlyXp,
   today,
 }: GoalsViewProps) {
@@ -262,7 +264,12 @@ export function GoalsView({
       )}
 
       <GoalsDomainLevelsSection />
-      <GoalsProgressSection completions30d={completions30d} monthlyXp={monthlyXp} today={today} />
+      <GoalsProgressSection
+        completions30d={completions30d}
+        completionsYear={completionsYear}
+        monthlyXp={monthlyXp}
+        today={today}
+      />
     </section>
   );
 }

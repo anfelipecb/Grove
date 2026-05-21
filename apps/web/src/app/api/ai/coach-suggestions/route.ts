@@ -108,8 +108,9 @@ export async function POST(request: Request) {
       if (profileData.google_calendar_token) {
         type T = { access_token: string; refresh_token?: string; expires_at: number; scope: string };
         const token = profileData.google_calendar_token as T;
+        const { token: validToken } = await getValidToken(token);
         const events = await fetchCalendarEvents(
-          await getValidToken(token),
+          validToken,
           new Date(today + "T00:00:00").toISOString(),
           new Date(weekDates[6] + "T23:59:59").toISOString(),
         );

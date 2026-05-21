@@ -1,14 +1,7 @@
 import { getServerUserId } from "@/lib/clerk-auth";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { fetchCalendarEvents, getValidToken } from "@/lib/google-calendar";
-
-function getMondayISO(fromDate: string): string {
-  const d = new Date(fromDate + "T00:00:00");
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
-}
+import { fetchGoogleBusyForDay } from "@/lib/calendar-google-sync";
+import { getMondayLocal } from "@/lib/local-date";
 
 export async function GET(req: Request, { params }: { params: Promise<{ date: string }> }) {
   const userId = await getServerUserId();
@@ -75,28 +68,27 @@ export async function GET(req: Request, { params }: { params: Promise<{ date: st
     };
   });
 
-  // Fetch Google Calendar busy blocks for this day if connected
   let busy: { title: string; start: string; end: string }[] = [];
+  let calendarStatus: "disconnected" | "ok" | "error" = "disconnected";
+  let calendarError: string | undefined;
+
   if (profile.google_calendar_token) {
-    try {
-      type TokenShape = { access_token: string; refresh_token?: string; expires_at: number; scope: string };
-      const token = profile.google_calendar_token as TokenShape;
-      const events = await fetchCalendarEvents(
-        await getValidToken(token),
-        new Date(date + "T00:00:00").toISOString(),
-        new Date(date + "T23:59:59").toISOString(),
-      );
-      busy = events
-        .filter((e) => e.start.dateTime)
-        .map((e) => ({ title: e.summary ?? "Busy", start: e.start.dateTime!, end: e.end.dateTime! }));
-    } catch { /* non-fatal */ }
+    const google = await fetchGoogleBusyForDay(
+      supabase,
+      profile.id as string,
+      profile.google_calendar_token as Parameters<typeof fetchGoogleBusyForDay>[2],
+      date,
+    );
+    busy = google.busy;
+    calendarStatus = google.status;
+    calendarError = google.error;
   }
 
   const url = new URL(req.url);
   let goalsProgress: Array<{ id: string; title: string; completed: number; total: number }> | undefined;
 
   if (url.searchParams.get("goals_progress") === "1") {
-    const monday = getMondayISO(date);
+    const monday = getMondayLocal(date);
     const { data: goals } = await supabase
       .from("goals")
       .select("id, title")
@@ -130,6 +122,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ date: st
     scheduled: scheduledWithGoals,
     communityPlans: communityPlans ?? [],
     busy,
+    calendarStatus,
+    ...(calendarError ? { calendarError } : {}),
     ...(goalsProgress !== undefined ? { goalsProgress } : {}),
   });
 }

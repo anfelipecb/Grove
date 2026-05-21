@@ -1,9 +1,11 @@
-type GoogleToken = {
+export type GoogleTokenShape = {
   access_token: string;
   refresh_token?: string;
   expires_at: number;
   scope: string;
 };
+
+type GoogleToken = GoogleTokenShape;
 
 type CalendarEvent = {
   id: string;
@@ -36,9 +38,14 @@ async function refreshAccessToken(token: GoogleToken): Promise<GoogleToken> {
   };
 }
 
-export async function getValidToken(token: GoogleToken): Promise<GoogleToken> {
-  if (Date.now() < token.expires_at - 60_000) return token;
-  return refreshAccessToken(token);
+export async function getValidToken(
+  token: GoogleToken,
+): Promise<{ token: GoogleToken; refreshed: boolean }> {
+  if (Date.now() < token.expires_at - 60_000) {
+    return { token, refreshed: false };
+  }
+  const refreshed = await refreshAccessToken(token);
+  return { token: refreshed, refreshed: true };
 }
 
 export async function fetchCalendarEvents(
@@ -46,7 +53,6 @@ export async function fetchCalendarEvents(
   timeMin: string,
   timeMax: string,
 ): Promise<CalendarEvent[]> {
-  const valid = await getValidToken(token);
   const params = new URLSearchParams({
     timeMin,
     timeMax,
@@ -57,7 +63,7 @@ export async function fetchCalendarEvents(
 
   const res = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
-    { headers: { Authorization: `Bearer ${valid.access_token}` } },
+    { headers: { Authorization: `Bearer ${token.access_token}` } },
   );
 
   if (!res.ok) {

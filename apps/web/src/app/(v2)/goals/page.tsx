@@ -130,11 +130,14 @@ export default async function GoalsPage() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10);
+  const yearAgo = new Date();
+  yearAgo.setDate(yearAgo.getDate() - 364);
+  const yearAgoStr = yearAgo.toISOString().slice(0, 10);
 
   const [
     { data: tasks, error: tasksError },
     { data: completions, error: completionsError },
-    { data: completions30d, error: completions30dError },
+    { data: completionsYearRows, error: completionsYearError },
     { data: xpRows, error: xpError },
   ] = await Promise.all([
     goalIds.length > 0
@@ -157,7 +160,7 @@ export default async function GoalsPage() {
       .from("task_completions")
       .select("task_id, completed_date, tasks!inner(domain)")
       .eq("profile_id", profile.id)
-      .gte("completed_date", thirtyDaysAgoStr),
+      .gte("completed_date", yearAgoStr),
     supabase
       .from("xp_events")
       .select("xp, created_at")
@@ -181,10 +184,10 @@ export default async function GoalsPage() {
     );
   }
 
-  if (completions30dError) {
+  if (completionsYearError) {
     return (
       <main className="p-8 text-foreground">
-        <p>Could not load progress history: {completions30dError.message}</p>
+        <p>Could not load progress history: {completionsYearError.message}</p>
       </main>
     );
   }
@@ -224,7 +227,7 @@ export default async function GoalsPage() {
     tasks: tasksByGoal.get(goal.id) ?? [],
   }));
 
-  const completionsWithDomain = (completions30d ?? []).map((row) => {
+  const completionsYear = (completionsYearRows ?? []).map((row) => {
     const join = row.tasks as { domain?: string | null } | null;
     return {
       task_id: row.task_id as string,
@@ -232,6 +235,7 @@ export default async function GoalsPage() {
       domain: coerceDomain(join?.domain),
     };
   });
+  const completions30d = completionsYear.filter((c) => c.completed_date >= thirtyDaysAgoStr);
 
   return (
     <GoalsView
@@ -239,7 +243,8 @@ export default async function GoalsPage() {
       displayName={(profile.display_name as string | null | undefined) ?? "Member"}
       initialGoals={initialGoals}
       profileId={profile.id as string}
-      completions30d={completionsWithDomain}
+      completions30d={completions30d}
+      completionsYear={completionsYear}
       monthlyXp={monthlyXp}
       today={today}
     />

@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MessageSquareText, Send } from "lucide-react";
 import Link from "next/link";
 import { twMerge } from "tailwind-merge";
+import { CoachActionCard } from "@/components/v2/coach/coach-action-card";
 import { JournalPromptCard } from "@/components/v2/coach/journal-prompt-card";
 import { DopamineMenuPanel } from "@/components/v2/shared/dopamine-menu-panel";
+import type { CoachAction } from "@/lib/coach-actions";
 import type { CoachQuickAction } from "@/lib/coach-quick-actions";
 import type { CoachBriefingSnapshot } from "@/lib/coach-dashboard-context";
 import { clampBriefingLine, humanizeGoalLabel } from "@/lib/coach-briefing-copy";
@@ -13,6 +15,7 @@ import { clampBriefingLine, humanizeGoalLabel } from "@/lib/coach-briefing-copy"
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  actions?: CoachAction[];
 };
 
 export type CoachChatContext = {
@@ -93,7 +96,10 @@ export function CoachChatPanel({
   const [quickActions, setQuickActions] = useState<CoachQuickAction[]>([]);
   const [showDopamine, setShowDopamine] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [pendingActions, setPendingActions] = useState<CoachAction[]>([]);
   const listEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const nearBottomRef = useRef(true);
   const storageKey = `grove-coach-chat:${profileId}`;
   const openingLine = buildOpeningLine(context, displayName);
   const mainDone = context.todayTasks.length > 0;
@@ -180,8 +186,47 @@ export function CoachChatPanel({
   }, [messages, ready, storageKey]);
 
   useEffect(() => {
+    if (!nearBottomRef.current) return;
     listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading, showDopamine]);
+  }, [messages, loading, showDopamine, pendingActions]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
+
+  async function endCurrentSession(msgs: ChatMessage[]) {
+    if (!sessionId || demoMode) return;
+    const summary =
+      msgs.length >= 2
+        ? msgs
+            .slice(-4)
+            .map((m) => `${m.role}: ${m.content.slice(0, 200)}`)
+            .join(" | ")
+        : null;
+    await fetch(`/api/v2/coach/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ transcript: msgs.slice(-30), summary, end: true }),
+    });
+  }
+
+  async function startNewChat() {
+    await endCurrentSession(messages);
+    try {
+      window.sessionStorage.removeItem(storageKey);
+    } catch {
+      // best effort
+    }
+    setSessionId(null);
+    setPendingActions([]);
+    setError(null);
+    setShowDopamine(false);
+    const opener = greeting ?? openingLine;
+    setMessages([{ role: "assistant", content: opener }]);
+    nearBottomRef.current = true;
+  }
 
   async function patchSession(msgs: ChatMessage[]) {
     if (!sessionId || demoMode) return;
@@ -218,18 +263,23 @@ export function CoachChatPanel({
     setLoading(true);
 
     try {
-      const response = await fetch("/api/ai/mycelium-chat", {
+      const response = await fetch("/api/ai/coach-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: nextMessages,
-          context,
-          sessionId: sessionId ?? undefined,
+          profileId,
+          context: {
+            today: context.today,
+            activeGoals: context.activeGoals,
+            todayTasks: context.todayTasks,
+          },
         }),
       });
 
       const payload = (await response.json()) as {
         reply?: string;
+        actions?: CoachAction[];
         safety?: boolean;
         message?: string;
         error?: string;
@@ -245,14 +295,18 @@ export function CoachChatPanel({
         return;
       }
 
-      const withReply = [
+      const actions = payload.actions ?? [];
+      setPendingActions(actions);
+      const withReply: ChatMessage[] = [
         ...nextMessages,
         {
-          role: "assistant" as const,
+          role: "assistant",
           content: payload.reply?.trim() || "I couldn't produce a reply just now.",
+          actions: actions.length > 0 ? actions : undefined,
         },
       ];
       setMessages(withReply);
+      nearBottomRef.current = true;
       void patchSession(withReply);
     } catch {
       setError("Could not send your message right now.");
@@ -275,8 +329,8 @@ export function CoachChatPanel({
   }
 
   return (
-    <section className="flex h-full min-h-[520px] flex-col rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
-      <div className="mb-3">
+    <section className="flex max-h-[min(720px,calc(100vh-10rem))] min-h-[420px] flex-col rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
+      <div className="mb-3 shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -290,11 +344,20 @@ export function CoachChatPanel({
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{insight}</p>
             ) : null}
           </div>
-          {demoMode ? (
-            <span className="shrink-0 rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Demo
-            </span>
-          ) : null}
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            {demoMode ? (
+              <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Demo
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void startNewChat()}
+              className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted-foreground transition hover:border-moss/40 hover:text-foreground"
+            >
+              New chat
+            </button>
+          </div>
         </div>
 
         {quickActions.length > 0 ? (
@@ -333,13 +396,19 @@ export function CoachChatPanel({
         </div>
       ) : null}
 
-      <JournalPromptCard
-        onSaved={(confirmation) =>
-          setMessages((current) => [...current, { role: "assistant", content: confirmation }])
-        }
-      />
+      <div className="mb-3 shrink-0">
+        <JournalPromptCard
+          onSaved={(confirmation) =>
+            setMessages((current) => [...current, { role: "assistant", content: confirmation }])
+          }
+        />
+      </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-[24px] border border-border bg-background/70 p-4">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-[24px] border border-border bg-background/70 p-4"
+      >
         {messages.map((message, index) => (
           <div
             key={`${index}-${message.role}`}
@@ -363,10 +432,23 @@ export function CoachChatPanel({
             </span>
           </div>
         ) : null}
+        {pendingActions.length > 0 ? (
+          <div className="space-y-2">
+            {pendingActions.map((action, i) => (
+              <CoachActionCard
+                key={`${action.type}-${i}`}
+                action={action}
+                demoMode={demoMode}
+                onDismiss={() => setPendingActions((prev) => prev.filter((_, j) => j !== i))}
+                onSetupComplete={() => setPendingActions([])}
+              />
+            ))}
+          </div>
+        ) : null}
         <div ref={listEndRef} />
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex shrink-0 gap-2">
         <textarea
           className="min-h-[56px] min-w-0 flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-moss"
           placeholder="Ask Mycelium a concrete question..."

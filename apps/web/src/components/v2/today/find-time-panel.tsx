@@ -29,7 +29,11 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function FindTimePanel() {
+type FindTimePanelProps = {
+  onPlanAccepted?: () => void;
+};
+
+export function FindTimePanel({ onPlanAccepted }: FindTimePanelProps = {}) {
   const [status, setStatus] = useState<"idle" | "loading" | "preview" | "accepting" | "done" | "error">("idle");
   const [plan, setPlan] = useState<PlanItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -92,6 +96,7 @@ export function FindTimePanel() {
       ),
     );
     setStatus("done");
+    onPlanAccepted?.();
   }
 
   function toggleItem(i: number) {

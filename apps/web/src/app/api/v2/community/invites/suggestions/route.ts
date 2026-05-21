@@ -20,8 +20,9 @@ type Body = {
 async function loadEvents(token: TokenShape | null, dates: string[]) {
   if (!token || dates.length === 0) return [];
   try {
+    const { token: validToken } = await getValidToken(token);
     const events = await fetchCalendarEvents(
-      await getValidToken(token),
+      validToken,
       `${dates[0]}T00:00:00.000Z`,
       `${dates[dates.length - 1]}T23:59:59.999Z`,
     );

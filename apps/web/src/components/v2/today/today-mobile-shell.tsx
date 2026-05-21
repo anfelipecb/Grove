@@ -14,6 +14,7 @@ type TodayMobileShellProps = {
   profileId: string;
   mainTask: DopamineMainTask | null;
   googleCalendarConnected: boolean;
+  calendarRefreshKey?: number;
 };
 
 export function TodayMobileShell({
@@ -22,6 +23,7 @@ export function TodayMobileShell({
   profileId,
   mainTask,
   googleCalendarConnected,
+  calendarRefreshKey = 0,
 }: TodayMobileShellProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const session = useFocusSession();
@@ -34,6 +36,7 @@ export function TodayMobileShell({
         profileId={profileId}
         mainTask={mainTask}
         googleCalendarConnected={googleCalendarConnected}
+        calendarRefreshKey={calendarRefreshKey}
         onStartFocusSession={(task?: FocusTask) =>
           task ? session.startWithTasks([task]) : session.openTaskSelect()
         }

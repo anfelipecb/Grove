@@ -209,7 +209,7 @@ export async function POST(req: Request) {
     try {
       type TokenShape = { access_token: string; refresh_token?: string; expires_at: number; scope: string };
       const token = profile.google_calendar_token as TokenShape;
-      const validToken = await getValidToken(token);
+      const { token: validToken } = await getValidToken(token);
       const events = await fetchCalendarEvents(
         validToken,
         new Date(today + "T00:00:00").toISOString(),

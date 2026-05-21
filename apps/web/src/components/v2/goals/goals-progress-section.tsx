@@ -5,6 +5,7 @@ import { twMerge } from "tailwind-merge";
 import { LIFE_DOMAINS, type LifeDomainId } from "@grove/core";
 import { DomainTag } from "@/components/v2/shared/domain-tag";
 import { computeCompletionStreak } from "@/lib/streak";
+import { GoalsActivityHeatmap } from "@/components/v2/goals/goals-activity-heatmap";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VALID_DOMAIN_IDS = new Set<string>(LIFE_DOMAINS.map((d) => d.id));
@@ -17,11 +18,12 @@ type Completion = {
 
 type Props = {
   completions30d: Completion[];
+  completionsYear: Completion[];
   monthlyXp: number;
   today: string;
 };
 
-type Range = "week" | "month";
+type Range = "week" | "month" | "year";
 
 function getMondayOfWeek(today: string): Date {
   const d = new Date(`${today}T12:00:00`);
@@ -67,12 +69,14 @@ function countByDomain(completions: Completion[]): { id: LifeDomainId; label: st
   }));
 }
 
-export function GoalsProgressSection({ completions30d, monthlyXp, today }: Props) {
+export function GoalsProgressSection({ completions30d, completionsYear, monthlyXp, today }: Props) {
   const [range, setRange] = useState<Range>("week");
 
+  const sourceCompletions = range === "year" ? completionsYear : completions30d;
+
   const inRange = useMemo(
-    () => filterForRange(completions30d, range, today),
-    [completions30d, range, today],
+    () => (range === "year" ? sourceCompletions : filterForRange(completions30d, range, today)),
+    [completions30d, sourceCompletions, range, today],
   );
 
   const countsByDate = useMemo(() => {
@@ -107,8 +111,11 @@ export function GoalsProgressSection({ completions30d, monthlyXp, today }: Props
           return dates;
         })();
 
-  const activeDaysInRange = rangeDates.filter((date) => (countsByDate.get(date) ?? 0) > 0).length;
-  const daysInRange = range === "week" ? 7 : 30;
+  const activeDaysInRange =
+    range === "year"
+      ? new Set(inRange.map((c) => c.completed_date)).size
+      : rangeDates.filter((date) => (countsByDate.get(date) ?? 0) > 0).length;
+  const daysInRange = range === "week" ? 7 : range === "month" ? 30 : 365;
 
   return (
     <section className="rounded-[28px] border border-border bg-card/95 p-5 shadow-panel dark:shadow-panel-dark">
@@ -118,7 +125,7 @@ export function GoalsProgressSection({ completions30d, monthlyXp, today }: Props
           <p className="mt-1 text-sm text-muted-foreground">Tasks you finished, by life domain.</p>
         </div>
         <div className="flex rounded-full border border-border bg-background p-1">
-          {(["week", "month"] as const).map((value) => (
+          {(["week", "month", "year"] as const).map((value) => (
             <button
               key={value}
               type="button"
@@ -137,7 +144,7 @@ export function GoalsProgressSection({ completions30d, monthlyXp, today }: Props
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            {range === "week" ? "This week" : "Last 30 days"}
+            {range === "week" ? "This week" : range === "month" ? "Last 30 days" : "Last 12 months"}
           </p>
           <p className="mt-2 text-lg font-semibold text-foreground">
             {taskCount} task{taskCount === 1 ? "" : "s"} completed
@@ -159,6 +166,14 @@ export function GoalsProgressSection({ completions30d, monthlyXp, today }: Props
           ) : null}
         </div>
       </div>
+
+      {range === "month" || range === "year" ? (
+        <GoalsActivityHeatmap
+          completions={range === "year" ? completionsYear : completions30d}
+          today={today}
+          mode={range === "year" ? "year" : "month"}
+        />
+      ) : null}
 
       {range === "week" ? (
         <div className="mt-6 flex items-end justify-between gap-2 px-1">
